@@ -19,40 +19,61 @@ session. Nothing here depends on RL (abandoned 2026-09-28).
 
 ## Components
 
+Everything runs on one machine: this Mac (M1 Pro, 10 cores, 32 GB). The repository
+is local; git tags and branches are the interface between agents and the league.
+
 ```
-                 ┌───────────────────────────── poscatgpu2 ─────────────────────────────┐
-  orchestrator   │  league service                                                       │
-  (scheduler)    │   ingest → gates → matches (28 cores) → ratings → reports → replays   │
-      │  briefs  │         ▲                                    │                         │
-      ▼          │         │ variants (git branches)            ▼ leaderboard, reports    │
-  agent workers ─┼─────────┘                               league CLI ◄── agents query   │
-  (Claude Code,  └───────────────────────────────────────────────────────────────────────┘
-   one worktree each)                     champion ──► unswbc submit ──► competition server
-                                                             server results ──► league (ground truth)
+  ┌──────────────────────────────────── this Mac ─────────────────────────────────────┐
+  │                                                                                    │
+  │  orchestrator ── briefs ──► agent workers (Claude Code, headless, one worktree     │
+  │  (scheduler)                and task/<id> branch each; tag variant/<name>)        │
+  │       ▲                              │ tags                                        │
+  │       │ standings                    ▼                                             │
+  │  league service: ingest tags → gates → matches → ratings → reports (SQLite)        │
+  │       ▲                                                                            │
+  │       └──── league CLI ◄── agents query their standing, run quick matches          │
+  └────────────────────────────────────────────────────────────────────────────────────┘
+        champion ──► unswbc submit ──► competition server ──► results, replays ──► league
 ```
 
-### 1. Variant contract (`league/variants/<id>/`)
+### Running on this Mac
+
+- **CPU:** the league's matches use at most 6 threads, leaving cores for the agents'
+  builds and `league quick` runs, and for the person at the machine. The native engine
+  plays about one full match per second per thread, so a generation (~8 new variants
+  × ~60 maps × both sides against a handful of opponents) takes on the order of an hour.
+  The orchestrator runs ~2-4 agents at once (most of an agent's time is thinking, not CPU).
+- **Disk:** the disk is 96% full (38 GB free on 2026-09-28). Each worktree is small
+  (~1 MB of source plus a build), but builds, replays and logs add up: the league deletes
+  a task's build directory when the task ends, keeps `.replay` files only for sampled
+  losses of the current top variants, and warns below 10 GB free.
+- **Processes:** the league service and the orchestrator run as ordinary background
+  processes (or launchd agents), started by hand; nothing needs a server.
+
+### 1. Variant contract (`variants/<name>/`)
 
 | File | Content |
 |---|---|
-| `src/*.hpp, *.cpp` | The strategy. Implements `bot::Agent` and exports `extern "C" bot::Agent* league_make_agent(const rl::Spawn*)`. May copy code from any variant or `strategy/src`, but builds only from its own directory plus the shared layer below. |
-| `variant.toml` | `id`, `parents` (0-2 ids), `operator` (fresh / mutate / crossover / tweak), `archetype`, `author` (model, session id), `created`. |
+| `*.hpp, *.cpp` | The strategy: a `bot::Agent`, with one `LEAGUE_VARIANT(Class)` line (`shared/bot/plugin.hpp`) exporting `league_make_agent`. Builds from its own directory plus `shared/`. |
+| `variant.toml` | `name`, `parents` (0-2 names), `operator` (fresh / mutate / crossover / tweak), `archetype`, `author` (model, session id), `created`, `task`. |
 | `NOTES.md` | The idea, what changed from the parents and why, what the author expects to improve. Written before evaluation. |
 
-- **Id:** `<short-name>-<hash of src>`; the league refuses a changed variant under an existing id.
-- **Shared layer (read-only for agents):** the engine port (`dragons-env`), the protocol
-  parser (`train/native/observation.*`), `strategy/src/{agent,protocol_io}.*`,
-  `board_memory`, `pathing`. Agents may copy and modify these inside their own variant,
-  never in place. Shared-layer changes go through a human-reviewed PR.
-- **Two builds from one source:** a plugin (`.so`, hidden symbols, loaded by the league)
-  and an unswbc bot (`make_bot.sh`, flat directory, the judge's flags).
+- **Identity:** the annotated git tag `variant/<name>` on the commit that holds it. Tags
+  never move; `scripts/submit.sh` refuses an existing name.
+- **Shared layer (read-only for agents):** `shared/` (engine, protocol parser, the
+  `Agent` interface and loop, `BoardMemory`, `pathing`). Agents may copy and modify any
+  of it inside their own variant, never in place (`submit.sh` refuses changes outside the
+  variant directory). Shared-layer changes are made by a human.
+- **Two builds from one source:** a plugin (`build/variants/lib<name>.so`, hidden
+  symbols, loaded by `sim`, `check` and the league) and an unswbc bot
+  (`scripts/make-bot.sh`, flat directory, the judge's flags).
 
-### 2. League service (poscatgpu2, systemd)
+### 2. League service (a background process on this Mac)
 
-A long-running daemon; everything it learns goes into `league/league.sqlite` (backed up
-nightly) and committed reports.
+A long-running process; everything it learns goes into `league/league.sqlite` (copied
+aside daily) and committed reports.
 
-- **Ingest:** watches the git remote for `variant/*` branches; builds each new variant.
+- **Ingest:** polls the repository for new `variant/*` tags; builds each new variant.
 - **Gates**, in order; a failure is recorded with its log and the variant is rejected:
   1. builds as a plugin and as an unswbc bot with the judge's flags; zip under 4 MB;
   2. safety: memory audit and "no wall or self death with a safe move" (today's
@@ -117,7 +138,8 @@ generation-based, with a hard token budget.
     ambushes, ...), with the knowledge file.
   - ~10% *tweak:* parameter changes as a variant, the cheapest operator.
 - **Launching workers:** headless Claude Code (`claude -p` with the brief) or the
-  Agent SDK, each in its own git worktree on a fresh branch, with allowed tools limited
+  Agent SDK, on this Mac, each in its own git worktree on a fresh branch
+  (`scripts/new-task.sh`), with allowed tools limited
   to the repo, the league CLI and the build. Concurrency ~4-8. Per-task caps on turns,
   tokens and wall time. Model tiers: a cheaper model for tweak and mutate, the strongest
   for crossover and fresh ideas.
