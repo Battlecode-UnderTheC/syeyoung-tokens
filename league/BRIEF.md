@@ -57,6 +57,8 @@ build/tools/sim --a {variant} --b <parent> --maps maps/official --threads 2
 python3 league/league.py quick build/variants/lib{variant}.so --vs <opponent> --vs <opponent>
 build/tools/sim --a {variant} --b <parent> --maps maps/official --trace <map name>   # one match, verbosely
 python3 maps/worldgen/worldgen.py --batch 20 --outdir {worktree}/build/practice           # more maps
+# --seed S --batch N makes seeds S..S+N-1: for a second, independent set use a seed at least N away
+# (e.g. --seed 1000 then --seed 2000); seeds 1 and 2 share 19 of 20 maps.
 build/tools/sim --a {variant} --b <parent> --maps {worktree}/build/practice --threads 2
 ```
 
