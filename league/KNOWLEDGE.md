@@ -106,6 +106,11 @@ against the RL policy, native engine, 2026-09-28). `g<N>` = `league/generations/
   endgame (split until 400; everyone incl. leaders feeds the champion from 380 within 3 if
   < 80% of it; trust_visible; champion freeze at 330) went 27-13 vs gst27 on worldgen and
   12-10 on official, and closed most of the gap to late-surge-6 (18-22). (g7-7)
+- **The late-surge endgame transfers to every line** (g8): vs its own parent swarm-hunt-9
+  34-28, counter-swarm-14 38-1-23, body-wall-3 36-26, giant-4 35-1-26; each closed most of its
+  worldgen gap to gather-split-trade-31 (e.g. counter-swarm 13-27 → 18-22, body-wall 22-40 →
+  30-32 overall). The giant line needs the surge earlier (340; 380 lost badly), its helpers
+  being spread out. After g8 the top ~8 span four lines within ~20 Elo. (g8-1..4)
 - **The split window matters across lines:** workers splitting until ~350 (not 300) helped in
   all three older lines: gather-split-trade-13 (+80 Elo), counter-swarm-12 (its collapse after
   300), swarm-hunt-8 (37-25). late-surge splits until 400. (g4-4, g6-9, g7-2)
