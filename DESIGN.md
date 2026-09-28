@@ -119,10 +119,13 @@ traced losses and `.replay` files in reports, generation reports.
 
 Submitting stays `scripts/submit.sh` (check, commit, tag); the service picks the tag up.
 
-### 4. Orchestrator (scheduler)
+### 4. Orchestrator (a Claude Code session: `ORCHESTRATOR.md`)
 
-Runs on a machine holding the Claude credentials (a cron job or a small service);
-generation-based, with a hard token budget.
+As built: a Claude Code session on a clean context runs generations by following
+`ORCHESTRATOR.md`, and spawns one worker subagent per task (brief: `league/BRIEF.md`) in
+that task's worktree. Bookkeeping is `league/generations/g<N>.md` and `league/KNOWLEDGE.md`,
+committed. The rest of this section is the original plan; the instruction file is simpler
+(no MAP-Elites archive yet; the orchestrator judges diversity from reports).
 
 - **Selection.** Keeps an elite set (top ~4 by holdout rating) and a MAP-Elites archive
   over behaviour descriptors, so different styles survive even when one leads:
@@ -186,7 +189,7 @@ re-run parity before trusting results.
 
 ## Build order
 
-Done: 1-3 (2026-09-28). Next: 4.
+Done: 1-4 (2026-09-28). Next: 5, by starting an orchestrator session.
 
 1. **Plugin contract:** `league_make_agent`, the `.so` build, strategy-v1 as the first
    variant, the simulator loading plugins. Also the RL policy and greedy/random as plugins
