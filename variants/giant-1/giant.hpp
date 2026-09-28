@@ -27,12 +27,12 @@ struct Params {
   int32_t threat_radius = 6;     // enemy heads' reach is computed this far
   int32_t evade_distance = 3;    // closer than this, evading beats the goal
   int32_t stub_length = 3;       // this short (and not alone): trade with any enemy head
-  int32_t feed_from_round = 400; // helpers walk to a bigger ally and die next to it
+  int32_t feed_from_round = 300; // helpers walk to a bigger ally and die next to it
   int32_t feed_max_length = 1000;
   // numbers: the giant splits off helpers early, helpers split too
   int32_t giant_split_until = 100;
   int32_t giant_child_length = 8;  // a child born this long carries on as a giant
-  int32_t helper_split_until = 300;
+  int32_t helper_split_until = 250;
   int32_t split_min_length = 4;
   // helpers fight: trade with enemy heads at least as long, hunt them this close
   int32_t hunt_radius = 6;
@@ -48,9 +48,9 @@ struct Params {
   int32_t feed_early_length = 0;    // a helper this long feeds the giant in view any time after the giant stops splitting (0: off)
   int32_t feed_distance = 3;        // a helper this close (torus steps) to the giant's head dies there
   int32_t intercept_ahead = 2;      // and walks to this many steps in front of it
-  double body_time_factor = 1.0;    // room check: own segment frees after (steps until it would) * this (eating stalls the tail)
-  int32_t unknown_room = 0;         // room check: an unexplored edge is worth this many tiles (0: a sure way out)
-  int32_t tight_factor = 2;         // no roomy step: move anyway if room * this >= need, else split out
+  double body_time_factor = 1.5;    // room check: own segment frees after (steps until it would) * this (eating stalls the tail)
+  int32_t unknown_room = 4;         // room check: an unexplored edge is worth this many tiles (0: a sure way out)
+  int32_t tight_factor = 1000;         // no roomy step: move anyway if room * this >= need, else split out
 };
 
 class GiantAgent : public bot::Agent {
