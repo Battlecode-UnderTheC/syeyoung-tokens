@@ -121,8 +121,9 @@ copies the first parent into `variants/<variant>/` (fresh: an empty directory), 
 
 Then spawn a worker subagent with the Agent tool: `general-purpose`, **in the background**,
 without the tool's own worktree isolation (the task already has its worktree). Its prompt is
-`league/BRIEF.md` with every `{placeholder}` filled in: write the filled brief to a file in
-your scratchpad and give the worker its path ("read it in full first and follow it"). The
+`league/BRIEF.md` with every `{placeholder}` filled in: write the filled brief to
+`../syeyoung-tokens.league/briefs/<task>.md` (not the session scratchpad: it doesn't survive a
+restart; `briefs/fill.py <tasks.json>` fills `briefs/template.md`) and give the worker its path ("read it in full first and follow it"). The
 worker starts with no context and must not depend on this conversation. Use the strongest model
 for fresh and crossover tasks; a cheaper one is fine for tweaks.
 
