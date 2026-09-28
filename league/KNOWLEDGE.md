@@ -215,6 +215,12 @@ against the RL policy, native engine, 2026-09-28). `g<N>` = `league/generations/
   maps alone can't separate variants. Native turn times under machine load spike 10–100×;
   count search work instead. (g1-1, g1-3)
 
+- **Target claims over sonar don't pay, even on a modern base.** 14.8% of pearl/bed goal-turns
+  chase a tile an ally also chases; claims (73k heard a match) cut that only to 13.3%, and giving
+  way went 46-56 vs gather-split-trade-39 (0.4 weight: 41-61). A duplicate chaser re-targets once
+  the pearl is gone; a claim sends it to a worse target on stale news. Sending the champion word
+  on only two directions before r330 cost nothing (40-40): early ping slots are free. (g13-2)
+
 ## Walls
 
 - **Multi-step seals work, but matter little:** laying the head across a pocket exit in one
