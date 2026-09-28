@@ -63,7 +63,9 @@ against the RL policy, native engine, 2026-09-28). `g<N>` = `league/generations/
   cap (40 worldgen matches), almost none had a shrinking-room trend: rooms read open for many
   turns then 1–3 the next (bodies close gaps within a round), or the dragon entered the pocket
   while it could still split out and other splits filled the cap. Avoiding crowds (g6-7) and
-  reacting at the cap (g6-13) both did nothing. (g6-13)
+  reacting at the cap (g6-13) both did nothing; forecasting the cap before trusting a split
+  escape didn't either (g6-16): long dragons walk in on steps that looked open. Caution on the
+  long dragon's side is a dead end; try the supply side (fewer idle slots). (g6-13, g6-16)
 - **Trapped long dragons resign whole at the unit cap** (no split escape): ~110 dragons of
   length 4–19 in one worldgen match. (g5-7)
 - **Don't grow the champion early:** a lone gatherer grows ~0.05–0.1 length a round; an heir
