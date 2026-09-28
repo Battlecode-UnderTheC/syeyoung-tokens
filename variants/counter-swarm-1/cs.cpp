@@ -1,4 +1,3 @@
-#define CS_TUNE 1
 #include <type_traits>
 #include <cstdio>
 #include <cstdlib>
@@ -16,7 +15,7 @@ StrategyAgent::StrategyAgent(const rl::Spawn& spawn, Params params)
   auto env = [](const char* k, auto& v) { if (const char* e = getenv(k)) v = static_cast<std::remove_reference_t<decltype(v)>>(atof(e)); };
   env("P_SPLIT", p_.split_min_length); env("P_SPLITR", p_.split_until_round); env("P_FEED", p_.feed_from_round);
   env("P_LIBS", p_.min_libs); env("P_MARGIN", p_.trade_margin); env("P_HUNT", p_.hunt_radius); env("P_HUNTU", p_.hunt_min_units);
-  env("P_ROOMM", p_.room_margin); env("P_ROOMMIN", p_.room_min); env("P_TRAP", p_.trap_cost); env("P_REACH", p_.strike_reach); env("P_GOSSIP", p_.gossip); env("P_FEEDD", p_.feed_distance); env("P_PATV", p_.patrol_value); env("P_PATF", p_.patrol_from); env("P_PATA", p_.patrol_age); env("P_SMEM", p_.snipe_memory); env("P_SFAC", p_.snipe_factor); env("P_LSPLIT", p_.leader_split_until); env("P_ALLYM", p_.ally_memory); env("P_TTL", p_.rumor_ttl); env("P_X1", p_.x1); env("P_X2", p_.x2); env("P_X3", p_.x3);
+  env("P_ROOMM", p_.room_margin); env("P_ROOMMIN", p_.room_min); env("P_TRAP", p_.trap_cost); env("P_REACH", p_.strike_reach); env("P_GOSSIP", p_.gossip); env("P_FEEDD", p_.feed_distance); env("P_EXPL", p_.explore_value); env("P_PATV", p_.patrol_value); env("P_PATF", p_.patrol_from); env("P_PATA", p_.patrol_age); env("P_SMEM", p_.snipe_memory); env("P_SFAC", p_.snipe_factor); env("P_LSPLIT", p_.leader_split_until); env("P_ALLYM", p_.ally_memory); env("P_TTL", p_.rumor_ttl); env("P_X1", p_.x1); env("P_X2", p_.x2); env("P_X3", p_.x3);
 #endif
 }
 
@@ -347,25 +346,6 @@ bot::Action StrategyAgent::SafeStep(int preferred, bool trap_ok) {
     if (Classify(board_.Step(head_, d)) == Cell::kEnemyHead) return Because("trapped: trade", bot::Action::Move(d));
   for (int d = 0; d < 4; ++d)
     if (Classify(board_.Step(head_, d)) == Cell::kUnknown) return Because("trapped: unknown portal", bot::Action::Move(d));
-  if (getenv("CSDBG")) {
-    fprintf(stderr, "TRAP id=%d r=%d len=%d leader=%d head=(%d,%d) body=", spawn_.id, round_, length_, leader_, board_.X(head_), board_.Y(head_));
-    for (auto t : body_) fprintf(stderr, "(%d,%d)", board_.X(t), board_.Y(t));
-    fprintf(stderr, " nb=");
-    for (int d = 0; d < 4; ++d) { int32_t n = board_.Step(head_, d); fprintf(stderr, "%d:%d ", n, (int)Classify(n)); }
-    fprintf(stderr, "\n");
-    for (int dy = -3; dy <= 3; ++dy) {
-      for (int dx = -3; dx <= 3; ++dx) {
-        int32_t t = board_.Tile(board_.X(head_) + dx, board_.Y(head_) + dy);
-        const TileMemory& m = board_.at(t);
-        char c = '.';
-        if (Mine(t)) c = t == head_ ? '@' : 'o';
-        else if (Occupied(t)) c = m.occupant_team == spawn_.team ? (m.occupant_head ? 'A' : 'a') : (m.occupant_head ? 'E' : 'e');
-        else if (m.pearl) c = '*';
-        fprintf(stderr, "%c", c);
-      }
-      fprintf(stderr, "\n");
-    }
-  }
   return Because("trapped: no move", bot::Action::Resign());
 }
 
