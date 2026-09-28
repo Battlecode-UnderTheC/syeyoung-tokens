@@ -53,6 +53,9 @@ against the RL policy, native engine, 2026-09-28). `g<N>` = `league/generations/
   and die only when they see it within reach. gather-split-trade-4 beat its parent 29-11
   (+70 Elo); counter-swarm-5 +30. Feed deaths are still only ~5–8 a match: reaching the
   champion is the limit. Feeding from 260 is clearly worse than 300–360. (g2-3, g3-1, g3-3)
+- **Feeding logistics:** holding the champion still (13-27 on worldgen) and walking feeders
+  to stale reports both lose; routing feeders raised feed deaths 25% but not the champion's
+  length, since a walking feeder stops gathering. (g3-6)
 - **Defending against strikes/lunges didn't pay** (g2-2, g2-7: even or worse); neither did a
   look-ahead safety layer on counter-swarm-1 (g2-5: 16-24 vs parent). (g2)
 
@@ -82,6 +85,10 @@ against the RL policy, native engine, 2026-09-28). `g<N>` = `league/generations/
 - **Sonar sharing of pearls/enemies didn't pay** (sonar-pack-1: 152-168 vs strategy-v1 on
   320 worldgen matches); delivery rate was never measured. (g1-2)
 
+- **Judge CPU is far under the limit:** in the judge's sandbox (`unswbc run --sandbox`, after
+  `scripts/make-bot.sh`), gather-split-trade-5 and counter-swarm-5 used p50 4.1M, max 6.5M
+  points a turn (limit 100M) on schooltime. The 10–50 ms native spikes workers saw were
+  machine load. (orchestrator, 2026-09-28)
 - **Noise is large:** a one-parameter change swings ±8 wins in 80 matches; the 11 official
   maps alone can't separate variants. Native turn times under machine load spike 10–100×;
   count search work instead. (g1-1, g1-3)
