@@ -1,0 +1,7 @@
+name = "swarm-hunt-13"
+parents = ["swarm-hunt-12"]
+operator = "mutate"
+archetype = "swarm-hunt"
+author = "claude-opus-5-5"
+created = "2026-09-28"
+task = "g11-6"
