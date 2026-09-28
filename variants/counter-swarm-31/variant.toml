@@ -1,0 +1,7 @@
+name = "counter-swarm-31"
+parents = ["counter-swarm-30", "body-wall-17"]
+operator = "crossover"
+archetype = "counter-swarm"
+author = "claude-sonnet-5"
+created = "2026-09-29"
+task = "g15-26"
