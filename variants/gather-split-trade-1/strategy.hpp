@@ -28,6 +28,8 @@ struct Params {
   // growth: split off a worker (the child takes the tail half)
   int32_t split_min_length = 4;     // at least this long ... (numbers win the head-to-head attrition: 4 beat 6, 8, 12 in simulation)
   int32_t split_until_round = 300;  // ... and before this round
+  int32_t split_headroom = 0;       // ... leaving this many dragons below the unit limit (to split out of traps)
+  int32_t big_split_length = 0;     // unused
   // feeding: a worker gives its body to a bigger ally
   int32_t feed_from_round = 400;
   int32_t feed_distance = 2;        // dies when its head is this close to the ally's head (steps)
@@ -45,7 +47,13 @@ struct Params {
   int32_t escape_slack = 12;        // no way back out, but this many tiles more than twice our length: fine
   int32_t escape_min = 24;
   int32_t check_split = 1;
-  int32_t liberties = 1;            // 1: prefer steps that leave a free tile no other head can take first          // 1: split only where both halves can get out
+  int32_t liberties = 1;
+  double share_factor = 0.1;        // a target an ally in view is nearer to is worth this much (1: ignore allies)
+  int32_t patrol = 1;
+  int32_t turnout_budget = 3000;    // moves searched to find a way out of a small region the flood calls doomed (0: off)
+  int32_t escape_steps = 1;
+  int32_t doom_first = 1;           // 1: avoid a dead end before avoiding enemy heads         // 1: judge steps by whether we can get back out (timed flood); 0: room only
+  int32_t trap_small = 1;           // 1: dragons too short to split out of a dead end don't enter one               // no target: walk towards the tiles seen longest ago            // 1: prefer steps that leave a free tile no other head can take first          // 1: split only where both halves can get out
   // kamikaze (a head-to-head kills both dragons)
   int32_t hunt_radius = 6;          // workers chase enemy heads this many steps away ...
   int32_t hunt_min_units = 3;       // ... when we have at least this many dragons
@@ -101,6 +109,7 @@ class StrategyAgent : public bot::Agent {
   int EscapeLevel(const std::vector<int32_t>& body, int32_t cap, int32_t* count = nullptr,
                   const std::vector<int32_t>* blocked = nullptr) const;
   bool SplitSafe(int32_t n) const;
+  int TurnOut(const std::vector<int32_t>& body, int32_t max_depth) const;
 #ifdef GST1_DEBUG
   void Dump(const char* why) const;
 #endif

@@ -3,6 +3,11 @@
 #include <algorithm>
 #include <cmath>
 #include <tuple>
+#include <functional>
+#ifdef GST1_TUNE
+#include <cstdlib>
+#include <string>
+#endif
 #include <unordered_set>
 #ifdef GST1_DEBUG
 #include <cstdio>
@@ -11,7 +16,32 @@
 namespace gst1 {
 
 StrategyAgent::StrategyAgent(const rl::Spawn& spawn, Params params)
-    : p_(params), spawn_(spawn), board_(spawn.width, spawn.height) {}
+    : p_(params), spawn_(spawn), board_(spawn.width, spawn.height) {
+#ifdef GST1_TUNE
+  // GST1_P="name=value,..." overrides parameters (tuning builds only)
+  if (const char* env = std::getenv("GST1_P")) {
+    std::string all(env);
+    size_t pos = 0;
+    while (pos < all.size()) {
+      size_t end = all.find(',', pos);
+      if (end == std::string::npos) end = all.size();
+      const std::string kv = all.substr(pos, end - pos);
+      pos = end + 1;
+      const size_t eq = kv.find('=');
+      if (eq == std::string::npos) continue;
+      const std::string k = kv.substr(0, eq);
+      const double v = std::atof(kv.c_str() + eq + 1);
+#define GST1_SET(name) if (k == #name) p_.name = static_cast<decltype(p_.name)>(v);
+      GST1_SET(split_min_length) GST1_SET(split_until_round) GST1_SET(feed_from_round) GST1_SET(trap_cost)
+      GST1_SET(room_margin) GST1_SET(room_min) GST1_SET(escape_slack) GST1_SET(escape_min) GST1_SET(check_split)
+      GST1_SET(liberties) GST1_SET(share_factor) GST1_SET(patrol) GST1_SET(hunt_radius) GST1_SET(explore_value)
+      GST1_SET(escape_steps) GST1_SET(trap_small)
+      GST1_SET(split_headroom) GST1_SET(turnout_budget) GST1_SET(doom_first) GST1_SET(big_split_length)
+#undef GST1_SET
+    }
+  }
+#endif
+}
 
 // ---- what this dragon sees ------------------------------------------------------------------------
 
@@ -158,11 +188,26 @@ StrategyAgent::Goal StrategyAgent::ChooseGoal(const Paths& paths) const {
     double score;
   };
   std::vector<Candidate> candidates;
+  // allies in view now: a tile one of them is nearer to is probably theirs
+  std::vector<int32_t> allies;
+  if (p_.share_factor < 1.0)
+    for (const auto& [id, w] : seen_)
+      if (w.team == spawn_.team && w.round == round_ && w.head >= 0) allies.push_back(w.head);
+  auto torus = [&](int32_t a, int32_t b) {
+    const int32_t dx = std::abs(board_.X(a) - board_.X(b)), dy = std::abs(board_.Y(a) - board_.Y(b));
+    return std::min(dx, board_.width() - dx) + std::min(dy, board_.height() - dy);
+  };
   for (int32_t t = 0; t < board_.size(); ++t) {
     const int32_t d = paths.dist[t];
     if (d <= 0) continue;
     int32_t ready;
     double score = TileValue(t, d, &ready) / (ready + 1);
+    if (score > 0)
+      for (const int32_t a : allies)
+        if (torus(a, t) < d) {
+          score *= p_.share_factor;
+          break;
+        }
     for (int dir = 0; dir < 4; ++dir)
       if (board_.Step(t, dir) == kUnknown) {
         score = std::max(score, p_.explore_value / (d + 1));
@@ -198,6 +243,19 @@ StrategyAgent::Goal StrategyAgent::ChooseGoal(const Paths& paths) const {
       best = {c.tile, trap};
     }
   }
+  // nothing worth going for: patrol, towards what we have not seen for longest
+  if (best.tile < 0 && p_.patrol) {
+    double top = 0;
+    for (int32_t t = 0; t < board_.size(); ++t) {
+      const int32_t d = paths.dist[t];
+      if (d <= 0 || Occupied(t)) continue;
+      const double score = (round_ - board_.at(t).seen_round) / (d + 4.0);
+      if (score > top) {
+        top = score;
+        best = {t, false};
+      }
+    }
+  }
   return best;
 }
 
@@ -228,6 +286,44 @@ void StrategyAgent::Dump(const char* why) const {
   }
 }
 #endif
+
+// Exact search for a way out of a small region: the dragon's own moves, its body simulated
+// (other dragons stand still). 2: it gets back onto a tile its body left, or to the unexplored
+// edge; 0: every line of play dies within max_depth moves; 1: out of budget.
+int StrategyAgent::TurnOut(const std::vector<int32_t>& body, int32_t max_depth) const {
+  std::vector<uint8_t> orig(board_.size(), 0), occ(board_.size(), 0);
+  for (const int32_t t : body) orig[t] = 1, ++occ[t];
+  std::deque<int32_t> snake(body.begin(), body.end());
+  int32_t budget = p_.turnout_budget;
+  // returns 2 success, 0 dead, 1 budget
+  std::function<int(int32_t)> go = [&](int32_t depth) -> int {
+    if (depth >= max_depth) return 0;
+    int result = 0;
+    const int32_t head = snake.front();
+    for (int d = 0; d < 4; ++d) {
+      const int32_t n = board_.Step(head, d);
+      if (n == kUnknown) return 2;
+      if (n < 0 || occ[n]) continue;
+      if (board_.Current(n) && board_.at(n).occupant >= 0 && board_.at(n).occupant != spawn_.id) continue;
+      if (orig[n]) return 2;
+      if (--budget < 0) return 1;
+      const int32_t tail = snake.back();
+      snake.pop_back();
+      --occ[tail];
+      snake.push_front(n);
+      ++occ[n];
+      const int r = go(depth + 1);
+      snake.pop_front();
+      --occ[n];
+      snake.push_back(tail);
+      ++occ[tail];
+      if (r == 2) return 2;
+      result = std::max(result, r);
+    }
+    return result;
+  };
+  return go(0);
+}
 
 // Both halves of a split of the last n segments can get out.
 bool StrategyAgent::SplitSafe(int32_t n) const {
@@ -309,13 +405,17 @@ bot::Action StrategyAgent::SafeStep(int preferred, bool trap_ok) {
     const bool exposed = Exposed(to);
     body[0] = to;
     int32_t count = 0;
-    const int level = EscapeLevel(body, cap, &count);
+    int level = p_.escape_steps ? EscapeLevel(body, cap, &count) : 1;
+    if (level == 0 && p_.turnout_budget > 0) level = TurnOut(body, count + length_ + 2) == 0 ? 0 : 2;
     const int libs = p_.liberties ? Liberties(to, body) : 2;
     if (k == 0 && preferred >= 0 && !exposed && libs >= 2 && ((level >= 1 && room >= need) || (trap_ok && level >= 1)))
       return Because(room >= need ? "toward goal" : "into a dead end worth it", bot::Action::Move(d));
-    if (k == 0 && preferred >= 0 && !exposed && libs >= 2 && trap_ok && length_ >= 4)
+    if (k == 0 && preferred >= 0 && !exposed && libs >= 2 && trap_ok && (length_ >= 4 || !p_.trap_small))
       return Because("into a dead end worth it", bot::Action::Move(d));
-    auto key = [](bool e, int lv, int lb, int c, int r) { return std::make_tuple(!e, lv, lb, c, r); };
+    // a sure death in a dead end is worse than a tile an enemy head might take (that would be a trade)
+    auto key = [&](bool e, int lv, int lb, int c, int r) {
+      return std::make_tuple(p_.doom_first ? lv > 0 : true, !e, lv, lb, c, r);
+    };
     if (best < 0 || key(exposed, level, libs, count, room) > key(best_exposed, best_level, best_libs, best_count, best_room)) {
       best = d;
       best_level = level;
@@ -373,7 +473,8 @@ bot::Action StrategyAgent::Turn(const rl::Observation& o) {
     }
 
   // 4. growth: split off a worker while there is time for it to gather
-  if (length_ >= p_.split_min_length && round_ < p_.split_until_round && units_ < spawn_.unit_limit &&
+  if (length_ >= p_.split_min_length && round_ < p_.split_until_round &&
+      units_ < spawn_.unit_limit - p_.split_headroom &&
       (!p_.check_split || SplitSafe(length_ / 2)))
     return Because("split", bot::Action::Split(length_ / 2));
 
