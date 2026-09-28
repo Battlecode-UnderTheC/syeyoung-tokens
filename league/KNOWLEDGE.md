@@ -133,6 +133,8 @@ against the RL policy, native engine, 2026-09-28). `g<N>` = `league/generations/
   51-51 vs gst34. Piecewise ports never did this; swap the layer whole. (g12-6)
   And a third time: swarm-hunt-14 (swap + hunting off + no split reserve) 63-39 vs swarm-hunt-13.
   Hunting costs growth even in the line built around it. (g12-12)
+  A fourth time: late-surge-15 (gst39's layer + late-surge's quiet trading, trader switch,
+  outnumbered mode, endgame) 57-45 vs late-surge-14 and 60-42 vs gather-split-trade-39. (g12-21)
 - **Giants don't survive on official maps:** giant-8's round-0 leaders split at 4 until r100, sit at
   2–4 long and die trapped by r150–300, so the line plays like the main line with a different leader
   split cutoff. Stopping leaders splitting (length ≥ 8) loses the opening (6-16). Making the giant
