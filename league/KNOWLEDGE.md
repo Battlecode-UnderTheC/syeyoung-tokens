@@ -315,6 +315,10 @@ against the RL policy, native engine, 2026-09-28). `g<N>` = `league/generations/
   portal orbits. Priority: the portal fix. (server M491281) Replays, decoder and renderer: `../syeyoung-tokens.league/replays/`.
 
 ## Maps
+- **Small official maps are decided by the seat.** In self-play (cs27 v cs27, gst48 v gst48)
+  Colosseum, arena and default_small go to B, devil and trophy to A (on arena A falls behind from
+  r9, before contact). W-D-L on those maps flips on tiny changes: judge small-map fixes by the
+  favoured seat's results and by length traces, not by the win count. (g14-10)
 
 - **Worldgen maps are harder than the official ones** for window-only play: mazes,
   labyrinths, 1-wide warrens and portal lattices. anchor-greedy beats anchor-random 15-7 on
