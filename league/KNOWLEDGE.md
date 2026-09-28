@@ -65,6 +65,9 @@ against the RL policy, native engine, 2026-09-28). `g<N>` = `league/generations/
   the new short length (and starting the obituary) on trapped splits of 10+ dragons cut those ghosts
   186 -> 52 at r450 (longest's share of team length .32 -> .385). Announcing routine growth splits
   too cost sonar turns and lost.
+  Saturated for good (g16-22): an obituary for a champion missing from its reported tile plus a faster
+  late fade cut ghost-champion team-rounds ~80% (15-20% of late rounds on worldgen) with no W-D-L change.
+  Split announce ported: helps gst/bw/ls, neutral in cs/swh. (g16-13, g16-28..30)
 - **The cap trap is set before the cap is reached:** of ~2,100 length ≥ 4 resignations at the
   cap (40 worldgen matches), almost none had a shrinking-room trend: rooms read open for many
   turns then 1–3 the next (bodies close gaps within a round), or the dragon entered the pocket
