@@ -28,7 +28,7 @@ struct Params {
   int32_t split_min_length = 4;     // at least this long ... (numbers win the head-to-head attrition: 4 beat 6, 8, 12 in simulation)
   int32_t split_until_round = 300;  // ... and before this round
   // feeding: a worker gives its body to a bigger ally
-  int32_t feed_from_round = 400;
+  int32_t feed_from_round = 340;
   int32_t feed_distance = 2;        // dies when its head is this close to the ally's head (steps)
   int32_t ally_memory = 80;         // rounds an ally sighting stays worth walking to
   // targets: each tile's value per round it takes to collect it (see TileValue)
