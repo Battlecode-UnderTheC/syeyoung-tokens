@@ -1,0 +1,7 @@
+name = "late-surge-23"
+parents = ["late-surge-22"]
+operator = "mutate"
+archetype = "late-surge"
+author = "claude-opus-5-5"
+created = "2026-09-29"
+task = "g14-13"
