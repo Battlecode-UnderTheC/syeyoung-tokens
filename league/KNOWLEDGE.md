@@ -98,6 +98,16 @@ against the RL policy, native engine, 2026-09-28). `g<N>` = `league/generations/
   `feed_from_round`, `explore_value`, `trap_cost` moved results by a few games in 80.
   (EXPERIMENTS)
 
+- **Our openings are slow (watched, 13 local games; unconfirmed by a variant yet).** In r0–200 the
+  ts4 opponent clone eats 2–5× more pearls per 100 moves than our lines (Devil 15.7 vs 8.6–9.9,
+  Trauma 11.6 vs 2.0–3.5). Our explore goal is the nearest unseen tile (dragons dither along the
+  spawn edge while the enemy takes the central field), a dragon waits on a bed about to ripen next
+  to a full pearl field (a bed scores `max(dist, due)`, fields count as single pearls), and goals
+  change before they are reached on 36–50% of turns. A known portal is a one-way door: its far end
+  is out of view, so the blind-step liberty cap turns every goal step onto it into a detour (653 of
+  1,048 unsafe detours in one game). Tasks: g13-5 (portal); opening/bed scoring next. Replays and
+  films: `../syeyoung-tokens.league/replays/league-1/`, VISUAL.md #11–17. (league-1 watch)
+
 ## Growth and roles
 
 - **Late-surge beats the champion-feeding line on worldgen:** a quiet swarm (never trade
