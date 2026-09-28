@@ -52,18 +52,30 @@ an improvement is a new variant with the old one as a parent. At the start the l
 `strategy-v1` (Elo ≈1740, the hand-written baseline, also our current competition
 submission), `anchor-random` and `anchor-greedy`.
 
-## A generation
+## The loop: short and continuous
 
-Default brood: **6 tasks, all running at once**. Workers spend most of their time reading
-and writing code, not simulating, so CPU is not the bottleneck; each uses at most 2 threads
-(builds `-j 2`, `sim --threads 2`) so their bursts share the 10 cores with the league. The user may give
-you a different size or number of generations; otherwise run generations until told to stop
-or until the stopping rule below.
+The user wants a **very short loop**: rapid prototype, rapid arena, rapid fix. So:
+
+- **Tasks are small:** one idea or one fix per task, about **20 minutes** of worker time. The
+  worker checks it is sound (`check`, a quick `sim` or `league quick` against its parent),
+  submits, and reports. The league rates a new tag in about 3 minutes (it polls once a
+  minute; a batch of 120 matches takes ~20 s), so the league does the thorough measuring.
+- **Slots stay full:** keep **6 workers running**, each at most 2 threads (builds `-j 2`,
+  `sim --threads 2`). Workers mostly write code, so CPU is not the bottleneck.
+- **No barriers:** when a worker reports, collect it (step 4), and as soon as its tag is
+  rated, read the fresh standings and launch the next task into the free slot (steps 1–3 for
+  that one task). A fix for a child's measured weakness can go out minutes after it is rated.
+- **A generation is a bookkeeping unit:** every 6 launched tasks form `g<N>`. Add each task to
+  `g<N>.md`'s Plan table as you launch it (commit), and close the report (steps 5–6) once its
+  6 tasks are rated. Update `KNOWLEDGE.md` whenever a result is clear, not only then.
+
+Run until told to stop or until the stopping rule below. Steps 1–6 describe one task's life
+and a generation's report.
 
 ### 1. Look
 
-- `league/league.py pending` must say 0 and 0. If not, the last generation isn't rated
-  yet: wait (check every few minutes; a generation's matches take roughly 10–60 minutes).
+- Wait until the tag you are building on is rated (`league/league.py pending`; ~3 minutes).
+  Other tags still pending don't block you.
 - Read `status`, the reports of the top ~4 variants and of last generation's children,
   `league/KNOWLEDGE.md`, and the last `league/generations/g*.md`.
 - Also check `df -h .`: below 10 GB free, delete finished worktrees' `build/` dirs first.
@@ -113,7 +125,7 @@ without the tool's own worktree isolation (the task already has its worktree). I
 starts with no context and must not depend on this conversation. Use the strongest model
 for fresh and crossover tasks; a cheaper one is fine for tweaks.
 
-Launch every task of the generation at once.
+Launch into any free slot at once; keep 6 running.
 
 ### 4. Collect
 

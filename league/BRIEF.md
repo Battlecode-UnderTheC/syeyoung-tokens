@@ -13,8 +13,11 @@ every other variant on maps you can't see, so play well in general; don't tune f
 
 - Operator: **{operator}**. Parents: {parents}.
 - Focus: {focus}
-- Budget: about {budget}. When you're near the end, stop exploring, make sure the best
-  version you have is in place, and submit it.
+- Budget: about {budget} (check `date` at the start). This is a short loop: make the one
+  change the focus asks for, check it is sound (`check`, then one `sim` on the official maps
+  and one on ~20 worldgen maps against your parent), submit, and report. Don't sweep
+  parameters or polish: the league rates your tag within minutes, and the next task will
+  build on what it measures.
 
 ## Where you work
 
