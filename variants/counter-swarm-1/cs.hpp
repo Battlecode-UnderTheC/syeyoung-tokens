@@ -53,7 +53,9 @@ struct Params {
   // danger: an enemy head next to ours can step onto it and take both dragons
   int32_t avoid_heads = 1;          // 1: every dragon keeps off tiles next to enemy heads it won't trade with; 0: leaders only
   int32_t survivor_units = 0;
-  int32_t strike_reach = 5;         // multi-step strikes onto enemy heads up to this many steps away
+  int32_t strike_reach = 5;
+  int32_t rumor_ttl = 30;           // rounds a rumored big ally stays worth walking to
+  int32_t gossip = 0;               // 1: share the biggest ally over sonar         // multi-step strikes onto enemy heads up to this many steps away
   double x1 = 0.9, x2 = 0, x3 = 8;  // x2,x3: snipe length, radius  // x1: a pearl an ally head is closer to is worth this much less
   int32_t min_libs = 2;             // the goal step must leave this many (half-)liberties       // down to this many dragons and outnumbered: flee enemy heads (0: off; fleeing lost games in simulation)
 };
@@ -62,6 +64,7 @@ class StrategyAgent : public bot::Agent {
  public:
   StrategyAgent(const rl::Spawn& spawn, Params params = {});
   bot::Action Turn(const rl::Observation& o) override;
+  bot::Action Decide(const rl::Observation& o);
   // why the last action was taken (for the simulator's tallies and debugging)
   const char* reason() const override { return reason_; }
 
@@ -113,6 +116,12 @@ class StrategyAgent : public bot::Agent {
   // on the far side of a portal it just came through
   std::deque<int32_t> body_;
   const char* reason_ = "";
+  // gossip over sonar: the biggest ally anyone of us knows of (its head then, its length)
+  struct Rumor {
+    int32_t tile = -1, round = -1000, length = 0;
+  } rumor_;
+  void Hear(int32_t tile, int32_t round, int32_t length);
+  void Gossip(bot::Action& a) const;
 };
 
 }  // namespace cs

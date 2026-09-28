@@ -16,7 +16,7 @@ StrategyAgent::StrategyAgent(const rl::Spawn& spawn, Params params)
   auto env = [](const char* k, auto& v) { if (const char* e = getenv(k)) v = static_cast<std::remove_reference_t<decltype(v)>>(atof(e)); };
   env("P_SPLIT", p_.split_min_length); env("P_SPLITR", p_.split_until_round); env("P_FEED", p_.feed_from_round);
   env("P_LIBS", p_.min_libs); env("P_MARGIN", p_.trade_margin); env("P_HUNT", p_.hunt_radius); env("P_HUNTU", p_.hunt_min_units);
-  env("P_ROOMM", p_.room_margin); env("P_ROOMMIN", p_.room_min); env("P_TRAP", p_.trap_cost); env("P_REACH", p_.strike_reach); env("P_X1", p_.x1); env("P_X2", p_.x2); env("P_X3", p_.x3);
+  env("P_ROOMM", p_.room_margin); env("P_ROOMMIN", p_.room_min); env("P_TRAP", p_.trap_cost); env("P_REACH", p_.strike_reach); env("P_GOSSIP", p_.gossip); env("P_TTL", p_.rumor_ttl); env("P_X1", p_.x1); env("P_X2", p_.x2); env("P_X3", p_.x3);
 #endif
 }
 
@@ -46,6 +46,36 @@ void StrategyAgent::Remember(const rl::Observation& o) {
     if (s.head) w.head = board_.Tile(s.x, s.y);
   }
   for (const auto& [id, n] : segments) seen_[id].length = n;
+  if (p_.gossip) {
+    for (const uint64_t w : o.inbox) {
+      if (w >> 29 != 0b101) continue;
+      const int32_t x = w & 63, y = (w >> 6) & 63, len = (w >> 12) & 255, r = (w >> 20) & 511;
+      if (x >= board_.width() || y >= board_.height() || r > round_) continue;
+      Hear(board_.Tile(x, y), r, len);
+    }
+    Hear(head_, round_, length_);
+    // arrived where the rumor pointed and it isn't here: forget it
+    if (rumor_.tile >= 0 && rumor_.tile != head_ && Torus(rumor_.tile, head_) <= 2 && rumor_.round < round_) {
+      bool there = false;
+      for (const auto& [id, w] : seen_)
+        if (w.team == spawn_.team && w.round == round_ && w.head >= 0 && Torus(w.head, rumor_.tile) <= 3) there = true;
+      if (!there) rumor_ = Rumor{};
+    }
+  }
+}
+
+void StrategyAgent::Hear(int32_t tile, int32_t round, int32_t length) {
+  const bool stale = round_ - rumor_.round > p_.rumor_ttl;
+  if (stale || length > rumor_.length || (length == rumor_.length && round > rumor_.round))
+    rumor_ = Rumor{tile, round, length};
+}
+
+void StrategyAgent::Gossip(bot::Action& a) const {
+  if (!p_.gossip || rumor_.tile < 0 || round_ - rumor_.round > p_.rumor_ttl) return;
+  const uint64_t w = (uint64_t{0b101} << 29) | (uint64_t(rumor_.round & 511) << 20) |
+                     (uint64_t(std::min(rumor_.length, 255)) << 12) | (uint64_t(board_.Y(rumor_.tile)) << 6) |
+                     uint64_t(board_.X(rumor_.tile));
+  for (int d = 0; d < 4; ++d) a.sonar[d] = w;
 }
 
 bool StrategyAgent::Mine(int32_t t) const { return std::find(body_.begin(), body_.end(), t) != body_.end(); }
@@ -338,6 +368,12 @@ bot::Action StrategyAgent::SafeStep(int preferred, bool trap_ok) {
 // ---- the turn --------------------------------------------------------------------------------------
 
 bot::Action StrategyAgent::Turn(const rl::Observation& o) {
+  bot::Action a = Decide(o);
+  Gossip(a);
+  return a;
+}
+
+bot::Action StrategyAgent::Decide(const rl::Observation& o) {
   Remember(o);
 
   // 1. feeding: late in the game a worker dies next to a bigger ally, leaving it pearls
@@ -385,16 +421,28 @@ bot::Action StrategyAgent::Turn(const rl::Observation& o) {
           paths.dist[w.head] <= p_.x3 && w.length >= p_.x2 && w.length >= 2 * length_ &&
           (snipe < 0 || paths.dist[w.head] < paths.dist[snipe]))
         snipe = w.head;
-  const Goal target = snipe >= 0 ? Goal{snipe, false}
-                      : ally && paths.dist[ally->head] > 0 ? Goal{ally->head, false} : ChooseGoal(paths);
+  Goal target = snipe >= 0 ? Goal{snipe, false}
+                : ally && paths.dist[ally->head] > 0 ? Goal{ally->head, false} : Goal{};
+  // no big ally in sight: walk towards where the gossip says one is
+  if (target.tile < 0 && !leader_ && round_ >= p_.feed_from_round && p_.gossip && rumor_.tile >= 0 &&
+      rumor_.length > length_ && round_ - rumor_.round <= p_.rumor_ttl && Torus(rumor_.tile, head_) > 2) {
+    int32_t best = -1, best_cost = 1 << 30;
+    for (int32_t t = 0; t < board_.size(); ++t)
+      if (paths.dist[t] > 0) {
+        const int32_t cost = 4 * Torus(t, rumor_.tile) + paths.dist[t];
+        if (cost < best_cost) { best_cost = cost; best = t; }
+      }
+    if (best >= 0 && Torus(best, rumor_.tile) < Torus(head_, rumor_.tile)) target = Goal{best, false};
+  }
+  if (target.tile < 0) target = ChooseGoal(paths);
   const int32_t goal = target.tile;
   const int preferred = goal >= 0 ? paths.first[goal] : -1;
-  bot::Action a = SafeStep(preferred, target.trap);
+  bot::Action step = SafeStep(preferred, target.trap);
   // the last step onto an enemy head we chose to hunt is a trade, not a mistake
   if (goal >= 0 && preferred >= 0 && board_.Step(head_, preferred) == goal && Classify(goal) == Cell::kEnemyHead &&
       WorthTrading(board_.at(goal).occupant))
     return Because("hunt: trade", bot::Action::Move(preferred));
-  return a;
+  return step;
 }
 
 }  // namespace cs
