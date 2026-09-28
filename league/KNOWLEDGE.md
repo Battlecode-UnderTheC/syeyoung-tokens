@@ -203,6 +203,11 @@ against the RL policy, native engine, 2026-09-28). `g<N>` = `league/generations/
   ally bodies was neutral (gst75). Goalless stubs preferring open ground over corridors helped a little
   (gst73 53-49). (g16-7, g16-17)
 
+- **Poor-home portal push helps only the gst line.** Pushing dragons through portals early when home food
+  is scarce won trauma both seats for gather-split-trade-78/-83 (early pearls 87 -> 133) but was inert in
+  late-surge (its frontier scoring already covers it; the push fired 1-2 times) and in body-wall (its
+  length >= 4 unknown-portal gate blocks it). (g16-20, g16-26, g17-3, g17-4)
+
 ## Growth and roles
 
 - **Late-surge beats the champion-feeding line on worldgen:** a quiet swarm (never trade
