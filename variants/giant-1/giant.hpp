@@ -51,6 +51,10 @@ struct Params {
   double body_time_factor = 1.5;    // room check: own segment frees after (steps until it would) * this (eating stalls the tail)
   int32_t unknown_room = 4;         // room check: an unexplored edge is worth this many tiles (0: a sure way out)
   int32_t strict_early = 1;         // 1: a giant avoids every head even while still splitting
+  int32_t anchor_radius = 0;        // late, the king keeps its goals this close to where it was at feed_from_round (0: off)
+  int32_t avoid_giant_len = 6;      // helpers keep off a head of an ally this long (or the king) until feeding (0: off)
+  int32_t heir_by_sonar = 0;        // a child is a giant only if its giant parent pinged it (else: by its length)
+  int32_t promote_length = 10;       // a helper this long, done splitting, becomes a giant (0: never)
   int32_t tight_factor = 1000;         // no roomy step: move anyway if room * this >= need, else split out
 };
 
@@ -68,7 +72,9 @@ class GiantAgent : public bot::Agent {
   bot::Action Decide();
   void ComputeThreats();
   int32_t TimeRoom(int32_t to, bool grow, int32_t limit) const;
-  int32_t ChooseGoal(const std::vector<int32_t>& dist) const;
+  int32_t ChooseGoal(const std::vector<int32_t>& dist, int32_t anchor) const;
+  int32_t Torus(int32_t a, int32_t b) const;
+  int32_t anchor_ = -1;                       // the king's home late in the game
   bot::Action Because(const char* why, bot::Action a) {
     reason_ = why;
     return a;
@@ -90,6 +96,7 @@ class GiantAgent : public bot::Agent {
   King king_;                                 // the biggest giant we heard of
   void Consider(const King& k);
   uint64_t Encode(const King& k) const;
+  uint64_t HeirWord() const;
   bool Decode(uint64_t w, King* k) const;
   bool KingKnown() const { return king_.id >= 0 && round_ - king_.round <= p_.king_ttl; }   // a helper gains by a head-to-head with it
   int32_t head_ = 0, length_ = 0, units_ = 1, round_ = 0;

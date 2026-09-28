@@ -35,7 +35,7 @@ static Params FromEnv(Params p) {
     P(pearl_decay) P(ripe_bed_value) P(explore_value) P(room_margin) P(room_min) P(threat_radius) P(evade_distance)
     P(feed_from_round) P(feed_max_length) P(giant_split_until) P(giant_child_length) P(helper_split_until) P(split_min_length)
     P(hunt_radius) P(hunt_min_units) P(helper_room_margin) P(helper_room_min) P(outnumbered_factor)
-    P(king_ttl) P(strict_early) P(king_decay) P(demote_ratio) P(intercept_ahead) P(unknown_room) P(body_time_factor) P(tight_factor) P(feed_early_length) P(feed_distance)
+    P(king_ttl) P(promote_length) P(heir_by_sonar) P(avoid_giant_len) P(anchor_radius) P(strict_early) P(king_decay) P(demote_ratio) P(intercept_ahead) P(unknown_room) P(body_time_factor) P(tight_factor) P(feed_early_length) P(feed_distance)
 #undef P
     pos = end + 1;
   }
@@ -54,17 +54,21 @@ void GiantAgent::Remember(const rl::Observation& o) {
   length_ = o.length;
   units_ = o.unit_count;
   round_ = o.round;
-  strict_ = giant_ && (round_ >= p_.giant_split_until || p_.strict_early);
   std::vector<int32_t> visible;   // own segments in view, head to tail
   for (const rl::Segment& s : o.segments)
     if (s.id == spawn_.id) visible.push_back(board_.Tile(s.x, s.y));
   if (first_turn_) {
     first_turn_ = false;
     // alive at the start, or a long child (a giant that split its way out of a trap)
-    giant_ = o.round == 0 || o.length >= p_.giant_child_length;
+    // alive at the start, or the heir of a giant that split its way out of a trap (it pings us)
+    bool heir = false;
+    for (const uint64_t w : o.inbox)
+      if (w == HeirWord()) heir = true;
+    giant_ = o.round == 0 || (p_.heir_by_sonar ? heir : o.length >= p_.giant_child_length);
     body_.assign(visible.begin(), visible.end());
     blacklist_until_.assign(board_.size(), -1);
   }
+  strict_ = giant_ && (round_ >= p_.giant_split_until || p_.strict_early);
   if (static_cast<int32_t>(visible.size()) == length_) body_.assign(visible.begin(), visible.end());
   if (body_.empty() || body_.front() != head_) body_.push_front(head_);
   while (static_cast<int32_t>(body_.size()) > length_) body_.pop_back();
@@ -99,6 +103,10 @@ void GiantAgent::Remember(const rl::Observation& o) {
         continue;
       }
       (s.team == spawn_.team ? ally_heads_ : enemy_heads_).push_back(t);
+      // a helper that isn't feeding keeps out of a giant's way, as if its head were an enemy's
+      if (s.team == spawn_.team && !giant_ && p_.avoid_giant_len > 0 && round_ < p_.feed_from_round &&
+          (s.id == king_.id || seen_len_[s.id] >= p_.avoid_giant_len))
+        enemy_heads_.push_back(t);
     }
   }
 }
@@ -108,6 +116,8 @@ void GiantAgent::Remember(const rl::Observation& o) {
 namespace {
 constexpr uint64_t kMagic = 0xB1A7;
 }
+
+uint64_t GiantAgent::HeirWord() const { return (kMagic + 1) << 48 | static_cast<uint64_t>(spawn_.team & 1); }
 
 uint64_t GiantAgent::Encode(const King& k) const {
   const uint64_t x = static_cast<uint64_t>(board_.X(k.tile)), y = static_cast<uint64_t>(board_.Y(k.tile));
@@ -208,12 +218,18 @@ int32_t GiantAgent::TimeRoom(int32_t to, bool grow, int32_t limit) const {
   return std::min(count, limit);
 }
 
-int32_t GiantAgent::ChooseGoal(const std::vector<int32_t>& dist) const {
+int32_t GiantAgent::Torus(int32_t a, int32_t b) const {
+  const int32_t dx = std::abs(board_.X(a) - board_.X(b)), dy = std::abs(board_.Y(a) - board_.Y(b));
+  return std::min(dx, board_.width() - dx) + std::min(dy, board_.height() - dy);
+}
+
+int32_t GiantAgent::ChooseGoal(const std::vector<int32_t>& dist, int32_t anchor) const {
   int32_t best = -1;
   double best_score = 0;
   for (int32_t t = 0; t < board_.size(); ++t) {
     const int32_t d = dist[t];
     if (d <= 0 || blacklist_until_[t] > round_) continue;
+    if (anchor >= 0 && Torus(t, anchor) > p_.anchor_radius) continue;
     const strat::TileMemory& m = board_.at(t);
     double score = 0;
     if (m.seen_round >= 0) {
@@ -255,6 +271,12 @@ bot::Action GiantAgent::Turn(const rl::Observation& o) {
     if (Decode(w, &k)) Consider(k);
   }
   if (giant_) Consider({spawn_.id, head_, round_, length_});
+  // a long helper that no longer splits is a giant too (unless the king dwarfs it)
+  if (!giant_ && p_.promote_length > 0 && length_ >= p_.promote_length && round_ >= p_.helper_split_until &&
+      !(KingKnown() && length_ * p_.demote_ratio < king_.length)) {
+    giant_ = true;
+    demoted_ = false;
+  }
   // a much smaller giant steps down: it gathers and later feeds the king
   if (giant_ && round_ >= p_.giant_split_until && KingKnown() && king_.id != spawn_.id &&
       length_ * p_.demote_ratio < king_.length) {
@@ -266,6 +288,13 @@ bot::Action GiantAgent::Turn(const rl::Observation& o) {
   const bot::Action a = Decide();
 #ifdef GIANT_TUNING
   if (std::getenv("GIANT_DEBUG") && giant_ && std::string(reason_) == "trapped: split") {
+    std::string why;
+    for (int d = 0; d < 4; ++d) {
+      const int32_t t = board_.Step(head_, d);
+      why += t < 0 ? 'W' : own_idx_[t] >= 0 ? 'M' : other_[t] ? (board_.at(t).occupant_team == spawn_.team ? 'A' : 'E') : enemy_dist_[t] <= 1 ? 'L' : '?';
+    }
+    std::sort(why.begin(), why.end());
+    std::fprintf(stderr, "TRAPCLASS %s r%d\n", why.c_str(), round_ / 100 * 100);
     std::fprintf(stderr, "TRAP r%d id%d len %d facing %d\n", round_, spawn_.id, length_, o.facing);
     for (int r = 0; r < 7; ++r) {
       for (int c = 0; c < 7; ++c) {
@@ -282,8 +311,8 @@ bot::Action GiantAgent::Turn(const rl::Observation& o) {
       std::fprintf(stderr, "\n");
     }
   }
-  if (std::getenv("GIANT_DEBUG2") && !giant_ && round_ % 20 == 0 && round_ >= 400)
-    std::fprintf(stderr, "H r%d id%d len %d king %d len %d age %d dist %d %s\n", round_, spawn_.id, length_, king_.id, king_.length,
+  if (std::getenv("GIANT_DEBUG2") && !giant_ && round_ % 5 == 0 && round_ >= 300 && spawn_.team == 0)
+    std::fprintf(stderr, "H r%d id%d at %d,%d len %d king %d at %d,%d len %d age %d dist %d %s\n", round_, spawn_.id, board_.X(head_), board_.Y(head_), length_, king_.id, board_.X(king_.tile), board_.Y(king_.tile), king_.length,
                  round_ - king_.round, king_.tile < 0 ? -1 : std::abs(board_.X(king_.tile) - board_.X(head_)) + std::abs(board_.Y(king_.tile) - board_.Y(head_)), reason_);
   if (std::getenv("GIANT_DEBUG") && (giant_ || length_ >= 10) && round_ % 25 == 0)
     std::fprintf(stderr, "r%d id%d team%d %s len %d king %d(%d) %s\n", round_, spawn_.id, spawn_.team, giant_ ? "G" : "h", length_, king_.id, king_.length, reason_);
@@ -291,6 +320,8 @@ bot::Action GiantAgent::Turn(const rl::Observation& o) {
   bot::Action out = a;
   if (KingKnown())
     for (int d = 0; d < 4; ++d) out.sonar[d] = Encode(king_);
+  if (giant_ && a.kind == bot::Action::kSplit && a.split == length_ - 2)   // our child carries on as the giant
+    for (int d = 0; d < 4; ++d) out.sonar[d] = HeirWord();
   return out;
 }
 
@@ -385,7 +416,14 @@ bot::Action GiantAgent::Decide() {
     for (const int32_t h : trade_heads_)
       if (dist[h] > 0 && dist[h] <= p_.hunt_radius && (goal < 0 || dist[h] < dist[goal])) goal = h;
   if (goal >= 0 && is_trade(goal) && dist[goal] == 1) return Because("hunt: trade", bot::Action::Move(first[goal]));
-  if (goal < 0) goal = ChooseGoal(dist);
+  // the king stays near one spot late in the game, so its helpers can find it
+  if (giant_ && king_.id == spawn_.id && p_.anchor_radius > 0 && round_ >= p_.feed_from_round) {
+    if (anchor_ < 0) anchor_ = head_;
+  } else {
+    anchor_ = -1;
+  }
+  if (goal < 0 && anchor_ >= 0) goal = ChooseGoal(dist, anchor_);
+  if (goal < 0) goal = ChooseGoal(dist, -1);
   const int preferred = goal >= 0 ? first[goal] : -1;
 
   struct Cand {
