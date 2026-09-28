@@ -59,6 +59,11 @@ against the RL policy, native engine, 2026-09-28). `g<N>` = `league/generations/
   naming the dead one: 50–100% of our dragons fed a ghost from round 340 on. Rank by
   `length − 0.5 × age` (gather-split-trade-23): the live heir takes over in a few rounds;
   longest at 499 went 39 → 78 in a traced game. (g5-7)
+- **The cap trap is set before the cap is reached:** of ~2,100 length ≥ 4 resignations at the
+  cap (40 worldgen matches), almost none had a shrinking-room trend: rooms read open for many
+  turns then 1–3 the next (bodies close gaps within a round), or the dragon entered the pocket
+  while it could still split out and other splits filled the cap. Avoiding crowds (g6-7) and
+  reacting at the cap (g6-13) both did nothing. (g6-13)
 - **Trapped long dragons resign whole at the unit cap** (no split escape): ~110 dragons of
   length 4–19 in one worldgen match. (g5-7)
 - **Don't grow the champion early:** a lone gatherer grows ~0.05–0.1 length a round; an heir
