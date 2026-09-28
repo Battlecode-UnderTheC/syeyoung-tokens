@@ -816,7 +816,7 @@ bot::Action StrategyAgent::SafeStep(int preferred, bool trap_ok) {
   body.insert(body.begin(), -1);
   if (static_cast<int32_t>(body.size()) > length_) body.pop_back();
   int best = -1, best_level = -1, best_count = -1, best_room = -1, best_libs = -1;
-  bool best_exposed = true, best_jam = true;
+  bool best_exposed = true, best_jam = true, best_lane = true;
   for (int k = 0; k < 4; ++k) {
     const int d = ((preferred < 0 ? 0 : preferred) + k) % 4;   // the preferred direction first
     const int32_t to = board_.Step(head_, d);
@@ -829,6 +829,8 @@ bot::Action StrategyAgent::SafeStep(int preferred, bool trap_ok) {
     if (level == 0 && p_.turnout_budget > 0) level = TurnOut(body, count + length_ + 2) == 0 ? 0 : 2;
     int libs = p_.liberties ? Liberties(to, body) : 2;
     const bool jam = p_.corridor_jam && Jammed(to);
+    // with no goal, a dragon wandering for room prefers open ground to a 1-wide corridor
+    const bool lane = p_.corridor_jam && preferred < 0 && Corridor(to);
     // through a portal to a tile out of view: someone may be lying there
     bool blind = p_.avoid_blind && !board_.Current(to);
     const char* lifted = nullptr;
@@ -879,12 +881,13 @@ bot::Action StrategyAgent::SafeStep(int preferred, bool trap_ok) {
     if (k == 0 && preferred >= 0 && !exposed && !jam && libs >= 2 && trap_ok && (can_split_out || !p_.trap_small))
       return Because("into a dead end worth it", bot::Action::Move(d));
     // a sure death in a dead end is worse than a tile an enemy head might take (that would be a trade)
-    auto key = [&](bool e, bool j, int lv, int lb, int c, int r) {
-      return std::make_tuple(p_.doom_first ? lv > 0 : true, !e, lv > 0, !j, lv, lb, c, r);
+    auto key = [&](bool e, bool j, bool ln, int lv, int lb, int c, int r) {
+      return std::make_tuple(p_.doom_first ? lv > 0 : true, !e, lv > 0, !j, !ln, lv, lb, c, r);
     };
-    if (best < 0 || key(exposed, jam, level, libs, count, room) >
-                        key(best_exposed, best_jam, best_level, best_libs, best_count, best_room)) {
+    if (best < 0 || key(exposed, jam, lane, level, libs, count, room) >
+                        key(best_exposed, best_jam, best_lane, best_level, best_libs, best_count, best_room)) {
       best_jam = jam;
+      best_lane = lane;
       best = d;
       best_level = level;
       best_count = count;
