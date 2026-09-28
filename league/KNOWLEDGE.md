@@ -190,6 +190,10 @@ against the RL policy, native engine, 2026-09-28). `g<N>` = `league/generations/
   SPLIT 2, like the swarm; 6 blocked by SplitSafe). The gap is eating: on devil at r100 we have 4
   dragons / 11 length to its 31 / 79, and its lunges start even trades that favour the bigger side. (g15-25)
 
+- **Don't trigger consolidation on a static "champion still short" test.** Starting to feed at r300
+  when the champion is <= 6 lost 13-27 on worldgen: it fires on games that are still growing normally.
+  Round-robin staggering of feeders cost more than the corpse pile-ups it avoided. (g16-8)
+
 ## Growth and roles
 
 - **Late-surge beats the champion-feeding line on worldgen:** a quiet swarm (never trade
