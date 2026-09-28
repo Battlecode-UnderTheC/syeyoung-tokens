@@ -110,6 +110,11 @@ against the RL policy, native engine, 2026-09-28). `g<N>` = `league/generations/
   endgame (split until 400; everyone incl. leaders feeds the champion from 380 within 3 if
   < 80% of it; trust_visible; champion freeze at 330) went 27-13 vs gst27 on worldgen and
   12-10 on official, and closed most of the gap to late-surge-6 (18-22). (g7-7)
+- **The main line's movement layer is transferable and was the giant line's whole early gap:**
+  giant-8 = gather-split-trade-34's movement/goal layer (escape levels + TurnOut, dead-end rule,
+  contest/share scoring, portal fix) with the giant roles: 77-25 vs giant-7, about even with gst34,
+  total length at r50/r100 now equal or ahead. Giant-7's surge at 340 was also wrong once movement
+  improved: gst34's timing (surge 380, splits until 400) was needed. (g11-4)
 - **The late-surge endgame transfers to every line** (g8): vs its own parent swarm-hunt-9
   34-28, counter-swarm-14 38-1-23, body-wall-3 36-26, giant-4 35-1-26; each closed most of its
   worldgen gap to gather-split-trade-31 (e.g. counter-swarm 13-27 → 18-22, body-wall 22-40 →
