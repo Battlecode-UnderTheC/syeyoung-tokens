@@ -197,7 +197,15 @@ against the RL policy, native engine, 2026-09-28). `g<N>` = `league/generations/
   late by eating, e.g. our champion's corpse). It wiped us out on small crowded maps (Devil,
   Prisoners, Trophy: out-ate us ~4:1, twice our dragons by r150) and beat us on longest on big
   maps by lunging our champion. Our trade rule (only enemies ≥ our length) gives its 2-long
-  kamikazes free even trades. Replays, decoder and renderer: `../syeyoung-tokens.league/replays/`.
+  kamikazes free even trades.
+- **A stronger opponent (M491281, we lost 2-8 with gather-split-trade-27):** the same swarm shape
+  plus sonar every turn, heavy portal use (1,098 crossings; it farms portal-only stores: 709 v 8
+  pearls on Trauma, 241 v 1 on Default), late champion feeding (own shorts die beside a longer
+  ally: longest 8 → 55 in 100 rounds), the reverse split, and kamikaze pincers (two 2-longs trap
+  our last long dragon). It lunged our champion's reverse-split head the round it appeared
+  (Schooltime r450). With a pearl in view we're as efficient as it; we lose by standing where
+  there are none (no pearl in view 66–78% of the time on portal maps). Our idle loops: 6.7%, 73%
+  portal orbits. Priority: the portal fix. (server M491281) Replays, decoder and renderer: `../syeyoung-tokens.league/replays/`.
 
 ## Maps
 
