@@ -77,6 +77,8 @@ against the RL policy, native engine, 2026-09-28). `g<N>` = `league/generations/
   near; every one of 2,047 trapped deaths of length ≥ 4 was at the unit cap with no split possible.
   Supply side works when broad: at <= 1 free slot, idle 2-3-long stubs among 3+ heads resign
   (body-wall-21): trapped deaths -10-35%, vs trading-swarm-5 83-19 (parent 77-25), even in the mirror. (g15-24)
+  Ported to gather-split-trade-70, counter-swarm-32, swarm-hunt-26: cap-trapped deaths fell 5-7x in
+  every line (e.g. 170 -> 27 a match on worldgen), W-D-L even vs parents. (g16-3, g16-9, g16-10)
 - **Partial sightings under-report the champion (likely in every champion-feeding line):** an
   ally whose body runs past the 7×7 window is reported at its visible length, stamped fresh, so
   it beats the champion's own exact report and mid-size dragons elect themselves. At r460 on
