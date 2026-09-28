@@ -78,11 +78,14 @@ against the RL policy, native engine, 2026-09-28). `g<N>` = `league/generations/
   small workers are the price of the economy, not a leak to plug. (g1-1, g4-5)
 - **Split window:** with champion feeding from 360, leaders splitting until round 350 beat
   300 (33-29, +5.9 longest on worldgen); 250 was worse. (g4-4)
-- **There's no first-mover edge:** head-to-heads kill both, and a deciding dragon always
+- **Turn order (disputed):** g4-9 found a real first-mover edge on the official maps for
+  swarm-hunt play: with side B's view rotated 180° (exact mirror play, `MirrorAgent` in
+  swarm-hunt-5), self-play still goes to side A 9-1-2 (worldgen ~even). g4-3 had argued there
+  is none: head-to-heads kill both, and a deciding dragon always
   moves before any enemy moves again. The only id-order effect is a tie at a bed's growth
   round (the lower id eats). Per-map side results come from deterministic play drifting apart
   (absolute direction tie-breaks). Conceding pearls an enemy head reaches first went 35-27.
-  (g4-3)
+  (g4-3, g4-9) Where going first wins is still open (pearl ties, lunge timing).
 - **Hunting the enemy champion rarely fires:** late workers are 2–4 long (lunge reach 1–3),
   and enemy leaders keep off tiles next to heads (29-33). (g4-1)
 - **The champion is almost never killed** (<1 guarded death a match); late losses are
