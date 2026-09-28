@@ -179,6 +179,8 @@ against the RL policy, native engine, 2026-09-28). `g<N>` = `league/generations/
   the middle, trapped deaths double). A split needs length ≥ 4 (2 ≤ n ≤ length − 2). (g15-14)
   Confirmed in other lines: gather-split-trade-63 32-30 and league #1, late-surge-27 34-28,
   counter-swarm-31 35-27; all better vs trading-swarm-5. (g15-20, g15-23, g15-26)
+  Its settings (0.3, until r50, <= 1,024 tiles) are a local optimum: 0.2 and until r80 lost, 0.45,
+  until r30 and 1,600 tiles were within noise. (g15-30)
   Devil is not about fast beds: learning each bed's gap exactly (the countdown reads the newly drawn
   gap the round it's drawn) and valuing fast beds changed nothing (body-wall-20). There the swarm has
   20+ dragons (avg length ~2.5) by r50 to our 7-10: the gap is how many dragons we field. (g15-19)
