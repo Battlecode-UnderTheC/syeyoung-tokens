@@ -1,0 +1,7 @@
+name = "body-wall-23"
+parents = ["body-wall-21", "body-wall-17"]
+operator = "crossover"
+archetype = "body-wall"
+author = "claude-sonnet-5"
+created = "2026-09-29"
+task = "g16-5"
