@@ -339,9 +339,13 @@ def schedule(con, suite_maps, limit=BATCH):
                     pairs.add(tuple(sorted((a, b))))
     todo = []
     for a, b in sorted(pairs):
-        for suite, maps in suite_maps.items():
-            if suite != 'holdout':
-                todo.append(pair_jobs(con, a, b, suite, maps))
+        # the rating suites interleaved within a pair, so a partly played pair has games on
+        # both the public and the rotating maps (otherwise the longer suite goes first and a
+        # new variant's early rating comes from one kind of map only)
+        per_suite = [pair_jobs(con, a, b, s, maps) for s, maps in suite_maps.items() if s != 'holdout']
+        mixed = [js[k] for k in range(max(map(len, per_suite), default=0)) for js in per_suite if k < len(js)]
+        if mixed:
+            todo.append(mixed)
     todo.sort(key=len, reverse=True)   # the pairs missing the most games first
     jobs = [j for js in todo for j in js]
     # the holdout among the top: each other, and anchor-greedy (a fixed yardstick: holdout vs
