@@ -59,6 +59,12 @@ against the RL policy, native engine, 2026-09-28). `g<N>` = `league/generations/
   naming the dead one: 50–100% of our dragons fed a ghost from round 340 on. Rank by
   `length − 0.5 × age` (gather-split-trade-23): the live heir takes over in a few rounds;
   longest at 499 went 39 → 78 in a traced game. (g5-7)
+  Where ghosts still come from (g15-22, gst62 probe): the champion splits most of its length off and
+  the short stub under its id dies; the stale reports are young (10-21 rounds), and on the split
+  turn the dragon still pings itself at full length, seeding its child and neighbours. Announcing
+  the new short length (and starting the obituary) on trapped splits of 10+ dragons cut those ghosts
+  186 -> 52 at r450 (longest's share of team length .32 -> .385). Announcing routine growth splits
+  too cost sonar turns and lost.
 - **The cap trap is set before the cap is reached:** of ~2,100 length ≥ 4 resignations at the
   cap (40 worldgen matches), almost none had a shrinking-room trend: rooms read open for many
   turns then 1–3 the next (bodies close gaps within a round), or the dragon entered the pocket
