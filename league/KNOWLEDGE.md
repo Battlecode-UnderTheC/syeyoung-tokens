@@ -72,13 +72,30 @@ against the RL policy, native engine, 2026-09-28). `g<N>` = `league/generations/
 - **A lone giant loses:** never splitting went 1-21 vs strategy-v1 on official maps. A giant
   fed by a helper swarm (giant-1) rated 1802, about even with strategy-v1. Sonar gossip about
   the giant's position reaches few helpers (~10 feeds a match). (g1-3)
-- **Split at length 4 beats 5 and 6** (confirmed again, g1-1).
+- **Split at length 4 beats 5 and 6, still, with modern variants and on worldgen too:** on
+  gather-split-trade-5, split at 6 went 5-17 official / 8-32 worldgen, at 5 6-16 / 17-23.
+  Trapped deaths fell, but splits halved: more heads eat more pearls. Trapped deaths of
+  small workers are the price of the economy, not a leak to plug. (g1-1, g4-5)
+- **Split window:** with champion feeding from 360, leaders splitting until round 350 beat
+  300 (33-29, +5.9 longest on worldgen); 250 was worse. (g4-4)
+- **There's no first-mover edge:** head-to-heads kill both, and a deciding dragon always
+  moves before any enemy moves again. The only id-order effect is a tie at a bed's growth
+  round (the lower id eats). Per-map side results come from deterministic play drifting apart
+  (absolute direction tie-breaks). Conceding pearls an enemy head reaches first went 35-27.
+  (g4-3)
+- **Hunting the enemy champion rarely fires:** late workers are 2–4 long (lunge reach 1–3),
+  and enemy leaders keep off tiles next to heads (29-33). (g4-1)
+- **The champion is almost never killed** (<1 guarded death a match); late losses are
+  attrition: too little team left to feed at the feed round. (g3-10)
 - **Round-0 identity:** "first turn is round 0" doesn't identify a map dragon if something
   splits in round 0 (a child born then also acts in round 0). (g1-3, g1-5)
 - **Children don't know their body beyond the 7×7 window**; heirs of trapped splits
   overestimate their room, so traps chain. Mark own segments seen each turn. (g1-3)
 
 ## Measuring
+
+- **League Elo shifted ~100 down at 19:05** when scheduling became neighbours-only past 12
+  variants (the top meet the anchors less). Compare Elo only within a snapshot; prefer head to head.
 
 - **strategy-v1's `SafeStep` never tries West when it has no goal** (`(preferred + k) % 4`
   with preferred −1 tries −1, 0, 1, 2). Anything copied from strategy-v1 must fix it. (g1-4)
