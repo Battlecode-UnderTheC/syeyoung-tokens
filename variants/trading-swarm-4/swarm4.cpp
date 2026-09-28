@@ -33,6 +33,21 @@ class SwarmAgent : public bot::Agent {
                          uint32_t(champ_round_ & 0xff);
       for (int d = 0; d < 4; ++d) a.sonar[d] = w;
     }
+    // stepping next to a portal whose far end we have never seen: ping only through it,
+    // so next turn's echoes say whether a dragon lies past its exit
+    if (!a.resign && a.kind == bot::Action::kMove && a.steps.size() == 1 && o.round < 480) {
+      const int d = a.steps[0];
+      const int n = mem_.Step(mem_.Tile(o.head_x(), o.head_y()), d);
+      if (n >= 0 && mem_.Current(n))
+        for (int e = 0; e < 4; ++e)
+          if (e != (d + 2) % 4 && (portal_[n] >> e & 1) && mem_.Step(n, e) == strat::kUnknown) {
+            const uint64_t w = a.sonar[e].value_or(1);
+            a.sonar = {};
+            a.sonar[e] = w;
+            ping_round_ = o.round, ping_tile_ = n, ping_dir_ = e;
+            break;
+          }
+    }
     return a;
   }
 
@@ -40,6 +55,12 @@ class SwarmAgent : public bot::Agent {
     const int L = o.length;
     Listen(o);
     Remember(o);
+    clear_dir_ = -1;
+    if (ping_round_ == o.round - 1 && ping_tile_ == mem_.Tile(o.head_x(), o.head_y()) && o.echo_present) {
+      bool any = false;
+      for (int k = 1; k < 5; ++k) any |= o.echo[k] != "0";   // ally, ally head, enemy, enemy head
+      if (!any) clear_dir_ = ping_dir_;
+    }
     bool occ[rl::kWindowTiles] = {};
     int enemy_head_len[rl::kWindowTiles];
     std::fill(std::begin(enemy_head_len), std::end(enemy_head_len), 0);
@@ -250,7 +271,6 @@ class SwarmAgent : public bot::Agent {
         }
       }
     }
-    (void)here;
 
     // 6. drift toward the centre (the pearl fields) or the champion, else straight on / wander
     int free[4], nf = 0;
@@ -263,6 +283,15 @@ class SwarmAgent : public bot::Agent {
     if (nf == 0)
       for (int d = 0; d < 4; ++d)
         if (const int k = win::Step(o, win::kCenter, d); k >= 0 && !occ[k]) free[nf++] = d;
+    if (nf == 0)   // no plain step: a portal whose far end is in view and free
+      for (int d = 0; d < 4; ++d) {
+        int idx;
+        if (EdgeCode(o, win::kCenter, d, &idx) < 0) continue;
+        if (const int t = mem_.Step(here, d); t >= 0 && Free(t)) {
+          why_ = "portal: escape";
+          return Commit(o, d);
+        }
+      }
     if (nf == 0) {
       why_ = "stuck";
       for (int d = 0; d < 4; ++d)   // die somewhere that isn't an ally's head
@@ -334,6 +363,7 @@ class SwarmAgent : public bot::Agent {
       const int id = EdgeCode(o, win::kCenter, d, &idx);
       if (id < 0 || d == (o.facing + 2) % 4) continue;
       if (unknown_only != (mem_.Step(mem_.Tile(o.head_x(), o.head_y()), d) == strat::kUnknown)) continue;
+      if (unknown_only && d != clear_dir_) continue;   // only after a clean sonar check
       if (id == last_portal_ && o.round - last_portal_round_ <= o.length + 1) continue;   // our body is over there
       int land = -2;
       if (d == 0 || d == 2) {
@@ -468,6 +498,7 @@ class SwarmAgent : public bot::Agent {
   int champ_len_ = 0, champ_x_ = -1, champ_y_ = -1, champ_round_ = -1000, goal_ = 0;
   int last_portal_ = -1, last_portal_round_ = -1000;
   const char* why_ = "";
+  int ping_round_ = -1000, ping_tile_ = -1, ping_dir_ = -1, clear_dir_ = -1;
   strat::BoardMemory mem_;
   std::vector<uint8_t> portal_;              // per tile: bit d set if side d is a portal
   // search scratch, shared by the agents of one process (one turn at a time)
