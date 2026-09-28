@@ -76,6 +76,11 @@ against the RL policy, native engine, 2026-09-28). `g<N>` = `league/generations/
   gather-split-trade-5, split at 6 went 5-17 official / 8-32 worldgen, at 5 6-16 / 17-23.
   Trapped deaths fell, but splits halved: more heads eat more pearls. Trapped deaths of
   small workers are the price of the economy, not a leak to plug. (g1-1, g4-5)
+- **The unit cap is hit constantly:** ~26% (official) and ~30% (worldgen) of our
+  dragon-turns are at UNIT_COUNT = 64, where no one can split. About a third of worldgen
+  trapped deaths happen at or near the cap. Reserving escape slots doesn't help (more stubs
+  die); having length-2/3 workers at the cap die next to a longer ally in reach (freeing a slot
+  for a productive split) went 57-45. The problem near the cap is idle slots. (g5-4)
 - **Split window:** with champion feeding from 360, leaders splitting until round 350 beat
   300 (33-29, +5.9 longest on worldgen); 250 was worse. (g4-4)
 - **Turn order (disputed):** g4-9 found a real first-mover edge on the official maps for
