@@ -331,6 +331,11 @@ against the RL policy, native engine, 2026-09-28). `g<N>` = `league/generations/
   unknown (12 of 18 in reach); dragons see only ~14 enemy crossings a match in their 7×7 windows;
   escapes through portals never came up. The real opponent crosses far more often. (g14-4)
 
+- **Bodyguards and escorts don't work.** A short ally trading into a lunger that threatens our giant
+  fired 0 times, opportunistically (gst86) or with placed escorts beside the champion (gst87): a lunger
+  strikes 2-3 tiles in one turn, an escort of length 2-4 reaches 1-3 and must also act first. Escorts
+  cost feeding (they crowd the champion). Only the giant's own avoidance is left to try. (g17-2, g17-7)
+
 ## Walls
 
 - **Multi-step seals work, but matter little:** laying the head across a pocket exit in one
