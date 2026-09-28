@@ -61,6 +61,7 @@ void StrategyAgent::Remember(const rl::Observation& o) {
   round_ = o.round;
   if (first_turn_) {
     leader_ = o.round == 0;
+    waller_ = !leader_ && p_.waller_mod > 0 && spawn_.id % p_.waller_mod == 0;
     born_ = o.round;                         // alive at the start: not a split child
     first_turn_ = false;
     for (const rl::Segment& s : o.segments)         // the part of the body in view, head to tail
@@ -239,6 +240,15 @@ StrategyAgent::Goal StrategyAgent::ChooseGoal(const Paths& paths) const {
       if (w.team != spawn_.team && w.round == round_ && w.head >= 0 && paths.dist[w.head] > 0 &&
           paths.dist[w.head] <= p_.hunt_radius && WorthTrading(id) &&
           (best < 0 || paths.dist[w.head] < paths.dist[best]))
+        best = w.head;
+    if (best >= 0) return {best, false};
+  }
+  // a waller long enough to wall goes where enemy heads are (seen in the last few rounds)
+  if (waller_ && length_ >= p_.squeeze_length && round_ < p_.feed_from_round) {
+    int32_t best = -1;
+    for (const auto& [id, w] : seen_)
+      if (w.team != spawn_.team && round_ - w.round <= p_.waller_chase_memory && w.head >= 0 && paths.dist[w.head] > 0 &&
+          paths.dist[w.head] <= p_.waller_chase_radius && (best < 0 || paths.dist[w.head] < paths.dist[best]))
         best = w.head;
     if (best >= 0) return {best, false};
   }
@@ -563,7 +573,12 @@ bool StrategyAgent::Lunge(bot::Action* out) const {
 
 // ---- the body wall ---------------------------------------------------------------------------
 
-bool StrategyAgent::Sealed(int32_t id, const std::vector<int32_t>& enemy, const std::vector<int32_t>& ours) const {
+// The tiles enemy `id` (body head first, as seen) can reach, up to `cap`, with our body
+// `ours` (head first, after our move). Timed: its own tail and our tail free tiles as they
+// move on, and reaching its freed tail is a way out (returns cap). Static: every body stays.
+// Timed: leaving the window is a way out (we can't tell); static: only the room in view counts.
+int32_t StrategyAgent::EnemyReach(int32_t id, const std::vector<int32_t>& enemy, const std::vector<int32_t>& ours,
+                                  bool timed, int32_t cap) const {
   const int32_t n = board_.size(), elen = static_cast<int32_t>(enemy.size()), olen = static_cast<int32_t>(ours.size());
   std::vector<int32_t> ei(n, -1), oi(n, -1), when(n, -1);
   for (int32_t i = elen - 1; i >= 0; --i) ei[enemy[i]] = i;
@@ -576,30 +591,35 @@ bool StrategyAgent::Sealed(int32_t id, const std::vector<int32_t>& enemy, const 
     const int32_t t = queue[q], m = when[t] + 1;
     for (int d = 0; d < 4; ++d) {
       const int32_t to = board_.Step(t, d);
-      if (to == kUnknown) return false;
+      if (to == kUnknown) return cap;
       if (to < 0 || when[to] >= 0) continue;
-      if (!board_.Current(to)) return false;             // out of view: can't tell
+      if (!board_.Current(to)) {                         // out of view: can't tell
+        if (timed) return cap;
+        continue;                                        // static: count the room in view only
+      }
       if (const int32_t i = ei[to]; i >= 0) {
-        if (i > 0 && i >= elen - m + 1) return false;    // follows its own tail out
+        if (timed && i > 0 && i >= elen - m + 1) return cap;   // follows its own tail out
         continue;
       }
       if (const int32_t j = oi[to]; j >= 0) {
-        if (olen - j > m) continue;                      // our segment still there then
+        if (!timed || olen - j > m) continue;            // our segment still there then
       } else if (board_.at(to).occupant >= 0 && board_.at(to).occupant != spawn_.id && board_.at(to).occupant != id) {
         continue;                                        // another dragon (assumed to stay)
       }
       when[to] = m;
-      if (++reached >= p_.wall_cap) return false;
+      if (++reached >= cap) return cap;
       queue.push_back(to);
     }
   }
-  return true;
+  return reached;
 }
 
 // A step that seals enemy heads in view into pockets they die in (more enemy length sealed
-// than by our other safe steps).
-bool StrategyAgent::Wall(bot::Action* out) {
+// than by our other safe steps); failing that, for a long dragon, the step that shrinks the
+// room around enemy heads most (closing a pocket behind them).
+bool StrategyAgent::Wall(bot::Action* out, bool* squeezed) {
   if (!p_.wall || length_ < p_.wall_min_length) return false;
+  if (round_ >= p_.feed_from_round && Champion().id == spawn_.id) return false;
   if (leader_ && round_ >= p_.wall_leader_round) return false;
   if (static_cast<int32_t>(body_.size()) < length_) return false;   // own body not fully known
   std::vector<std::pair<int32_t, const std::vector<int32_t>*>> enemies;
@@ -611,8 +631,9 @@ bool StrategyAgent::Wall(bot::Action* out) {
     enemies.push_back({id, &b});
   }
   if (enemies.empty()) return false;
+  const bool squeeze = p_.squeeze_room > 0 && length_ >= p_.squeeze_length && round_ < p_.feed_from_round;
   int best = -1;
-  int32_t best_score = -1, worst_score = 1 << 30;
+  int32_t best_seal = -1, best_sq = -1, worst_seal = 1 << 30, worst_sq = 1 << 30;
   std::vector<int32_t> ours(body_.begin(), body_.end());
   ours.insert(ours.begin(), -1);
   ours.pop_back();
@@ -621,16 +642,30 @@ bool StrategyAgent::Wall(bot::Action* out) {
     if (Classify(to) != Cell::kFree || !board_.Current(to) || Exposed(to)) continue;
     ours[0] = to;
     if (EscapeLevel(ours, EscapeCap(length_)) < 1 || Liberties(to, ours) < 1) continue;
-    int32_t score = 0;
-    for (const auto& [id, b] : enemies)
-      if (Sealed(id, *b, ours)) score += static_cast<int32_t>(b->size());
-    worst_score = std::min(worst_score, score);
-    if (score > best_score) {
-      best_score = score;
+    int32_t seal = 0, sq = 0;
+    for (const auto& [id, b] : enemies) {
+      if (EnemyReach(id, *b, ours, true, p_.wall_cap) < p_.wall_cap) {
+        seal += static_cast<int32_t>(b->size());
+      } else if (squeeze) {
+        sq += p_.squeeze_room - EnemyReach(id, *b, ours, false, p_.squeeze_room);
+      }
+    }
+    worst_seal = std::min(worst_seal, seal);
+    worst_sq = std::min(worst_sq, sq);
+    if (std::make_pair(seal, sq) > std::make_pair(best_seal, best_sq)) {
+      best_seal = seal;
+      best_sq = sq;
       best = d;
     }
   }
-  if (best < 0 || best_score <= worst_score) return false;
+  if (best < 0) return false;
+  if (best_seal > worst_seal) {
+    *squeezed = false;
+  } else if (squeeze && best_sq > worst_sq && best_sq >= p_.squeeze_gain) {
+    *squeezed = true;
+  } else {
+    return false;
+  }
   *out = bot::Action::Move(best);
   return true;
 }
@@ -687,7 +722,8 @@ bot::Action StrategyAgent::Decide(const rl::Observation& o) {
   // 2c. body wall: seal an enemy head into a pocket it dies in
   {
     bot::Action wall;
-    if (Wall(&wall)) return Because("wall: seal", wall);
+    bool squeezed = false;
+    if (Wall(&wall, &squeezed)) return Because(squeezed ? "wall: squeeze" : "wall: seal", wall);
   }
 
   // 3. survival: our last dragons, outnumbered, keep away from enemy heads (losing them all loses the game)
@@ -699,7 +735,7 @@ bot::Action StrategyAgent::Decide(const rl::Observation& o) {
     }
 
   // 4. growth: split off a worker while there is time for it to gather
-  if (length_ >= p_.split_min_length && round_ < (leader_ ? p_.leader_split_until : p_.split_until_round) &&
+  if (length_ >= (waller_ ? p_.waller_split : p_.split_min_length) && round_ < (leader_ ? p_.leader_split_until : p_.split_until_round) &&
       units_ < spawn_.unit_limit - p_.split_headroom &&
       (!p_.check_split || SplitSafe(length_ / 2)))
     return Because("split", bot::Action::Split(length_ / 2));

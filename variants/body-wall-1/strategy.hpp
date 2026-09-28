@@ -86,6 +86,17 @@ struct Params {
   int32_t wall_min_length = 3;      // our length at least this
   int32_t wall_cap = 48;            // an enemy reaching this many tiles is not trapped
   int32_t wall_leader_round = 300;  // the champion-to-be stops walling from this round
+  // squeeze: a dragon this long, with no seal on offer, takes the step that most shrinks the
+  // tiles enemy heads in view can reach (counted up to squeeze_room, bodies static) ...
+  int32_t squeeze_length = 5;
+  // wallers: split children with id % waller_mod == 0 grow long (split only from waller_split)
+  // to have a body to wall with
+  int32_t waller_mod = 4;           // 0: none
+  int32_t waller_split = 10;
+  int32_t waller_chase_radius = 12; // a waller walks towards enemy heads this many steps away ...
+  int32_t waller_chase_memory = 5;  // ... seen this many rounds ago at most
+  int32_t squeeze_room = 12;
+  int32_t squeeze_gain = 3;         // ... when it takes at least this many tiles from them
 };
 
 class StrategyAgent : public bot::Agent {
@@ -139,8 +150,9 @@ class StrategyAgent : public bot::Agent {
   bool Lunge(bot::Action* out) const;
   // enemy `id` (body head first, as seen) is sealed in: its timed flood, with our body
   // `ours` (head first, after our move) freeing tail first, finds no way out
-  bool Sealed(int32_t id, const std::vector<int32_t>& enemy, const std::vector<int32_t>& ours) const;
-  bool Wall(bot::Action* out);
+  int32_t EnemyReach(int32_t id, const std::vector<int32_t>& enemy, const std::vector<int32_t>& ours, bool timed,
+                     int32_t cap) const;
+  bool Wall(bot::Action* out, bool* squeezed);
   bot::Action Decide(const rl::Observation& o);
 #ifdef BW1_DEBUG
   void Dump(const char* why) const;
@@ -156,6 +168,7 @@ class StrategyAgent : public bot::Agent {
   rl::Spawn spawn_;
   BoardMemory board_;
   bool leader_ = false;
+  bool waller_ = false;
   bool first_turn_ = true;
   int32_t born_ = 0;
   // this turn
