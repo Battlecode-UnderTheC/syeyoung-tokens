@@ -143,6 +143,12 @@ against the RL policy, native engine, 2026-09-28). `g<N>` = `league/generations/
   dragon-turns) left every action count and death rate unchanged vs late-surge-17 (11-11, 0.0
   margin). Don't spend tasks on it. (g12-24, g13-21)
 
+- **Crowded midgame exploration pays in every line.** When a dragon sees > 3 allies, long-unseen
+  frontier tiles get explore_value × min(4, age/50) and patrol competes inside the goal scan
+  (swarm-hunt-17's idea): gst49 34-28, late-surge-21 35-27, counter-swarm-26 37-25, body-wall-14
+  36-26 vs their parents, mostly on worldgen (+31..+62 total). Port it with a per-ChooseGoal mine
+  mask: Occupied(t) per tile walks the body (O(board × length), 8 → 52 ms). (g13-28, g14-2/3/5)
+
 ## Growth and roles
 
 - **Late-surge beats the champion-feeding line on worldgen:** a quiet swarm (never trade
