@@ -36,7 +36,7 @@ StrategyAgent::StrategyAgent(const rl::Spawn& spawn, Params params)
       GST1_SET(room_margin) GST1_SET(room_min) GST1_SET(escape_slack) GST1_SET(escape_min) GST1_SET(check_split)
       GST1_SET(liberties) GST1_SET(share_factor) GST1_SET(patrol) GST1_SET(hunt_radius) GST1_SET(explore_value)
       GST1_SET(escape_steps) GST1_SET(trap_small)
-      GST1_SET(split_headroom) GST1_SET(turnout_budget) GST1_SET(doom_first) GST1_SET(big_split_length)
+      GST1_SET(split_headroom) GST1_SET(turnout_budget) GST1_SET(doom_first) GST1_SET(ally_memory) GST1_SET(leader_split_until) GST1_SET(share_leader) GST1_SET(feed_distance) GST1_SET(big_split_length)
 #undef GST1_SET
     }
   }
@@ -190,7 +190,7 @@ StrategyAgent::Goal StrategyAgent::ChooseGoal(const Paths& paths) const {
   std::vector<Candidate> candidates;
   // allies in view now: a tile one of them is nearer to is probably theirs
   std::vector<int32_t> allies;
-  if (p_.share_factor < 1.0)
+  if (p_.share_factor < 1.0 && (!leader_ || p_.share_leader))
     for (const auto& [id, w] : seen_)
       if (w.team == spawn_.team && w.round == round_ && w.head >= 0) allies.push_back(w.head);
   auto torus = [&](int32_t a, int32_t b) {
@@ -473,7 +473,7 @@ bot::Action StrategyAgent::Turn(const rl::Observation& o) {
     }
 
   // 4. growth: split off a worker while there is time for it to gather
-  if (length_ >= p_.split_min_length && round_ < p_.split_until_round &&
+  if (length_ >= p_.split_min_length && round_ < (leader_ ? p_.leader_split_until : p_.split_until_round) &&
       units_ < spawn_.unit_limit - p_.split_headroom &&
       (!p_.check_split || SplitSafe(length_ / 2)))
     return Because("split", bot::Action::Split(length_ / 2));
