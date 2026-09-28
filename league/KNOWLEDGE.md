@@ -94,8 +94,9 @@ against the RL policy, native engine, 2026-09-28). `g<N>` = `league/generations/
   195-45) on worldgen games; it loses to trading swarms on small crowded official maps. The
   surge sweet spot is 380–400 (350 too early). A crowding switch to even trades fixes the
   trading-swarm matchup but hurts vs counter-swarm (late-surge-2). (g6-8, g6-14, g6-15)
-- **The split window matters across lines:** counter-swarm's collapse after round 300 came
-  from stopping splits at 300 (splitting until 350 fixed most of its worldgen gap). (g6-9)
+- **The split window matters across lines:** workers splitting until ~350 (not 300) helped in
+  all three older lines: gather-split-trade-13 (+80 Elo), counter-swarm-12 (its collapse after
+  300), swarm-hunt-8 (37-25). late-surge splits until 400. (g4-4, g6-9, g7-2)
 - **League caveat (fixed 21:10):** the scheduler played a pair's worldgen games before its
   official ones, so new variants' early ratings were worldgen-only.
 
