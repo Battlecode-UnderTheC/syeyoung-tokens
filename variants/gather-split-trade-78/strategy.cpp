@@ -61,7 +61,7 @@ StrategyAgent::StrategyAgent(const rl::Spawn& spawn, Params params)
       GST78_SET(liberties) GST78_SET(share_factor) GST78_SET(patrol) GST78_SET(hunt_radius) GST78_SET(explore_value)
       GST78_SET(escape_steps) GST78_SET(trap_small)
       GST78_SET(split_headroom) GST78_SET(turnout_budget) GST78_SET(doom_first) GST78_SET(ally_memory) GST78_SET(avoid_blind) GST78_SET(doomed_split_room) GST78_SET(leader_split_until) GST78_SET(share_leader) GST78_SET(feed_distance) GST78_SET(big_split_length) GST78_SET(champ_no_trap)
-      GST78_SET(portal_cross) GST78_SET(portal_explore) GST78_SET(loop_break) GST78_SET(loop_ban) GST78_SET(known_portal) GST78_SET(blind_fallback) GST78_SET(poor_per_unit) GST78_SET(poor_min) GST78_SET(starve_rounds) GST78_SET(poor_portal_mult)
+      GST78_SET(portal_cross) GST78_SET(portal_explore) GST78_SET(loop_break) GST78_SET(loop_ban) GST78_SET(known_portal) GST78_SET(blind_fallback) GST78_SET(poor_per_unit) GST78_SET(poor_min) GST78_SET(starve_rounds) GST78_SET(poor_portal_mult) GST78_SET(poor_cross)
       GST78_SET(wait_factor) GST78_SET(cluster_bonus) GST78_SET(cluster_radius) GST78_SET(cluster_pool)
       GST78_SET(crowd_threshold) GST78_SET(stale_divisor) GST78_SET(stale_cap)
       GST78_SET(centre_bonus) GST78_SET(centre_until) GST78_SET(centre_max_tiles)
@@ -1091,7 +1091,7 @@ bot::Action StrategyAgent::Decide(const rl::Observation& o) {
   last_goal_ = goal;
   // exploring beside an unknown portal whose exit our ping found clear: step through it
   if (WillCross() && exit_clear_ && ping_tile_ == head_ && !target.trap && length_ >= 2 && UnknownPortal(head_, ping_dir_) &&
-      BodyInView() && (goal < 0 || poor_ || [&] {
+      BodyInView() && (goal < 0 || (poor_ && p_.poor_cross > 0 && paths.dist[goal] >= p_.poor_cross) || [&] {
         int32_t ready;
         return TileValue(goal, paths.dist[goal], &ready) == 0.0;
       }())) {

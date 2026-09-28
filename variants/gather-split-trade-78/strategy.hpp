@@ -163,10 +163,11 @@ struct Params {
   // eaten for a while. Then an unknown portal's explore value is multiplied (so it beats far
   // goals in an empty strip) and a dragon beside one whose exit pinged clean crosses even with
   // a valued goal elsewhere. Open maps with plenty of reachable food don't change.
-  int32_t poor_per_unit = 2;        // poor: fewer reachable valued tiles than this x our dragons ...
-  int32_t poor_min = 4;             // ... or than this
+  int32_t poor_per_unit = 1;        // poor: fewer reachable valued tiles than this x our dragons ...
+  int32_t poor_min = 3;             // ... or than this
   int32_t starve_rounds = 35;       // ... or nothing eaten for this many rounds
   double poor_portal_mult = 4.0;    // unknown-portal explore value multiplier when poor
+  int32_t poor_cross = 6;           // >0: when poor, cross a clean-pinged unknown portal even with a valued goal this many steps away or more (1 lost 8-14, 15-25 vs gst68)
   // loop breaker: the last loop_window heads on at most loop_distinct tiles, nothing eaten:
   // the goal is banned for loop_ban rounds
   int32_t loop_break = 1;
