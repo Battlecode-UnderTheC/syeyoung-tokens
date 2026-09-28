@@ -72,6 +72,10 @@ against the RL policy, native engine, 2026-09-28). `g<N>` = `league/generations/
   trauma only 0–3 of ~10 dragons knew the real champion. Fix: flag partial reports as lower
   bounds that never lower a known length (swarm-hunt-13; neutral in sims, but the mechanism is
   real). Isolated champions in portal pockets still don't get fed. (g11-6)
+  Farming portal-bounded pockets raises pocket pearls a lot (default 25 → 437 a match) but not
+  wins (portal-farmer-1/-2 even with gst39): matches follow the longest dragon and consolidation,
+  not gathering totals. Trauma's entry portals lead into maze corridors, not to the stores seen
+  through the wall. (g12-25, g13-3)
   Mostly the team names a DEAD champion (39 of 48 dragons naming one dead id), not an isolated one:
   the slower late fade keeps its old report alive and the corrected stub report never spreads.
   Obituary pings (relay a sharply shrunk or dead champion's correction for 20 rounds) raised
