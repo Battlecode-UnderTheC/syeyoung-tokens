@@ -21,12 +21,12 @@ namespace gst58 {
 static long g_escape = 0, g_turnout = 0, g_calls = 0;
 #define GST58_COUNT(x) ++(x)
 // idle-loop measurement: turns where the last 12 heads cover <= 6 tiles with nothing eaten
-static std::atomic<long> g_ak_big{0}, g_ak_champ{0}, g_hunt_turns{0};
+static std::atomic<long> g_ak_big{0}, g_ak_champ{0}, g_hunt_turns{0}, g_late{0}, g_known{0}, g_longer{0}, g_short{0};
 static struct AssassinReport {
   ~AssassinReport() {
     if (g_hunt_turns || g_ak_big)
-      std::fprintf(stderr, "GST58 late trades into enemy len>=10: %ld (into enemy champion %ld) assassin-walk turns %ld\n",
-                   g_ak_big.load(), g_ak_champ.load(), g_hunt_turns.load());
+      std::fprintf(stderr, "GST58 late trades into enemy len>=10: %ld (into enemy champion %ld) assassin-walk turns %ld | late non-champ turns %ld enemy known %ld longer than ours %ld and we short %ld\n",
+                   g_ak_big.load(), g_ak_champ.load(), g_hunt_turns.load(), g_late.load(), g_known.load(), g_longer.load(), g_short.load());
   }
 } g_assassin_report;
 static std::atomic<long> g_turns{0}, g_idle{0}, g_eaten{0}, g_cross{0}, g_bans{0}, g_kcross{0}, g_pdetour{0}, g_lifted{0};
@@ -1039,6 +1039,16 @@ bot::Action StrategyAgent::Decide(const rl::Observation& o) {
   const bool hunting = hunt_tile >= 0 && !in_view && paths.dist[hunt_tile] > 0 && paths.dist[hunt_tile] <= p_.assassin_range;
 #ifdef GST58_DEBUG
   if (hunting) ++g_hunt_turns;
+  if (round_ >= p_.assassin_from && champ.id != spawn_.id) {
+    ++g_late;
+    if (enemy_.id >= 0 && round_ - enemy_.round <= p_.assassin_memory) {
+      ++g_known;
+      if (enemy_.length > champ.length) {
+        ++g_longer;
+        if (length_ <= p_.assassin_max_length) ++g_short;
+      }
+    }
+  }
 #endif
   if (in_view && paths.dist[ally_head] >= 0 && paths.dist[ally_head] <= p_.feed_distance)
     return Because("feed champion", bot::Action::Resign());
