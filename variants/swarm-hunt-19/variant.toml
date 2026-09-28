@@ -1,0 +1,7 @@
+name = "swarm-hunt-19"
+parents = ["swarm-hunt-18", "late-surge-17"]
+operator = "crossover"
+archetype = "swarm-hunt"
+author = "claude-sonnet-5"
+created = "2026-09-29"
+task = "g13-19"
