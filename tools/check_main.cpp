@@ -6,8 +6,6 @@
 //  and, since it is cheap, an audit of the shared BoardMemory against the engine.
 //
 //   check <variant> <maps dir or pool> [limit]          exit status 0 when every check passed
-#include <dlfcn.h>
-
 #include <algorithm>
 #include <chrono>
 #include <cstdio>
@@ -20,7 +18,7 @@
 #include <vector>
 
 #include "board_memory.hpp"
-#include "plugin.hpp"
+#include "play.hpp"
 
 namespace {
 
@@ -28,62 +26,6 @@ int failures = 0;
 
 void Fail(const std::string& what) {
   if (++failures <= 20) std::printf("FAIL: %s\n", what.c_str());
-}
-
-bot::MakeAgentFn Load(const std::string& arg, const std::string& exe) {
-  std::string path = arg;
-  if (arg.find('/') == std::string::npos) {
-    const auto dir = std::filesystem::path(exe).parent_path().parent_path() / "variants";
-    for (const char* ext : {".so", ".dylib"})
-      if (const auto p = dir / ("lib" + arg + ext); std::filesystem::exists(p)) path = p.string();
-  }
-  void* h = dlopen(path.c_str(), RTLD_NOW | RTLD_LOCAL);
-  if (!h) throw std::runtime_error("cannot load variant " + arg + ": " + dlerror());
-  auto make = reinterpret_cast<bot::MakeAgentFn>(dlsym(h, bot::kMakeAgentSymbol));
-  if (!make) throw std::runtime_error(arg + " has no " + bot::kMakeAgentSymbol + " (LEAGUE_VARIANT missing)");
-  return make;
-}
-
-std::vector<std::pair<std::string, std::string>> ReadMaps(const std::string& path, size_t limit) {
-  std::vector<std::pair<std::string, std::string>> maps;
-  if (std::filesystem::is_directory(path)) {
-    std::vector<std::filesystem::path> files;
-    for (const auto& e : std::filesystem::directory_iterator(path))
-      if (e.path().extension() == ".map") files.push_back(e.path());
-    std::sort(files.begin(), files.end());
-    for (const auto& f : files) {
-      std::ifstream in(f);
-      std::stringstream s;
-      s << in.rdbuf();
-      maps.emplace_back(f.stem().string(), s.str());
-    }
-  } else {
-    std::ifstream in(path, std::ios::binary);
-    size_t n;
-    while (maps.size() < limit && in >> n) {
-      in.get();
-      std::string text(n, '\0');
-      in.read(text.data(), static_cast<std::streamsize>(n));
-      maps.emplace_back("pool" + std::to_string(maps.size()), std::move(text));
-    }
-  }
-  if (maps.size() > limit) maps.resize(limit);
-  return maps;
-}
-
-void Apply(dragons::Game& g, const bot::Action& a) {
-  dragons::Sonar sonar;
-  for (int d = 0; d < 4; ++d)
-    if (a.sonar[d]) {
-      sonar.mask |= 1 << d;
-      sonar.word[d] = *a.sonar[d];
-    }
-  if (a.resign) g.Act(dragons::kNoAction, nullptr, 0, 0, sonar, 3);
-  else if (a.kind == bot::Action::kSplit) g.Act(dragons::kSplit, nullptr, 0, a.split, sonar, 3);
-  else {
-    std::vector<uint8_t> steps(a.steps.begin(), a.steps.end());
-    g.Act(dragons::kMove, steps.data(), static_cast<int>(steps.size()), 0, sonar, 3);
-  }
 }
 
 // A neighbouring tile of the head that is in view, not kelp, and holds no dragon.
@@ -134,7 +76,7 @@ void Check(const std::string& name, const std::string& text, bot::MakeAgentFn ma
     const bot::Action action = it->second->Turn(o);
     slowest_ms = std::max(slowest_ms, std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - t0).count());
     g.ClearDeaths();
-    Apply(g, action);
+    tools::Apply(g, action);
     for (const dragons::Death& death : g.deaths()) {
       if (death.id == d && free_step && (death.reason == dragons::kHitWall || death.reason == dragons::kHitSelf) &&
           ++avoidable <= 3)
@@ -158,8 +100,8 @@ int main(int argc, char** argv) {
     return 2;
   }
   try {
-    const bot::MakeAgentFn make = Load(argv[1], argv[0]);
-    for (const auto& [name, text] : ReadMaps(argv[2], argc > 3 ? std::stoul(argv[3]) : 20)) Check(name, text, make);
+    const bot::MakeAgentFn make = tools::Load(argv[1], argv[0]).make;
+    for (const auto& [name, text] : tools::ReadMaps(argv[2], argc > 3 ? std::stoul(argv[3]) : 20)) Check(name, text, make);
   } catch (const std::exception& e) {
     Fail(std::string("exception: ") + e.what());
   }
