@@ -112,6 +112,17 @@ against the RL policy, native engine, 2026-09-28). `g<N>` = `league/generations/
   1,048 unsafe detours in one game). Tasks: g13-5 (portal); opening/bed scoring next. Replays and
   films: `../syeyoung-tokens.league/replays/league-1/`, VISUAL.md #11–17. (league-1 watch)
 
+- **Charge bed waiting; value pearl clusters (late-surge-17 62-40 vs its parent, 71-31 vs the ts4
+  clone).** A bed was scored ready at `max(dist, due)`, so waiting 5 rounds on a bed tied with
+  walking 5 steps to a pearl. Charging `dist + 2·max(0, due − dist)` plus 0.5× the value of other
+  pearls/beds within 2 steps won on official and worldgen maps. Weighting explore by unseen area
+  and a centre pull for the first 60 rounds were neutral to harmful (the centre pull hurt). Goal
+  stickiness (×1.2–1.5 on last turn's goal) was flat (gst44 51-51). (g13-6, g13-11)
+- **Known portals were one-way doors.** The blind-step liberty cap refused every goal step onto a
+  known portal (its exit is always out of view). gather-split-trade-42 crosses after a clean ping,
+  an exit seen empty within 2 rounds, or 2 refusals: crossings 68 → 231 a match on default; even
+  in sims (53-49) but #2 in the league with holdout 100-50. (g13-5)
+
 ## Growth and roles
 
 - **Late-surge beats the champion-feeding line on worldgen:** a quiet swarm (never trade
