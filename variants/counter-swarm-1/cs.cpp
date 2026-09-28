@@ -180,7 +180,7 @@ StrategyAgent::Goal StrategyAgent::ChooseGoal(const Paths& paths) const {
     // another of ours is closer to it: leave it to them (a crowd on one pearl boxes itself in)
     if (score > 0 && p_.x1 > 0)
       for (const int32_t a : allies)
-        if (Torus(a, t) < d) { score *= 1.0 - p_.x1; break; }
+        if (Torus(a, t) < (p_.x3 > 50 ? d : Torus(head_, t))) { score *= 1.0 - p_.x1; break; }
     for (int dir = 0; dir < 4; ++dir)
       if (board_.Step(t, dir) == kUnknown) {
         score = std::max(score, p_.explore_value / (d + 1));
@@ -377,7 +377,16 @@ bot::Action StrategyAgent::Turn(const rl::Observation& o) {
     return Because("split", bot::Action::Split(length_ / 2));
 
   // 5. a goal, and the first safe step towards it
-  const Goal target = ally && paths.dist[ally->head] > 0 ? Goal{ally->head, false} : ChooseGoal(paths);
+  // snipe: a big enemy dragon in reach is worth any of our small ones, late or not
+  int32_t snipe = -1;
+  if (!leader_ && p_.x2 > 0 && units_ >= 2)
+    for (const auto& [id, w] : seen_)
+      if (w.team != spawn_.team && w.round == round_ && w.head >= 0 && paths.dist[w.head] > 0 &&
+          paths.dist[w.head] <= p_.x3 && w.length >= p_.x2 && w.length >= 2 * length_ &&
+          (snipe < 0 || paths.dist[w.head] < paths.dist[snipe]))
+        snipe = w.head;
+  const Goal target = snipe >= 0 ? Goal{snipe, false}
+                      : ally && paths.dist[ally->head] > 0 ? Goal{ally->head, false} : ChooseGoal(paths);
   const int32_t goal = target.tile;
   const int preferred = goal >= 0 ? paths.first[goal] : -1;
   bot::Action a = SafeStep(preferred, target.trap);

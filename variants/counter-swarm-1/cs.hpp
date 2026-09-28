@@ -54,7 +54,7 @@ struct Params {
   int32_t avoid_heads = 1;          // 1: every dragon keeps off tiles next to enemy heads it won't trade with; 0: leaders only
   int32_t survivor_units = 0;
   int32_t strike_reach = 3;         // multi-step strikes onto enemy heads up to this many steps away
-  double x1 = 0.9, x2 = 0, x3 = 0;  // x1: a pearl an ally head is closer to is worth this much less
+  double x1 = 0.9, x2 = 0, x3 = 8;  // x2,x3: snipe length, radius  // x1: a pearl an ally head is closer to is worth this much less
   int32_t min_libs = 2;             // the goal step must leave this many (half-)liberties       // down to this many dragons and outnumbered: flee enemy heads (0: off; fleeing lost games in simulation)
 };
 
