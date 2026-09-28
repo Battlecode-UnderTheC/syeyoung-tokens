@@ -32,17 +32,17 @@ struct Params {
   int32_t split_headroom = 0;       // ... leaving this many dragons below the unit limit (to split out of traps)
   int32_t big_split_length = 0;     // unused
   // feeding: a worker gives its body to a bigger ally
-  int32_t feed_from_round = 420;   // the surge: from here every dragon (leaders too) walks to the champion and dies next to it
-  int32_t champ_freeze = 360;      // the champion stops splitting from here (it only grows)
-  int32_t use_lunge = 0;            // quiet play: no multi-step strikes
-  int32_t feed_distance = 2;        // dies when its head is this close to the ally's head (steps)
+  int32_t feed_from_round = 380;   // the surge: from here every dragon (leaders too) walks to the champion and dies next to it
+  int32_t champ_freeze = 330;      // the champion stops splitting from here (it only grows)
+  int32_t use_lunge = 1;            // quiet play: no multi-step strikes
+  int32_t feed_distance = 3;        // dies when its head is this close to the ally's head (steps)
   int32_t ally_memory = 80;         // rounds an ally sighting stays worth walking to
   // consolidation: every dragon reports itself by sonar and relays the longest ally it knows
   // of; late in the game every other dragon walks to that one (the team's champion) and dies
   // next to it, so the mass ends up in one dragon
   int32_t report_memory = 40;       // rounds a sonar report of an ally stays usable
   double report_fade = 0.5;         // a report's weight when choosing the champion: its length less this per round of age
-  int32_t leader_feed_from = 420;   // a leader that is not the champion feeds it from this round ...
+  int32_t leader_feed_from = 380;   // a leader that is not the champion feeds it from this round ...
   int32_t leader_feed_fresh = 20;   // ... when the champion was located at most this many rounds ago
   // targets: each tile's value per round it takes to collect it (see TileValue)
   double pearl_decay = 0.97;        // per round since a pearl was seen: the chance it is still there
