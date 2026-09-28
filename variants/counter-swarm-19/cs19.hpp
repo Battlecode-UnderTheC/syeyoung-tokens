@@ -116,7 +116,7 @@ struct Params {
   int32_t guard_min_length = 8;     // ... when at least this long
   double guard_share = 0.6;         // ... also any dragon at least this share of the champion's length
   int32_t guard_cut_extra = 3;      // an enemy whose body runs out of view: this much more reach
-  int32_t seek_champion = 1;        // a feeder whose champion is unreachable heads for the known tile nearest to it
+  int32_t seek_champion = 0;        // a feeder whose champion is unreachable heads for the known tile nearest to it
 };
 
 class StrategyAgent : public bot::Agent {
