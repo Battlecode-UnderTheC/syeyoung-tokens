@@ -17,3 +17,4 @@ one of these, or a new one added here.
 | `body-wall` | Use long bodies as walls: cut the enemy off from pearl fields, trap enemy heads in pockets so they die without valid moves. | |
 | `late-surge` | Play safe and small until late, then merge (feed) everything into one dragon in the last rounds to win on the longest dragon. Timing is the whole game. | |
 | `counter-swarm` | Specifically beat many-small-dragon opponents (like strategy-v1): avoid even trades, punish splits, win on total length. | counter-swarm-1 (1907) |
+| `trading-swarm` | Clone of the first real server opponent (split-v7): always `SPLIT 2`, splits to the end, starts every head-to-head it can (even trades, lunges at longer dragons), no sonar, greedy eating, no consolidation. A sparring partner for the style that beats us on crowded maps. | |
