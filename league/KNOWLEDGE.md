@@ -169,6 +169,9 @@ against the RL policy, native engine, 2026-09-28). `g<N>` = `league/generations/
   1 + 0.3 × closeness-to-centre before r50 on maps ≤ 1,024 tiles (most worldgen maps qualify): body-wall-17
   83-19 vs trading-swarm-5 (parent 73-29), 54-48 vs its parent; at 1.0 it lost 8-14 (the team crowds
   the middle, trapped deaths double). A split needs length ≥ 4 (2 ≤ n ≤ length − 2). (g15-14)
+  Devil is not about fast beds: learning each bed's gap exactly (the countdown reads the newly drawn
+  gap the round it's drawn) and valuing fast beds changed nothing (body-wall-20). There the swarm has
+  20+ dragons (avg length ~2.5) by r50 to our 7-10: the gap is how many dragons we field. (g15-19)
 
 ## Growth and roles
 
