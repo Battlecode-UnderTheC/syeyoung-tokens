@@ -36,7 +36,7 @@ StrategyAgent::StrategyAgent(const rl::Spawn& spawn, Params params)
       GST1_SET(room_margin) GST1_SET(room_min) GST1_SET(escape_slack) GST1_SET(escape_min) GST1_SET(check_split)
       GST1_SET(liberties) GST1_SET(share_factor) GST1_SET(patrol) GST1_SET(hunt_radius) GST1_SET(explore_value)
       GST1_SET(escape_steps) GST1_SET(trap_small)
-      GST1_SET(split_headroom) GST1_SET(turnout_budget) GST1_SET(doom_first) GST1_SET(ally_memory) GST1_SET(leader_split_until) GST1_SET(share_leader) GST1_SET(feed_distance) GST1_SET(big_split_length)
+      GST1_SET(split_headroom) GST1_SET(turnout_budget) GST1_SET(doom_first) GST1_SET(ally_memory) GST1_SET(doomed_split_room) GST1_SET(leader_split_until) GST1_SET(share_leader) GST1_SET(feed_distance) GST1_SET(big_split_length)
 #undef GST1_SET
     }
   }
@@ -427,7 +427,7 @@ bot::Action StrategyAgent::SafeStep(int preferred, bool trap_ok) {
   }
   // every step is a dead end we can't turn round in: split while we still can (the child
   // walks out the way we came)
-  if (best >= 0 && best_level == 0 && length_ >= 4 && units_ < spawn_.unit_limit)
+  if (best >= 0 && best_level == 0 && best_count <= p_.doomed_split_room && length_ >= 4 && units_ < spawn_.unit_limit)
     return Because("doomed: split", bot::Action::Split(length_ - 2));
   if (best >= 0) return Because(preferred >= 0 ? "detour (goal step unsafe)" : "no goal: roomiest", bot::Action::Move(best));
   // no free step. Split: the child's head is our tail, which points back the way we came
@@ -447,6 +447,14 @@ bot::Action StrategyAgent::SafeStep(int preferred, bool trap_ok) {
 // ---- the turn --------------------------------------------------------------------------------------
 
 bot::Action StrategyAgent::Turn(const rl::Observation& o) {
+#ifdef GST1_DEBUG
+  bot::Action a = TurnImpl(o);
+  if (a.kind == bot::Action::kSplit)
+    std::fprintf(stderr, "SPLIT id %d round %d len %d n %d leader %d units %d: %s\n", spawn_.id, round_, length_, a.split, leader_, units_, reason_);
+  return a;
+}
+bot::Action StrategyAgent::TurnImpl(const rl::Observation& o) {
+#endif
   Remember(o);
 
   // 1. feeding: late in the game a worker dies next to a bigger ally, leaving it pearls
