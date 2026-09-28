@@ -199,6 +199,10 @@ against the RL policy, native engine, 2026-09-28). `g<N>` = `league/generations/
   Don't gate feeding on the champion's length either: feed_min_champ 12 lost 9-13 on official maps
   (13 v 56 longest; the champion is short at r380 and grows by being fed). Gating on team size vs
   enemies seen (units > max(6, enemies)) halved fatal feed turns on gst84 but rarely fires on gst68. (g17-9, g17-10)
+- **The swarm's opening is not better than ours any more.** Playing its opening (value-per-round goals, no
+  contest discount, split 2 always) until r120 lost 49-53 to gather-split-trade-84: our contest discount
+  and centre pull take pearls from the swarm, and gst84 already out-eats trading-swarm-5 by r100 on official
+  maps (20.9 dragons / 56 length v 19.4 / 47). Opening trades lose. (g17-8)
 
 - **"No goal" means hemmed in, not idle.** On 97% of goalless turns the dragon's whole reachable region
   was in view and smaller than the room it needs: the goal search treats every body as a wall, so no
