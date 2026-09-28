@@ -126,7 +126,12 @@ against the RL policy, native engine, 2026-09-28). `g<N>` = `league/generations/
 - **Known portals were one-way doors.** The blind-step liberty cap refused every goal step onto a
   known portal (its exit is always out of view). gather-split-trade-42 crosses after a clean ping,
   an exit seen empty within 2 rounds, or 2 refusals: crossings 68 → 231 a match on default; even
-  in sims (53-49) but #2 in the league with holdout 100-50. (g13-5)
+  in sims (53-49) but #2 in the league with holdout 100-50. (g13-5) Its cost, measured: on 4 official
+  portal maps 143 lifted crossings, 36 deaths within 2 rounds, mostly head-to-head on the crossing
+  move into an exit with 3 unknown sides (2 unknown sides: 2 of 57 died). An enemy beside the exit
+  was known in only 2 of 248 crossings, so memory-based guards never fire (gst43). Vetoing the
+  fallback / exit-seen-empty crossings into open exits halved those deaths but stayed even (gst46
+  51-51); vetoing pinged ones too brought back portal pacing. (g13-18)
 
 ## Growth and roles
 
