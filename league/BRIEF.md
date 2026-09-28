@@ -81,9 +81,9 @@ Limits your variant must respect (the competition judge):
 1. Fill in `variants/{variant}/NOTES.md`: the idea; what changed from the parents and why;
    what you measured (your sim numbers, which maps, which opponents); what you expect to
    improve; what you tried that didn't work.
-2. From the worktree: `scripts/submit.sh {variant}`. It refuses changes outside your
-   directory, runs `check`, commits and tags `variant/{variant}`. The league picks it up
-   within a minute. A tag is final: never delete or move it.
+2. Don't run `scripts/submit.sh` yourself (the orchestrator tags): make sure
+   `build/tools/check {variant} maps/official` says "all checks passed", commit everything in
+   `variants/{variant}/`, and say in your report whether it is ready to submit.
 3. Submit only if your variant is at least even with its parents in your measurements. If it
    isn't, don't submit; your report is still valuable.
 

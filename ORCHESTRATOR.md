@@ -135,6 +135,9 @@ When a worker reports back:
 - Check the result yourself; don't trust the summary. `git tag -l variant/<name>` shows
   whether it submitted. `git -C <worktree> log --oneline main..` shows its commits.
   `git diff main...task/<task> --stat` must touch only `variants/<name>/`.
+- Workers don't tag (the permission classifier blocks `submit.sh` in their worktrees). When a
+  worker reports its variant ready and the diff is clean, run `scripts/submit.sh <variant>`
+  in its worktree yourself (the user allowed it: `Bash(scripts/submit.sh:*)`).
 - If submitted: `scripts/accept.sh g<N>-<k>` (merges the branch into main; the branch is
   kept). Then remove the worktree (`git worktree remove ../syeyoung-tokens.worktrees/g<N>-<k>`).
 - If it didn't submit (it ran out, or its variant lost to its parent): record what it
