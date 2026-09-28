@@ -137,10 +137,26 @@ struct Params {
   // portal-farmer (pf1): pockets are regions of known tiles closed off by kelp and portals
   // (no unknown edge, no plain way out) that hold beds: portal-only stores. Their pearls and
   // beds are worth pocket_bonus times as much, and a dragon inside one explores less
+#ifdef PF1_NOPOCKET
+  double pocket_bonus = 1.0;        // measurement baseline: gst39's behaviour, pockets only counted
+#else
   double pocket_bonus = 2.0;
+#endif
   int32_t pocket_max_div = 4;       // a pocket has at most board size / this many tiles
+#ifdef PF1_NOPOCKET
+  double pocket_explore = 1.0;
+#else
   double pocket_explore = 0.3;      // explore value while inside a pocket with beds
+#endif
   int32_t pocket_every = 4;         // recompute the pockets every this many rounds
+  // the lure: beds and pearls we have seen (through kelp) but know no way to reach are a store
+  // behind portals. With at least lure_min of them, a farmer (every lure_mod-th dragon by id)
+  // values stepping next to an unknown portal like lure_value and crosses it even with pearls
+  // in reach
+  int32_t lure_min = 4;
+  double lure_value = 3.0;
+  double lure_explore = 1.0;        // a lured farmer's explore value, times this (to find the entrances)
+  int32_t lure_mod = 0;             // 0: off (it lost 8-14 and 16-24 vs gst39 at 2, 9-13 and 16-24 at 4)
 };
 
 class StrategyAgent : public bot::Agent {
@@ -247,6 +263,7 @@ class StrategyAgent : public bot::Agent {
   std::vector<int32_t> pocket_;
   int32_t pocket_round_ = -100;
   void FindPockets();
+  bool lure_ = false;                                  // this turn: a farmer drawn to unknown portals
   bool InPocket(int32_t t) const { return !pocket_.empty() && pocket_[t] >= 0; }
   bool Banned(int32_t t) const {
     const auto it = banned_.find(t);

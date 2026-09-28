@@ -21,12 +21,13 @@ namespace pf1 {
 static long g_escape = 0, g_turnout = 0, g_calls = 0;
 #define PF1_COUNT(x) ++(x)
 // idle-loop measurement: turns where the last 12 heads cover <= 6 tiles with nothing eaten
-static std::atomic<long> g_turns{0}, g_idle{0}, g_eaten{0}, g_cross{0}, g_bans{0}, g_pocket_eat{0}, g_pocket_turns{0};
+static std::atomic<long> g_turns{0}, g_idle{0}, g_eaten{0}, g_cross{0}, g_bans{0}, g_pocket_eat{0}, g_pocket_turns{0}, g_lure{0}, g_lure_at{0}, g_lure_clear{0}, g_lure_body{0}, g_lure_known{0}, g_lure_reach{0};
 static struct IdleReport {
   ~IdleReport() {
     if (g_turns) std::fprintf(stderr, "PF1 turns %ld idle %ld (%.2f%%) eaten %ld crossings %ld bans %ld\n", g_turns.load(),
                               g_idle.load(), 100.0 * g_idle / g_turns, g_eaten.load(), g_cross.load(), g_bans.load());
     if (g_turns) std::fprintf(stderr, "PF1 pocket eaten %ld pocket turns %ld\n", g_pocket_eat.load(), g_pocket_turns.load());
+    if (g_turns) std::fprintf(stderr, "PF1 lure %ld at %ld clear %ld body %ld known %ld reach %ld\n", g_lure.load(), g_lure_at.load(), g_lure_clear.load(), g_lure_body.load(), g_lure_known.load(), g_lure_reach.load());
   }
 } g_idle_report;
 #else
@@ -450,9 +451,15 @@ StrategyAgent::Goal StrategyAgent::ChooseGoal(const Paths& paths) const {
         }
       }
     }
+    if (lure_)
+      for (int dir = 0; dir < 4; ++dir)
+        if (UnknownPortal(t, dir)) {
+          score = std::max(score, p_.lure_value / (d + 1));
+          break;
+        }
     for (int dir = 0; dir < 4; ++dir)
       if (board_.Step(t, dir) == kUnknown && !(p_.portal_explore && (portal_[t] >> dir & 1) && !WillCross())) {
-        score = std::max(score, (InPocket(head_) ? p_.pocket_explore : 1.0) * p_.explore_value / (d + 1));
+        score = std::max(score, (InPocket(head_) ? p_.pocket_explore : lure_ ? p_.lure_explore : 1.0) * p_.explore_value / (d + 1));
         break;
       }
     if (score > 0 && !Banned(t)) candidates.push_back({t, score});
@@ -809,7 +816,7 @@ bot::Action StrategyAgent::Turn(const rl::Observation& o) {
   ++g_turns;
   if (Looping()) ++g_idle;
   if (length_ > 0 && round_ == last_eat_ && round_ > born_) ++g_eaten;
-  if (std::string(reason_) == "portal: explore") ++g_cross;
+  if (std::string(reason_) == "portal: explore" || std::string(reason_) == "portal: lure") ++g_cross;
   if (InPocket(head_)) {
     ++g_pocket_turns;
     if (length_ > 0 && round_ == last_eat_ && round_ > born_) ++g_pocket_eat;
@@ -853,6 +860,16 @@ bot::Action StrategyAgent::Decide(const rl::Observation& o) {
   const Paths paths = Search(board_, head_, [&](int32_t t) {
     return !Occupied(t) || Classify(t) == Cell::kEnemyHead || t == ally_head;
   });
+  // the lure (pf1): seen stores we know no way into
+  lure_ = false;
+  if (WillCross() && !feeding && p_.lure_mod > 0 && spawn_.id % p_.lure_mod == 0) {
+    int32_t stranded = 0;
+    for (int32_t t = 0; t < board_.size() && stranded < p_.lure_min; ++t)
+      if (paths.dist[t] < 0 && board_.at(t).seen_round >= 0 && (board_.at(t).pearl || board_.at(t).countdown >= 0) &&
+          !Occupied(t))
+        ++stranded;
+    lure_ = stranded >= p_.lure_min;
+  }
   if (in_view && paths.dist[ally_head] >= 0 && paths.dist[ally_head] <= p_.feed_distance)
     return Because("feed champion", bot::Action::Resign());
 
@@ -902,15 +919,31 @@ bot::Action StrategyAgent::Decide(const rl::Observation& o) {
     recent_.clear();
   }
   last_goal_ = goal;
+#ifdef PF1_DEBUG
+  if (lure_) {
+    ++g_lure;
+    {
+      bool known = false, reach = false;
+      for (int32_t t = 0; t < board_.size(); ++t)
+        for (int d = 0; d < 4; ++d)
+          if (UnknownPortal(t, d)) { known = true; reach |= paths.dist[t] >= 0; }
+      g_lure_known += known;
+      g_lure_reach += reach;
+    }
+    if (ping_tile_ == head_ && ping_round_ == round_ - 1) ++g_lure_at;
+    if (exit_clear_ && ping_tile_ == head_) ++g_lure_clear;
+    if (exit_clear_ && ping_tile_ == head_ && BodyInView()) ++g_lure_body;
+  }
+#endif
   // exploring beside an unknown portal whose exit our ping found clear: step through it
   if (WillCross() && exit_clear_ && ping_tile_ == head_ && !target.trap && length_ >= 2 && UnknownPortal(head_, ping_dir_) &&
-      BodyInView() && (goal < 0 || [&] {
+      BodyInView() && (lure_ || goal < 0 || [&] {
         int32_t ready;
         return TileValue(goal, paths.dist[goal], &ready) == 0.0;
       }())) {
     bool enemy = false;
     for (const auto& [id, w] : seen_) enemy |= w.team != spawn_.team && w.round == round_ && w.head >= 0;
-    if (!enemy) return Because("portal: explore", bot::Action::Move(ping_dir_));
+    if (!enemy) return Because(lure_ ? "portal: lure" : "portal: explore", bot::Action::Move(ping_dir_));
   }
   const int preferred = goal >= 0 ? paths.first[goal] : -1;
   bot::Action a = SafeStep(preferred, target.trap);
