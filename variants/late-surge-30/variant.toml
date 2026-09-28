@@ -1,0 +1,7 @@
+name = "late-surge-30"
+parents = ["late-surge-29", "gather-split-trade-72"]
+operator = "crossover"
+archetype = "late-surge"
+author = "claude-sonnet-5"
+created = "2026-09-29"
+task = "g16-15"
