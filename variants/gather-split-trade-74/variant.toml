@@ -1,0 +1,7 @@
+name = "gather-split-trade-74"
+parents = ["gather-split-trade-72", "gather-split-trade-64"]
+operator = "crossover"
+archetype = "gather-split-trade"
+author = "claude-sonnet-5"
+created = "2026-09-29"
+task = "g16-11"
