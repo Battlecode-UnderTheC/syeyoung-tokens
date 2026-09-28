@@ -1,4 +1,4 @@
-#define GIANT_TUNING 1   // dev only: parameters from $GIANT
+// #define GIANT_TUNING 1   // dev only: parameters from $GIANT, debug output to stderr
 #include "giant.hpp"
 
 #include <algorithm>
@@ -444,6 +444,16 @@ bot::Action GiantAgent::Decide() {
     cands.push_back({d, to, TimeRoom(to, grow, need), edist, edist <= 1});
   }
 
+  // a portal exit out of view may hold a part of our body we don't know of (a child knows only
+  // what it saw): with a step in view that's not in reach of an enemy, don't gamble on it
+  {
+    bool seen_ok = false;
+    for (const Cand& c : cands)
+      if (board_.Current(c.to) && !c.lethal) seen_ok = true;
+    if (seen_ok)
+      cands.erase(std::remove_if(cands.begin(), cands.end(), [&](const Cand& c) { return !board_.Current(c.to); }),
+                  cands.end());
+  }
   const Cand* best = nullptr;
   bool evade = false;
   for (const Cand& c : cands)
