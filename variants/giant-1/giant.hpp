@@ -9,6 +9,7 @@
 
 #include <cstdint>
 #include <deque>
+#include <string>
 #include <unordered_map>
 #include <vector>
 
@@ -26,18 +27,44 @@ struct Params {
   int32_t threat_radius = 6;     // enemy heads' reach is computed this far
   int32_t evade_distance = 3;    // closer than this, evading beats the goal
   int32_t stub_length = 3;       // this short (and not alone): trade with any enemy head
-  int32_t feed_from_round = 430; // small dragons walk to a bigger ally and die next to it
-  int32_t feed_max_length = 6;
+  int32_t feed_from_round = 400; // helpers walk to a bigger ally and die next to it
+  int32_t feed_max_length = 1000;
+  // numbers: the giant splits off helpers early, helpers split too
+  int32_t giant_split_until = 100;
+  int32_t giant_child_length = 8;  // a child born this long carries on as a giant
+  int32_t helper_split_until = 300;
+  int32_t split_min_length = 4;
+  // helpers fight: trade with enemy heads at least as long, hunt them this close
+  int32_t hunt_radius = 6;
+  int32_t hunt_min_units = 3;
+  int32_t helper_room_margin = 3;
+  int32_t helper_room_min = 8;
+  int32_t outnumbered_factor = 2;   // outnumbered (by enemies seen lately), a helper trades only for this many times its length
+  int32_t enemy_memory = 60;
+  // gossip: every dragon pings the biggest giant it knows of (head tile, round, length)
+  int32_t king_ttl = 40;            // rounds a report stays believable
+  double king_decay = 0.5;          // reports compare by length less this per round of age
+  double demote_ratio = 2;          // a giant this many times shorter than the king becomes a helper
+  int32_t feed_early_length = 0;    // a helper this long feeds the giant in view any time after the giant stops splitting (0: off)
+  int32_t feed_distance = 3;        // a helper this close (torus steps) to the giant's head dies there
+  int32_t intercept_ahead = 2;      // and walks to this many steps in front of it
+  double body_time_factor = 1.0;    // room check: own segment frees after (steps until it would) * this (eating stalls the tail)
+  int32_t unknown_room = 0;         // room check: an unexplored edge is worth this many tiles (0: a sure way out)
+  int32_t tight_factor = 2;         // no roomy step: move anyway if room * this >= need, else split out
 };
 
 class GiantAgent : public bot::Agent {
  public:
   explicit GiantAgent(const rl::Spawn& spawn, Params params = {});
   bot::Action Turn(const rl::Observation& o) override;
-  const char* reason() const override { return reason_; }
+  const char* reason() const override {
+    why_ = std::string(giant_ ? "G " : "h ") + reason_;
+    return why_.c_str();
+  }
 
  private:
   void Remember(const rl::Observation& o);
+  bot::Action Decide();
   void ComputeThreats();
   int32_t TimeRoom(int32_t to, bool grow, int32_t limit) const;
   int32_t ChooseGoal(const std::vector<int32_t>& dist) const;
@@ -50,17 +77,33 @@ class GiantAgent : public bot::Agent {
   rl::Spawn spawn_;
   strat::BoardMemory board_;
   bool first_turn_ = true;
+  bool demoted_ = false;                      // a giant turned helper (never splits)
+  bool giant_ = false;                        // alive at round 0; else a helper
+  bool Tradeable(int32_t enemy_head) const;
+  int32_t EnemiesSeen() const;
+  std::unordered_map<int32_t, int32_t> enemy_seen_;   // enemy id -> last round seen
+  struct King {
+    int32_t id = -1, tile = -1, round = -1, length = 0;
+  };
+  King king_;                                 // the biggest giant we heard of
+  void Consider(const King& k);
+  uint64_t Encode(const King& k) const;
+  bool Decode(uint64_t w, King* k) const;
+  bool KingKnown() const { return king_.id >= 0 && round_ - king_.round <= p_.king_ttl; }   // a helper gains by a head-to-head with it
   int32_t head_ = 0, length_ = 0, units_ = 1, round_ = 0;
   std::deque<int32_t> body_;                  // own tiles, head first
   // this turn
   std::vector<int32_t> own_idx_;              // index in body_ of each tile, -1 none
   std::vector<uint8_t> other_;                // another dragon's segment (seen now)
   std::vector<int32_t> enemy_dist_;           // steps from the nearest enemy head (big: far)
-  std::vector<int32_t> enemy_heads_, ally_heads_;
+  std::vector<int32_t> enemy_heads_, ally_heads_, trade_heads_;   // threats, allies, trades we want
   std::unordered_map<int32_t, int32_t> seen_len_;   // visible segments by dragon id
   std::unordered_map<int32_t, int32_t> head_of_;    // head tile by dragon id (this turn)
+  std::unordered_map<int32_t, int> head_facing_;
+  std::vector<int32_t> head_id_;              // dragon id whose head is on the tile, -1
   std::vector<int32_t> blacklist_until_;      // goal tile -> round it is ignored until
   const char* reason_ = "";
+  mutable std::string why_;
 };
 
 }  // namespace giant
