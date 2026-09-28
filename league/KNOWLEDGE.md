@@ -135,6 +135,10 @@ against the RL policy, native engine, 2026-09-28). `g<N>` = `league/generations/
   fallback / exit-seen-empty crossings into open exits halved those deaths but stayed even (gst46
   51-51); vetoing pinged ones too brought back portal pacing. (g13-18)
 
+- **late-surge's trader switch is nearly inert by late-surge-17.** Making it decay (on 57% → 35% of
+  dragon-turns) left every action count and death rate unchanged vs late-surge-17 (11-11, 0.0
+  margin). Don't spend tasks on it. (g12-24, g13-21)
+
 ## Growth and roles
 
 - **Late-surge beats the champion-feeding line on worldgen:** a quiet swarm (never trade
