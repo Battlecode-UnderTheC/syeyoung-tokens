@@ -1,0 +1,7 @@
+name = "swarm-hunt-9"
+parents = ["swarm-hunt-8", "gather-split-trade-31"]
+operator = "crossover"
+archetype = "swarm-hunt"
+author = "claude-opus-5-5"
+created = "2026-09-28"
+task = "g8-1"
