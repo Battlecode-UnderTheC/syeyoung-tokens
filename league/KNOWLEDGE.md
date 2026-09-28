@@ -262,6 +262,11 @@ against the RL policy, native engine, 2026-09-28). `g<N>` = `league/generations/
   the pearl is gone; a claim sends it to a worse target on stale news. Sending the champion word
   on only two directions before r330 cost nothing (40-40): early ping slots are free. (g13-2)
 
+- **Portal ambushes don't fire in the league.** Waiting beside busy exits (portal-play-2) produced
+  ~0.1 ambush lunges a match: a head fresh out of a portal shows one segment, so its length is
+  unknown (12 of 18 in reach); dragons see only ~14 enemy crossings a match in their 7×7 windows;
+  escapes through portals never came up. The real opponent crosses far more often. (g14-4)
+
 ## Walls
 
 - **Multi-step seals work, but matter little:** laying the head across a pocket exit in one
