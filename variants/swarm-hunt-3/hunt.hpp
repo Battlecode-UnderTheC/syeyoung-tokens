@@ -48,7 +48,7 @@ struct Params {
   // spreading
   int32_t unit_reserve = 6;         // normal splits leave this many unit slots for trapped splits
   double crowd_penalty = 0.5;       // goal score /= 1 + penalty * ally segments near the goal
-  int32_t split_room = 2;           // split only with split_room * RoomNeeded free tiles around
+  int32_t split_room = 0;           // 0: off (2 halved splits and lost 13-27 on worldgen)
 };
 
 const Params& DefaultParams();

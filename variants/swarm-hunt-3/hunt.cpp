@@ -332,7 +332,7 @@ bot::Action HuntAgent::Turn(const rl::Observation& o) {
     const int32_t need = p_.split_room * RoomNeeded();
     auto open = [&](int32_t t) { return !Occupied(t) && !crowd_[t]; };
     const int32_t tail = body_.empty() ? head_ : body_.back();
-    if (static_cast<int32_t>(body_.size()) < length_ || (RoomAround(board_, head_, open, need) >= need &&
+    if (p_.split_room <= 0 || static_cast<int32_t>(body_.size()) < length_ || (RoomAround(board_, head_, open, need) >= need &&
                                                          RoomAround(board_, tail, open, need) >= need))
       return Because("split", bot::Action::Split(length_ / 2));
   }
