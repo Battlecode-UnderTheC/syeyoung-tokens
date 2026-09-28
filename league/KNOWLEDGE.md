@@ -172,7 +172,24 @@ against the RL policy, native engine, 2026-09-28). `g<N>` = `league/generations/
 - **A ping checks a tile out of view:** pings go straight (and through portals) and ECHOES
   reports what they hit, so a clean echo means the line is clear. It cut deaths on blind
   portal crossings from 27% to ~5%. (g5-1)
-- **Portals barely matter** to the current strategies: ~0.25% of moves cross one. (g5-1)
+- **Portals matter on real maps (overturns g5-1's "barely matter"):** in the first server battle
+  (M489641, 10 maps) 8.7% of our moves were idle loops (opponent 1.3%), 75% of them orbiting an
+  unknown portal: `ChooseGoal` gives explore value to a tile beside a portal whose far end we
+  haven't seen, `SafeStep` never takes that step, so the dragon circles forever (one leader did so
+  for 240 turns). On Default 11 portal-only rooms hold 138/249 beds and 64 of the 84 pearls left
+  at r499; on Trauma 122/142 beds are portal-only. Fix: step through the unknown portal when
+  exploring (sonar-check the exit first), plus a loop breaker. (server M489641)
+
+## Real opponents (server)
+
+- **split-v7-style trading swarm** (M489641, 5-5 vs gather-split-trade-27): no sonar, always
+  `SPLIT 2`, keeps splitting to r499, starts nearly every head-to-head as an even trade, 3–5-long
+  dragons lunge 2–4 steps at our long ones (killed a champion ≥ 14 in 4 of 10 games), sloppy
+  (many self/ally deaths, affordable at ~1 split a round), no consolidation (its longest grows
+  late by eating, e.g. our champion's corpse). It wiped us out on small crowded maps (Devil,
+  Prisoners, Trophy: out-ate us ~4:1, twice our dragons by r150) and beat us on longest on big
+  maps by lunging our champion. Our trade rule (only enemies ≥ our length) gives its 2-long
+  kamikazes free even trades. Replays, decoder and renderer: `../syeyoung-tokens.league/replays/`.
 
 ## Maps
 
