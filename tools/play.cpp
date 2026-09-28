@@ -106,6 +106,10 @@ Outcome Play(const std::string& map_text, const std::array<const Variant*, 2>& s
     const auto t0 = std::chrono::steady_clock::now();
     const bot::Action action = it->second->Turn(o);
     out.turn_us[team].push_back(std::chrono::duration<float, std::micro>(std::chrono::steady_clock::now() - t0).count());
+    std::vector<int32_t> before;  // lengths before the move, to price what a lunge kills
+    const bool multi = !action.resign && action.kind != bot::Action::kSplit && action.steps.size() > 1;
+    if (multi)
+      for (const auto& dr : g.dragons()) before.push_back(dr.length);
     g.ClearDeaths();
     Apply(g, action);
     const std::string why = it->second->reason();
@@ -116,6 +120,11 @@ Outcome Play(const std::string& map_text, const std::array<const Variant*, 2>& s
                     kCauses[death.reason], death.id == d ? "its own" : "another dragon's",
                     why.empty() ? "" : ", acting: ", why.c_str());
       ++out.deaths[death.team][death.reason];
+      if (multi && death.team != team && death.reason == 3 && death.id < static_cast<int32_t>(before.size())) {
+        const int32_t len = before[death.id];
+        ++out.lunged[death.team][len >= 10];
+        out.lunged_len[death.team][len >= 10] += len;
+      }
       if (death.id == d && !why.empty()) ++out.fatal[team][why];
       live.erase(death.id);
     }

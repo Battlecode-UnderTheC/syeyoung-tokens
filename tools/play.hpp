@@ -34,6 +34,8 @@ struct Outcome {
   int32_t rounds = 0;
   std::array<int32_t, 2> longest{}, total{};       // at the end, by team
   std::array<std::array<int32_t, 5>, 2> deaths{};  // by team and cause (kCauses)
+  std::array<std::array<int32_t, 2>, 2> lunged{};  // by team: dragons killed head-to-head by an enemy's
+  std::array<std::array<int32_t, 2>, 2> lunged_len{};  // multi-step move, [shorter than 10, 10+], and their length
   std::map<std::string, int64_t> reasons[2];       // by team: why its dragons acted
   std::map<std::string, int64_t> fatal[2];         // ... and the reasons behind turns that killed them
   std::array<std::vector<float>, 2> turn_us;       // by team: every Turn()'s wall time, microseconds
