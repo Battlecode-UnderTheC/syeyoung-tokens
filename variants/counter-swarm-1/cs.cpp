@@ -16,7 +16,7 @@ StrategyAgent::StrategyAgent(const rl::Spawn& spawn, Params params)
   auto env = [](const char* k, auto& v) { if (const char* e = getenv(k)) v = static_cast<std::remove_reference_t<decltype(v)>>(atof(e)); };
   env("P_SPLIT", p_.split_min_length); env("P_SPLITR", p_.split_until_round); env("P_FEED", p_.feed_from_round);
   env("P_LIBS", p_.min_libs); env("P_MARGIN", p_.trade_margin); env("P_HUNT", p_.hunt_radius); env("P_HUNTU", p_.hunt_min_units);
-  env("P_ROOMM", p_.room_margin); env("P_ROOMMIN", p_.room_min); env("P_TRAP", p_.trap_cost); env("P_REACH", p_.strike_reach); env("P_GOSSIP", p_.gossip); env("P_FEEDD", p_.feed_distance); env("P_ALLYM", p_.ally_memory); env("P_TTL", p_.rumor_ttl); env("P_X1", p_.x1); env("P_X2", p_.x2); env("P_X3", p_.x3);
+  env("P_ROOMM", p_.room_margin); env("P_ROOMMIN", p_.room_min); env("P_TRAP", p_.trap_cost); env("P_REACH", p_.strike_reach); env("P_GOSSIP", p_.gossip); env("P_FEEDD", p_.feed_distance); env("P_PATV", p_.patrol_value); env("P_PATF", p_.patrol_from); env("P_PATA", p_.patrol_age); env("P_SMEM", p_.snipe_memory); env("P_SFAC", p_.snipe_factor); env("P_LSPLIT", p_.leader_split_until); env("P_ALLYM", p_.ally_memory); env("P_TTL", p_.rumor_ttl); env("P_X1", p_.x1); env("P_X2", p_.x2); env("P_X3", p_.x3);
 #endif
 }
 
@@ -216,6 +216,10 @@ StrategyAgent::Goal StrategyAgent::ChooseGoal(const Paths& paths) const {
         score = std::max(score, p_.explore_value / (d + 1));
         break;
       }
+    // late: tiles not seen for a while are worth a look (the enemy's last dragons hide somewhere)
+    if (p_.patrol_value > 0 && !leader_ && round_ >= p_.patrol_from && board_.at(t).seen_round >= 0 &&
+        round_ - board_.at(t).seen_round > p_.patrol_age)
+      score = std::max(score, p_.patrol_value / (d + 1));
     if (score > 0) candidates.push_back({t, score});
   }
   const size_t k = std::min<size_t>(candidates.size(), p_.trap_candidates);
@@ -409,7 +413,8 @@ bot::Action StrategyAgent::Decide(const rl::Observation& o) {
     }
 
   // 4. growth: split off a worker while there is time for it to gather
-  if (length_ >= p_.split_min_length && round_ < p_.split_until_round && units_ < spawn_.unit_limit)
+  if (length_ >= p_.split_min_length && round_ < (leader_ ? p_.leader_split_until : p_.split_until_round) &&
+      units_ < spawn_.unit_limit)
     return Because("split", bot::Action::Split(length_ / 2));
 
   // 5. a goal, and the first safe step towards it
@@ -417,8 +422,8 @@ bot::Action StrategyAgent::Decide(const rl::Observation& o) {
   int32_t snipe = -1;
   if (!leader_ && p_.x2 > 0 && units_ >= 2)
     for (const auto& [id, w] : seen_)
-      if (w.team != spawn_.team && w.round == round_ && w.head >= 0 && paths.dist[w.head] > 0 &&
-          paths.dist[w.head] <= p_.x3 && w.length >= p_.x2 && w.length >= 2 * length_ &&
+      if (w.team != spawn_.team && round_ - w.round <= p_.snipe_memory && w.head >= 0 && paths.dist[w.head] > 0 &&
+          paths.dist[w.head] <= p_.x3 && w.length >= p_.x2 && w.length >= p_.snipe_factor * length_ &&
           (snipe < 0 || paths.dist[w.head] < paths.dist[snipe]))
         snipe = w.head;
   Goal target = snipe >= 0 ? Goal{snipe, false}
@@ -442,6 +447,7 @@ bot::Action StrategyAgent::Decide(const rl::Observation& o) {
   if (goal >= 0 && preferred >= 0 && board_.Step(head_, preferred) == goal && Classify(goal) == Cell::kEnemyHead &&
       WorthTrading(board_.at(goal).occupant))
     return Because("hunt: trade", bot::Action::Move(preferred));
+  if (snipe >= 0 && std::string(reason_) == "toward goal") reason_ = "snipe";
   return step;
 }
 

@@ -27,6 +27,7 @@ struct Params {
   // growth: split off a worker (the child takes the tail half)
   int32_t split_min_length = 4;     // at least this long ... (numbers win the head-to-head attrition: 4 beat 6, 8, 12 in simulation)
   int32_t split_until_round = 300;  // ... and before this round
+  int32_t leader_split_until = 300; // a leader (alive at the start) stops splitting here and grows
   // feeding: a worker gives its body to a bigger ally
   int32_t feed_from_round = 340;
   int32_t feed_distance = 2;        // dies when its head is this close to the ally's head (steps)
@@ -54,6 +55,10 @@ struct Params {
   int32_t avoid_heads = 1;          // 1: every dragon keeps off tiles next to enemy heads it won't trade with; 0: leaders only
   int32_t survivor_units = 0;
   int32_t strike_reach = 5;
+  int32_t snipe_memory = 0;         // rounds a big enemy sighting stays worth chasing
+  double snipe_factor = 2;          // a big enemy: at least this many times our length
+  double patrol_value = 0;          // a tile unseen for patrol_age rounds, from patrol_from on
+  int32_t patrol_from = 300, patrol_age = 40;
   int32_t rumor_ttl = 30;           // rounds a rumored big ally stays worth walking to
   int32_t gossip = 0;               // 1: share the biggest ally over sonar         // multi-step strikes onto enemy heads up to this many steps away
   double x1 = 0.9, x2 = 0, x3 = 8;  // x2,x3: snipe length, radius  // x1: a pearl an ally head is closer to is worth this much less
