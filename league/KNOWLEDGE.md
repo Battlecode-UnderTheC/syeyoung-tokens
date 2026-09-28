@@ -120,7 +120,9 @@ against the RL policy, native engine, 2026-09-28). `g<N>` = `league/generations/
   walking 5 steps to a pearl. Charging `dist + 2·max(0, due − dist)` plus 0.5× the value of other
   pearls/beds within 2 steps won on official and worldgen maps. Weighting explore by unseen area
   and a centre pull for the first 60 rounds were neutral to harmful (the centre pull hurt). Goal
-  stickiness (×1.2–1.5 on last turn's goal) was flat (gst44 51-51). (g13-6, g13-11)
+  stickiness (×1.2–1.5 on last turn's goal) was flat (gst44 51-51). Confirmed in every line it was ported to:
+  body-wall-12 35-27, swarm-hunt-19 41-21, counter-swarm-25 42-20 vs their parents. (g13-6, g13-11,
+  g13-17, g13-19, g13-22)
 - **Known portals were one-way doors.** The blind-step liberty cap refused every goal step onto a
   known portal (its exit is always out of view). gather-split-trade-42 crosses after a clean ping,
   an exit seen empty within 2 rounds, or 2 refusals: crossings 68 → 231 a match on default; even
