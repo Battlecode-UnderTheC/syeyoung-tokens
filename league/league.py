@@ -47,6 +47,7 @@ EPOCH_DAYS = 7               # the rotating suite changes this often
 EPOCH_START = dt.date(2026, 9, 28)
 HOLDOUT_POOL, HOLDOUT_WORLDGEN = 60, 40
 HOLDOUT_TOP = 4              # the top this many by rating play each other on the holdout
+HOLDOUT_SHARE = 0.25         # share of each batch kept for the holdout while rating games are owed
 NEIGHBOURS = 8               # past this many variants, each plays its rating neighbours only
 FULL_ROUND_ROBIN = 12        # ... up to this many, everyone plays everyone (low keeps a new tag rated in minutes)
 GATE_VS_RANDOM = 0.75        # share of public matches a new variant must win against anchor-random
@@ -343,13 +344,19 @@ def schedule(con, suite_maps, limit=BATCH):
                 todo.append(pair_jobs(con, a, b, suite, maps))
     todo.sort(key=len, reverse=True)   # the pairs missing the most games first
     jobs = [j for js in todo for j in js]
-    if not jobs:
-        # each other, and anchor-greedy: a fixed yardstick (holdout vs public rate against it shows overfitting)
-        top = [a for a in active if a not in ANCHORS][:HOLDOUT_TOP]
-        for i, a in enumerate(top):
-            for b in top[i + 1:] + (['anchor-greedy'] if 'anchor-greedy' in active else []):
-                jobs += pair_jobs(con, a, b, 'holdout', suite_maps['holdout'])
-    return jobs[:limit]
+    # the holdout among the top: each other, and anchor-greedy (a fixed yardstick: holdout vs
+    # public rate against it shows overfitting). It gets a share of every batch, so it keeps
+    # up while new tags keep arriving; pairs are interleaved so partial coverage stays even.
+    top = [a for a in active if a not in ANCHORS][:HOLDOUT_TOP]
+    held = []
+    for i, a in enumerate(top):
+        for b in top[i + 1:] + (['anchor-greedy'] if 'anchor-greedy' in active else []):
+            held.append(pair_jobs(con, a, b, 'holdout', suite_maps['holdout']))
+    held = [js[k] for k in range(max(map(len, held), default=0)) for js in held if k < len(js)]
+    if limit is None:
+        return held + jobs
+    share = limit if not jobs else int(limit * HOLDOUT_SHARE)
+    return held[:share] + jobs[:limit - min(share, len(held))]
 
 
 # ---- ratings: Bradley-Terry, draws half a win each way ----
