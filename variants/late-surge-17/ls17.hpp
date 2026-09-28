@@ -161,10 +161,10 @@ struct Params {
   double wait_factor = 2.0;         // a round spent waiting on a bed costs this many steps (0: parent's max(dist, due))
   double cluster_bonus = 0.5;       // a candidate gains this share of the pearls/beds within cluster_radius
   int32_t cluster_radius = 2;
-  int32_t frontier_radius = 3;      // an explore tile is weighted by the never-seen area within this radius
+  int32_t frontier_radius = 0;      // an explore tile is weighted by the never-seen area within this radius
   double frontier_floor = 0.3;      // ... from this share (no unseen area) to 1 (all unseen)
   int32_t open_centre_until = 60;   // the centre pull on every map for the first rounds
-  double open_centre_value = 0.4;
+  double open_centre_value = 0.0;
 };
 
 class StrategyAgent : public bot::Agent {
