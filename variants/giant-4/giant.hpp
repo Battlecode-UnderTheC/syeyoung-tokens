@@ -27,12 +27,12 @@ struct Params {
   int32_t threat_radius = 6;     // enemy heads' reach is computed this far
   int32_t evade_distance = 3;    // closer than this, evading beats the goal
   int32_t stub_length = 3;       // this short (and not alone): trade with any enemy head
-  int32_t feed_from_round = 380; // late-surge endgame: every dragon walks to the king and dies next to it
+  int32_t feed_from_round = 340; // surge: every dragon (giants too) walks to the king and dies next to it (380 measured worse here)
   int32_t feed_max_length = 1000;
   // numbers: the giant splits off helpers early, helpers split too
   int32_t giant_split_until = 100;
   int32_t giant_child_length = 8;  // a child born this long carries on as a giant
-  int32_t helper_split_until = 400;
+  int32_t helper_split_until = 350;  // 400 (late-surge) measured worse here
   int32_t split_min_length = 4;
   // helpers fight: trade with enemy heads at least as long, hunt them this close
   int32_t hunt_radius = 6;
