@@ -78,7 +78,12 @@ struct Params {
   int32_t avoid_heads = 1;          // 1: every dragon keeps off tiles next to enemy heads it won't trade with; 0: leaders only
   int32_t survivor_units = 0;       // down to this many dragons and outnumbered: flee enemy heads (0: off; fleeing lost games in simulation)
   // the lunge (from swarm-hunt-2): a MOVE of up to length-1 steps onto an enemy head worth a trade
-  int32_t lunge_reach = 6;          // at most this many steps (bounds the search)
+  int32_t lunge_reach = 6;
+  // the unit cap: at UNIT_LIMIT no one can split (a growth split or a trapped escape). A worker
+  // too short to split (length <= cap_feed_max_length) whose head is within 2 steps of a longer
+  // ally's head dies there instead: the ally eats its pearls and the slot goes to a split
+  int32_t cap_feed_max_length = 3;  // 0: off
+  int32_t cap_feed_slack = 0;       // ... when our count is at least unit_limit - this          // at most this many steps (bounds the search)
 };
 
 class StrategyAgent : public bot::Agent {

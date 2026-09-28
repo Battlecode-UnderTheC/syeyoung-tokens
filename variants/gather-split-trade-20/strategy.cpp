@@ -600,6 +600,23 @@ bot::Action StrategyAgent::Decide(const rl::Observation& o) {
     if (Lunge(&lunge)) return Because("lunge", lunge);
   }
 
+  // 2c. the unit cap: a short worker gives its slot (and pearls) to a longer ally right next to it
+  if (!leader_ && length_ <= p_.cap_feed_max_length && units_ >= spawn_.unit_limit - p_.cap_feed_slack &&
+      round_ < p_.feed_from_round) {
+    for (const auto& [id, w] : seen_) {
+      if (id == spawn_.id || w.team != spawn_.team || w.round != round_ || w.head < 0 || w.length <= length_) continue;
+      bool near = false;
+      for (int d = 0; d < 4 && !near; ++d) {
+        const int32_t n = board_.Step(head_, d);
+        if (n < 0) continue;
+        if (n == w.head) near = true;
+        else if (!Occupied(n))
+          for (int e = 0; e < 4 && !near; ++e) near = board_.Step(n, e) == w.head;
+      }
+      if (near) return Because("cap: feed ally", bot::Action::Resign());
+    }
+  }
+
   // 3. survival: our last dragons, outnumbered, keep away from enemy heads (losing them all loses the game)
   if (units_ <= p_.survivor_units && EnemiesSeen() > units_)
     if (const int flee = FleeDirection(); flee >= 0) {
