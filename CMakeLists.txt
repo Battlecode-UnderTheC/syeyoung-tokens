@@ -23,11 +23,11 @@ target_include_directories(shared PUBLIC shared/engine shared/protocol shared/bo
 target_compile_options(shared PRIVATE -O2 -Wall -Wextra)
 
 # every variants/<name>/ with a *.cpp is a plugin: build/variants/lib<name>.so
-file(GLOB variant_dirs LIST_DIRECTORIES true ${CMAKE_CURRENT_SOURCE_DIR}/variants/*)
+file(GLOB variant_dirs LIST_DIRECTORIES true CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/variants/*)
 foreach(dir ${variant_dirs})
   if(IS_DIRECTORY ${dir})
     get_filename_component(name ${dir} NAME)
-    file(GLOB sources ${dir}/*.cpp)
+    file(GLOB sources CONFIGURE_DEPENDS ${dir}/*.cpp)
     if(sources)
       add_library(${name} MODULE ${sources})
       target_include_directories(${name} PRIVATE ${dir})
