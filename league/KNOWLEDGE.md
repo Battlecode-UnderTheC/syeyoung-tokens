@@ -85,6 +85,18 @@ against the RL policy, native engine, 2026-09-28). `g<N>` = `league/generations/
 
 ## Growth and roles
 
+- **Late-surge beats the champion-feeding line on worldgen:** a quiet swarm (never trade
+  evenly; strike/lunge only at strictly longer enemies; split at 4 until 400) that sends every
+  dragon, leaders included, to the sonar-agreed champion from round 380 (die within 3 steps)
+  went 53-27 vs gather-split-trade-23 on worldgen in sims and led the league (2180, holdout
+  195-45) on worldgen games; it loses to trading swarms on small crowded official maps. The
+  surge sweet spot is 380–400 (350 too early). A crowding switch to even trades fixes the
+  trading-swarm matchup but hurts vs counter-swarm (late-surge-2). (g6-8, g6-14, g6-15)
+- **The split window matters across lines:** counter-swarm's collapse after round 300 came
+  from stopping splits at 300 (splitting until 350 fixed most of its worldgen gap). (g6-9)
+- **League caveat (fixed 21:10):** the scheduler played a pair's worldgen games before its
+  official ones, so new variants' early ratings were worldgen-only.
+
 - **A lone giant loses:** never splitting went 1-21 vs strategy-v1 on official maps. A giant
   fed by a helper swarm (giant-1) rated 1802, about even with strategy-v1. Sonar gossip about
   the giant's position reaches few helpers (~10 feeds a match). (g1-3)
