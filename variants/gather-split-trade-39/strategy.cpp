@@ -1,4 +1,3 @@
-#define GST39_TRACE 1
 #include "strategy.hpp"
 
 #include <algorithm>
