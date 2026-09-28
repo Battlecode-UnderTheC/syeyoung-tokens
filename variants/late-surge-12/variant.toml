@@ -1,0 +1,7 @@
+name = "late-surge-12"
+parents = ["late-surge-11"]
+operator = "tweak"
+archetype = "late-surge"
+author = "claude-sonnet-5"
+created = "2026-09-28"
+task = "g12-7"
