@@ -1,0 +1,7 @@
+name = "gather-split-trade-83"
+parents = ["gather-split-trade-78"]
+operator = "tweak"
+archetype = "gather-split-trade"
+author = "claude-sonnet-5"
+created = "2026-09-29"
+task = "g16-26"
