@@ -1,0 +1,7 @@
+name = "giant-8"
+parents = ["giant-7", "gather-split-trade-34"]
+operator = "crossover"
+archetype = "giant"
+author = "claude-opus-5-5"
+created = "2026-09-28"
+task = "g11-4"
