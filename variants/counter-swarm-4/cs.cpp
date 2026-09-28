@@ -127,6 +127,7 @@ bool StrategyAgent::Exposed(int32_t t) const {
 // view), so assume at least 4.
 void StrategyAgent::MapThreats() {
   threat_.assign(board_.size(), 0);
+  if (!leader_) return;             // workers are cheap and trade anyway; dodging cost them more than it saved
   std::vector<int32_t> depth(board_.size(), -1), frontier, next, touched;
   for (const auto& [id, w] : seen_) {
     if (w.team == spawn_.team || w.round != round_ || w.head < 0 || WorthTrading(id)) continue;
