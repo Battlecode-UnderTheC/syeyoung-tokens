@@ -156,6 +156,12 @@ against the RL policy, native engine, 2026-09-28). `g<N>` = `league/generations/
   cap-safety no-trap gate already covers the champion case and an outright dead-end ban costs
   growth there; the portal gate alone read 21-19. The fix depends on the line. (g14-15, g15-1..4)
 
+- **The losing side's flat midgame is a numbers problem, not a pickup problem.** Trade corpses:
+  <1% left uneaten; the winner eats ~53% (≈30 pearls a match more). Goal steps refused next to an
+  enemy head: ~1% of turns, ~4 pearls a match if loosened. The loser has fewer dragons at each trade
+  and fewer allies to recycle its trapped dead. Fix earlier (dragons alive when sides meet).
+  Letting an enemy head contest only its 2 nearest targets (gst56) helped a little (55-47). (g15-6)
+
 ## Growth and roles
 
 - **Late-surge beats the champion-feeding line on worldgen:** a quiet swarm (never trade
