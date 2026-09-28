@@ -32,7 +32,7 @@ struct Params {
   // numbers: the giant splits off helpers early, helpers split too
   int32_t giant_split_until = 100;
   int32_t giant_child_length = 8;  // a child born this long carries on as a giant
-  int32_t helper_split_until = 250;
+  int32_t helper_split_until = 300;
   int32_t split_min_length = 4;
   // helpers fight: trade with enemy heads at least as long, hunt them this close
   int32_t hunt_radius = 6;
