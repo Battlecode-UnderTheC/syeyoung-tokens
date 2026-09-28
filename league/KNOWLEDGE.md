@@ -341,7 +341,7 @@ against the RL policy, native engine, 2026-09-28). `g<N>` = `league/generations/
 - **Bodyguards and escorts don't work.** A short ally trading into a lunger that threatens our giant
   fired 0 times, opportunistically (gst86) or with placed escorts beside the champion (gst87): a lunger
   strikes 2-3 tiles in one turn, an escort of length 2-4 reaches 1-3 and must also act first. Escorts
-  cost feeding (they crowd the champion). Only the giant's own avoidance is left to try. (g17-2, g17-7)
+  cost feeding (they crowd the champion). Champion-only lunge avoidance was neutral too (49-53, gst92): the lunge problem has no cheap fix. (g17-2, g17-7, g17-13)
 
 - **A 40-game worldgen win can be seed luck.** gather-split-trade-90 went 29-11 vs its parent on one set
   and 17-23 on an independent one (g17-12). Always confirm a promising worker result on a second set
