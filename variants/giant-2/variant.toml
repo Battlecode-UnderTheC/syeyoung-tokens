@@ -1,0 +1,7 @@
+name = "giant-2"
+parents = ["giant-1"]
+operator = "mutate"
+archetype = "giant"
+author = "claude-opus-5-5"
+created = "2026-09-28"
+task = "g6-5"
