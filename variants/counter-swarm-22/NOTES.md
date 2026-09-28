@@ -41,7 +41,7 @@ that no longer plays.
 - Kept: counter-swarm's strike (not the lunge), trade rules, hunting cut at 300, champion guard.
 
 After the fix, same maps and seats: true champion named 43% (was 35%) at r460, dead-named 42%
-(was 50%); at r400 56% (was 38%). Better, but still well below gst39's own reported 72%.
+(was 50%); at r400 60% (was 38%), dead-named 24% (was 43%). Better, but still well below gst39's own reported 72%.
 
 ## Measured (sim, both seats, threads 2)
 
