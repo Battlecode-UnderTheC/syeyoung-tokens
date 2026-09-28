@@ -53,6 +53,9 @@ against the RL policy, native engine, 2026-09-28). `g<N>` = `league/generations/
   and die only when they see it within reach. gather-split-trade-4 beat its parent 29-11
   (+70 Elo); counter-swarm-5 +30. Feed deaths are still only ~5–8 a match: reaching the
   champion is the limit. Feeding from 260 is clearly worse than 300–360. (g2-3, g3-1, g3-3)
+- **Don't grow the champion early:** a lone gatherer grows ~0.05–0.1 length a round; an heir
+  that stops splitting from round 150–200 cost the swarm more than it gained (15-25 on
+  worldgen at 150). Freezing the champion from 300 (no splits/trades/lunges) went 57-45. (g5-6)
 - **Feeding logistics:** holding the champion still (13-27 on worldgen) and walking feeders
   to stale reports both lose; routing feeders raised feed deaths 25% but not the champion's
   length, since a walking feeder stops gathering. (g3-6)
