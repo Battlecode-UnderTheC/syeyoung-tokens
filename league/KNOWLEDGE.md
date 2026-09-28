@@ -72,6 +72,10 @@ against the RL policy, native engine, 2026-09-28). `g<N>` = `league/generations/
   trauma only 0–3 of ~10 dragons knew the real champion. Fix: flag partial reports as lower
   bounds that never lower a known length (swarm-hunt-13; neutral in sims, but the mechanism is
   real). Isolated champions in portal pockets still don't get fed. (g11-6)
+  Mostly the team names a DEAD champion (39 of 48 dragons naming one dead id), not an isolated one:
+  the slower late fade keeps its old report alive and the corrected stub report never spreads.
+  Obituary pings (relay a sharply shrunk or dead champion's correction for 20 rounds) raised
+  knowledge 48% → 64% on a worldgen set; gather-split-trade-39 55-47. (g12-10)
 - **Trapped long dragons resign whole at the unit cap** (no split escape): ~110 dragons of
   length 4–19 in one worldgen match. (g5-7)
 - **Don't grow the champion early:** a lone gatherer grows ~0.05–0.1 length a round; an heir
