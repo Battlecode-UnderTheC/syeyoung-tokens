@@ -43,12 +43,20 @@ struct Params {
   double report_fade = 0.5;         // a report's weight when choosing the champion: its length less this per round of age
   // gather-split-trade-38 (from swarm-hunt-13): in the endgame a far champion's relayed reports
   // arrive old: keep them longer and fade them slower, so remote dragons stop electing themselves
+#ifdef GST38_OFF
+  int32_t late_report_from = 9999;
+#else
   int32_t late_report_from = 330;
+#endif
   int32_t late_report_memory = 80;
   double late_report_fade = 0.25;
   // a partial sighting of an ally is only a lower bound on its length: it moves the report's
   // position and round on, but never shrinks the length an exact (self) report gave
+#ifdef GST38_OFF
+  int32_t lower_bound_reports = 0;
+#else
   int32_t lower_bound_reports = 1;
+#endif
   int32_t leader_feed_from = 380;   // a leader that is not the champion feeds it from this round ...
   int32_t leader_feed_fresh = 20;   // ... when the champion was located at most this many rounds ago
   // targets: each tile's value per round it takes to collect it (see TileValue)
