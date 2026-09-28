@@ -9,6 +9,7 @@
                                    variants on public + practice maps; touches nothing
     league trace <A> <B> <map>     one match, round by round (sim --trace)
     league rate                    recompute ratings and reports from the results alone
+    league pending                 tags not yet ingested or gated, and matches still owed
 
 Standard library only. Everything it owns lives in ../syeyoung-tokens.league/ (the data
 dir, never in git): league.db (SQLite: variants, matches), plugins/, tools/, maps/,
@@ -32,7 +33,9 @@ import tempfile
 import time
 from pathlib import Path
 
-REPO = Path(__file__).resolve().parent.parent
+# the main checkout, also when run from a task worktree (which shares its .git)
+REPO = Path(subprocess.run(['git', '-C', str(Path(__file__).resolve().parent), 'rev-parse', '--path-format=absolute',
+                            '--git-common-dir'], check=True, capture_output=True, text=True).stdout.strip()).parent
 DATA = REPO.parent / (REPO.name + '.league')
 
 # ---- configuration (change it here, in a commit) ----
@@ -320,7 +323,7 @@ def parse_toml(text):
 
 
 # ---- scheduling ----
-def schedule(con, suite_maps):
+def schedule(con, suite_maps, limit=BATCH):
     """The next batch: pairs short of a full set of games on the rating suites first, fewest
     games first; then the holdout among the top."""
     active = [r['name'] for r in con.execute(
@@ -346,7 +349,7 @@ def schedule(con, suite_maps):
         for i, a in enumerate(top):
             for b in top[i + 1:] + (['anchor-greedy'] if 'anchor-greedy' in active else []):
                 jobs += pair_jobs(con, a, b, 'holdout', suite_maps['holdout'])
-    return jobs[:BATCH]
+    return jobs[:limit]
 
 
 # ---- ratings: Bradley-Terry, draws half a win each way ----
@@ -617,6 +620,17 @@ def trace(args):
                     '--maps', str(m.parent), '--trace', m.stem])
 
 
+def pending(args):
+    """What the league still owes: 0 tags and 0 matches means every variant is fully rated."""
+    con = db()
+    known = {r['name']: r['status'] for r in con.execute('SELECT name, status FROM variants')}
+    tags = [t[len('variant/'):] for t in git('tag', '--list', 'variant/*').split('\n') if t]
+    waiting = [t for t in tags if known.get(t) in (None, 'building', 'gating')]
+    jobs = schedule(con, suites(con), limit=None)
+    print(f"tags waiting: {len(waiting)}{' (' + ', '.join(waiting) + ')' if waiting else ''}")
+    print(f'matches owed: {len(jobs)}')
+
+
 def rerate(args):
     refresh(db())
     print((DATA / 'reports' / 'LEADERBOARD.md').read_text())
@@ -643,6 +657,7 @@ def main():
     s.add_argument('map', help='a .map file')
     s.set_defaults(fn=trace)
     sub.add_parser('rate').set_defaults(fn=rerate)
+    sub.add_parser('pending').set_defaults(fn=pending)
     args = ap.parse_args()
     args.fn(args)
 

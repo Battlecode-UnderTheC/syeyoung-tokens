@@ -22,7 +22,7 @@ if [ -n "$outside" ]; then
   exit 1
 fi
 cmake -S . -B build >/dev/null
-cmake --build build -j --target "$name" check >/dev/null
+cmake --build build -j 4 --target "$name" check >/dev/null
 if ! report=$(build/tools/check "$name" maps/official); then
   echo "$report" | tail -15
   echo "check failed: not submitted" >&2
