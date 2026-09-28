@@ -55,7 +55,7 @@ StrategyAgent::StrategyAgent(const rl::Spawn& spawn, Params params)
       GST42_SET(liberties) GST42_SET(share_factor) GST42_SET(patrol) GST42_SET(hunt_radius) GST42_SET(explore_value)
       GST42_SET(escape_steps) GST42_SET(trap_small)
       GST42_SET(split_headroom) GST42_SET(turnout_budget) GST42_SET(doom_first) GST42_SET(ally_memory) GST42_SET(avoid_blind) GST42_SET(doomed_split_room) GST42_SET(leader_split_until) GST42_SET(share_leader) GST42_SET(feed_distance) GST42_SET(big_split_length)
-      GST42_SET(portal_cross) GST42_SET(portal_explore) GST42_SET(loop_break) GST42_SET(loop_ban)
+      GST42_SET(portal_cross) GST42_SET(portal_explore) GST42_SET(loop_break) GST42_SET(loop_ban) GST42_SET(known_portal) GST42_SET(blind_fallback)
 #undef GST42_SET
     }
   }
