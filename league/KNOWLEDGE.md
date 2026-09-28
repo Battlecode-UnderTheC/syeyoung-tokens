@@ -67,6 +67,11 @@ against the RL policy, native engine, 2026-09-28). `g<N>` = `league/generations/
 
 ## Measuring
 
+- **strategy-v1's `SafeStep` never tries West when it has no goal** (`(preferred + k) % 4`
+  with preferred −1 tries −1, 0, 1, 2). Anything copied from strategy-v1 must fix it. (g1-4)
+- **Sonar sharing of pearls/enemies didn't pay** (sonar-pack-1: 152-168 vs strategy-v1 on
+  320 worldgen matches); delivery rate was never measured. (g1-2)
+
 - **Noise is large:** a one-parameter change swings ±8 wins in 80 matches; the 11 official
   maps alone can't separate variants. Native turn times under machine load spike 10–100×;
   count search work instead. (g1-1, g1-3)
