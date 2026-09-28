@@ -81,12 +81,12 @@ struct Params {
   int32_t avoid_heads = 1;          // 1: every dragon keeps off tiles next to enemy heads it won't trade with; 0: leaders only
   int32_t survivor_units = 0;       // down to this many dragons and outnumbered: flee enemy heads (0: off; fleeing lost games in simulation)
   // the lunge (from swarm-hunt-2): a MOVE of up to length-1 steps onto an enemy head worth a trade
-  int32_t lunge_reach = 6;
+  int32_t lunge_reach = 6;          // at most this many steps (bounds the search)
   // champion safety: from champ_freeze the champion keeps off tiles an enemy head in view could
-  // lunge onto, assuming it is at least this long + 1 (we see only part of its body; 0: off)
-  int32_t lunge_guard_min = 3;
-  int32_t seek_champion = 1;        // 1: a feeder with no known path to the champion walks to the known tile nearest it
-  int32_t trust_visible = 1;        // 1: an ally whose whole body is in view is as long as it looks          // at most this many steps (bounds the search)
+  // lunge onto, assuming it is at least this long + 1 (we see only part of its body; 0: off: 3 went 17-23 vs late-surge-1 on worldgen)
+  int32_t lunge_guard_min = 0;
+  int32_t seek_champion = 0;        // 1: a feeder with no known path to the champion walks to the known tile nearest it
+  int32_t trust_visible = 1;        // 1: an ally whose whole body is in view is as long as it looks
 };
 
 class StrategyAgent : public bot::Agent {
