@@ -124,6 +124,12 @@ against the RL policy, native engine, 2026-09-28). `g<N>` = `league/generations/
   Confirmed on counter-swarm: counter-swarm-19 (the same wholesale swap, keeping strikes/trade
   rules/guard) closed its growth gap too (official total at r340: 71 → 133), 54-48 vs its parent,
   51-51 vs gst34. Piecewise ports never did this; swap the layer whole. (g12-6)
+- **Giants don't survive on official maps:** giant-8's round-0 leaders split at 4 until r100, sit at
+  2–4 long and die trapped by r150–300, so the line plays like the main line with a different leader
+  split cutoff. Stopping leaders splitting (length ≥ 8) loses the opening (6-16). Making the giant
+  real needs protection by movement, not fewer splits. (g12-9)
+- **Portal pockets fragment consolidation:** on trauma 8+ champions are believed at once (sonar
+  doesn't cross pockets); longest 6 at r380 with 93 total. (g12-9, g11-6)
 - **The late-surge endgame transfers to every line** (g8): vs its own parent swarm-hunt-9
   34-28, counter-swarm-14 38-1-23, body-wall-3 36-26, giant-4 35-1-26; each closed most of its
   worldgen gap to gather-split-trade-31 (e.g. counter-swarm 13-27 → 18-22, body-wall 22-40 →
