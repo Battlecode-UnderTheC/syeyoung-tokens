@@ -103,9 +103,11 @@ struct Params {
   int32_t loop_ban = 50;
   // gst35: against the reverse-split lunge and kamikaze pincers (server battle M491281)
   int32_t split_veto_radius = 3;    // no split while an enemy head is this close (steps) to our tail (the child's head)
-  int32_t split_veto_memory = 2;    // ... counting enemy heads seen this many rounds ago
+  int32_t split_veto_memory = 2;
+  int32_t split_veto_child = 6;     // ... when the child would be at least this long (a short child is an even trade)    // ... counting enemy heads seen this many rounds ago
   int32_t guard_length = 10;        // the team's longest this long (or our last dragon) keeps off ...
-  int32_t guard_reach_cap = 8;      // ... tiles next to an enemy head and in a shorter enemy's lunge reach (capped)
+  int32_t guard_reach_cap = 8;
+  int32_t guard_last = 1;           // 1: our last dragon is guarded at any length      // ... tiles next to an enemy head and in a shorter enemy's lunge reach (capped)
 };
 
 class StrategyAgent : public bot::Agent {
@@ -157,7 +159,7 @@ class StrategyAgent : public bot::Agent {
   bool SplitSafe(int32_t n) const;
   int TurnOut(const std::vector<int32_t>& body, int32_t max_depth) const;
   bool Lunge(bot::Action* out) const;
-  bool TailThreatened() const;                          // an enemy head near our tail: a split child would be lunged
+  bool TailThreatened(int32_t child) const;                         // an enemy head near our tail: a split child would be lunged
   bool Guarded() const;                                 // our last dragon, or the team's long champion
   std::vector<uint8_t> DangerMap() const;               // tiles an enemy head can reach (and lunge us on) next
   bot::Action Decide(const rl::Observation& o);
@@ -170,6 +172,7 @@ class StrategyAgent : public bot::Agent {
   bool CanCountOnSplit() const;                         // planning: a dead end can be split out of later
   const char* Bucket(const char* base);                 // base + length bucket + near-cap tag (for tallies)
   char bucket_[64] = {};
+  char tagged_[80] = {};                                // (gst35) reason tagged ' L10+' for long dragons
   int32_t EscapeCap(int32_t length) const { return std::max(2 * length + p_.escape_slack, p_.escape_min); }
   bot::Action Because(const char* why, bot::Action a) {
     reason_ = why;

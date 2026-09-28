@@ -2,6 +2,8 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdio>
+#include <cstring>
 #include <tuple>
 #include <functional>
 #ifdef GST35_TUNE
@@ -601,7 +603,7 @@ bot::Action StrategyAgent::SafeStep(int preferred, bool trap_ok) {
   }
   // every step is a dead end we can't turn round in: split while we still can (the child
   // walks out the way we came)
-  const bool tail_threat = TailThreatened();
+  const bool tail_threat = TailThreatened(length_ - 2);
   if (best >= 0 && best_level == 0 && best_count <= p_.doomed_split_room && CanSplitNow() && !tail_threat)
     return Because("doomed: split", bot::Action::Split(length_ - 2));
   if (best >= 0) {
@@ -664,8 +666,8 @@ bool StrategyAgent::Lunge(bot::Action* out) const {
 
 // A split child's head is our tail, and it acts after every enemy dragon this round: an
 // enemy head a few steps from our tail can lunge it before it moves.
-bool StrategyAgent::TailThreatened() const {
-  if (p_.split_veto_radius <= 0 || body_.empty()) return false;
+bool StrategyAgent::TailThreatened(int32_t child) const {
+  if (p_.split_veto_radius <= 0 || body_.empty() || child < p_.split_veto_child) return false;
   std::unordered_set<int32_t> heads;
   for (const auto& [id, w] : seen_)
     if (w.team != spawn_.team && w.head >= 0 && round_ - w.round <= p_.split_veto_memory) heads.insert(w.head);
@@ -690,7 +692,7 @@ bool StrategyAgent::TailThreatened() const {
 }
 
 bool StrategyAgent::Guarded() const {
-  if (units_ <= 1) return true;
+  if (units_ <= 1 && p_.guard_last) return true;
   return length_ >= p_.guard_length && Champion().id == spawn_.id;
 }
 
@@ -723,6 +725,11 @@ std::vector<uint8_t> StrategyAgent::DangerMap() const {
 
 bot::Action StrategyAgent::Turn(const rl::Observation& o) {
   bot::Action a = Decide(o);
+  // (gst35) tag every reason of a long dragon, so its deaths show in the fatal-turn tallies
+  if (length_ >= 10 && !std::strstr(reason_, "L10+")) {
+    std::snprintf(tagged_, sizeof tagged_, "%s L10+", reason_);
+    reason_ = tagged_;
+  }
   // tell the dragons around us who the champion is (a dead dragon's pings are not cast)
   const Report champ = Champion();
   if (champ.id >= 0)
@@ -811,7 +818,7 @@ bot::Action StrategyAgent::Decide(const rl::Observation& o) {
   if (length_ >= p_.split_min_length && round_ < (leader_ ? p_.leader_split_until : p_.split_until_round) &&
       FreeSlots() > std::max(p_.split_headroom, p_.reserve_slots) &&
       !(round_ >= p_.champ_freeze && champ.id == spawn_.id) &&
-      (!p_.check_split || SplitSafe(length_ / 2)) && !TailThreatened())
+      (!p_.check_split || SplitSafe(length_ / 2)) && !TailThreatened(length_ / 2))
     return Because("split", bot::Action::Split(length_ / 2));
 
   // 5. a goal, and the first safe step towards it
