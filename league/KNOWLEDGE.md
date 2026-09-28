@@ -194,6 +194,12 @@ against the RL policy, native engine, 2026-09-28). `g<N>` = `league/generations/
   when the champion is <= 6 lost 13-27 on worldgen: it fires on games that are still growing normally.
   Round-robin staggering of feeders cost more than the corpse pile-ups it avoided. (g16-8)
 
+- **"No goal" means hemmed in, not idle.** On 97% of goalless turns the dragon's whole reachable region
+  was in view and smaller than the room it needs: the goal search treats every body as a wall, so no
+  out-of-view tile is reachable to score (3-12% of dragon-turns, ~70% at length 2-3). Searching past
+  ally bodies was neutral (gst75). Goalless stubs preferring open ground over corridors helped a little
+  (gst73 53-49). (g16-7, g16-17)
+
 ## Growth and roles
 
 - **Late-surge beats the champion-feeding line on worldgen:** a quiet swarm (never trade
