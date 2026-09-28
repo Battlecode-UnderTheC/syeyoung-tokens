@@ -1,0 +1,6 @@
+name = "anchor-greedy"
+parents = []
+operator = "anchor"
+archetype = "anchor"
+author = "claude-opus-5-5, session 01A2LM9DWuJfDUECx5ZVvbAY"
+created = "2026-09-28"
