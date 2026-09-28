@@ -251,7 +251,7 @@ class SwarmAgent : public bot::Agent {
     threshold_ = r < 3 ? 4 : r < 7 ? 5 : 6;
   }
 
-  static constexpr int kRelayAge = 12, kLateRound = 380;
+  static constexpr int kRelayAge = 12, kLateRound = 350;
 
   // sonar: remember the longest ally we've heard of (or are)
   void Listen(const rl::Observation& o) {
