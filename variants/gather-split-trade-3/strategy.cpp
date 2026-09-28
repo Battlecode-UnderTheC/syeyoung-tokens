@@ -104,7 +104,7 @@ void StrategyAgent::MapLunges() {
   for (const auto& [id, w] : seen_) {
     if (w.team == spawn_.team || w.round != round_ || w.head < 0) continue;
     const int32_t reach = std::min(w.length - 1, p_.lunge_cap);
-    if (reach < 2 || WorthTrading(id)) continue;       // reach 1: Exposed() covers it
+    if (reach < 2 || (WorthTrading(id) && w.length > length_)) continue;   // reach 1: Exposed() covers it; even trades: avoid (we see only part of them)
     dist.clear();
     dist[w.head] = 0;
     frontier.assign(1, w.head);
