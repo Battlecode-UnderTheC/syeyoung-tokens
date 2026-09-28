@@ -234,7 +234,7 @@ class SwarmAgent : public bot::Agent {
       bool pearl_seen = false;
       for (int k = 0; k < rl::kWindowTiles; ++k) pearl_seen |= o.pearl[k] != 0;
       const int pd = PortalDir(o, occ);
-      if (pd >= 0 && (pearl_seen || std::uniform_int_distribution<int>(0, 2)(rng_) == 0)) {
+      if (pd >= 0 && (pearl_seen || std::uniform_int_distribution<int>(0, 2)(rng_) != 0)) {
         why_ = "cross portal";
         return bot::Action::Move(pd);
       }
