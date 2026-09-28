@@ -113,6 +113,13 @@ against the RL policy, native engine, 2026-09-28). `g<N>` = `league/generations/
   maps alone can't separate variants. Native turn times under machine load spike 10–100×;
   count search work instead. (g1-1, g1-3)
 
+## Sonar tricks
+
+- **A ping checks a tile out of view:** pings go straight (and through portals) and ECHOES
+  reports what they hit, so a clean echo means the line is clear. It cut deaths on blind
+  portal crossings from 27% to ~5%. (g5-1)
+- **Portals barely matter** to the current strategies: ~0.25% of moves cross one. (g5-1)
+
 ## Maps
 
 - **Worldgen maps are harder than the official ones** for window-only play: mazes,
