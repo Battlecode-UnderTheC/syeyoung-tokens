@@ -66,6 +66,9 @@ against the RL policy, native engine, 2026-09-28). `g<N>` = `league/generations/
   reacting at the cap (g6-13) both did nothing; forecasting the cap before trusting a split
   escape didn't either (g6-16): long dragons walk in on steps that looked open. Caution on the
   long dragon's side is a dead end; try the supply side (fewer idle slots). (g6-13, g6-16)
+  Confirmed in detail (g15-18): of body-wall's trapped deaths, the turn before was almost never
+  'toward goal' (42 of 8,860); rooms flip from 60+ tiles to 1–2 within one round when 3+ heads are
+  near; every one of 2,047 trapped deaths of length ≥ 4 was at the unit cap with no split possible.
 - **Partial sightings under-report the champion (likely in every champion-feeding line):** an
   ally whose body runs past the 7×7 window is reported at its visible length, stamped fresh, so
   it beats the champion's own exact report and mid-size dragons elect themselves. At r460 on
