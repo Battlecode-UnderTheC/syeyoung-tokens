@@ -176,6 +176,9 @@ against the RL policy, native engine, 2026-09-28). `g<N>` = `league/generations/
   Devil is not about fast beds: learning each bed's gap exactly (the countdown reads the newly drawn
   gap the round it's drawn) and valuing fast beds changed nothing (body-wall-20). There the swarm has
   20+ dragons (avg length ~2.5) by r50 to our 7-10: the gap is how many dragons we field. (g15-19)
+  Not the split rule: on small maps our dragons split on 160 of 166 turns at length >= 4 (always
+  SPLIT 2, like the swarm; 6 blocked by SplitSafe). The gap is eating: on devil at r100 we have 4
+  dragons / 11 length to its 31 / 79, and its lunges start even trades that favour the bigger side. (g15-25)
 
 ## Growth and roles
 
