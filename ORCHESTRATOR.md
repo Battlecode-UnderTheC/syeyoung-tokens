@@ -179,6 +179,20 @@ of the top 4 on the holdout) hasn't changed in **3 generations**. Then write a s
 the user: the champion, how it compares to `strategy-v1` (head-to-head and holdout), what
 worked, and what to try next.
 
+## Real matches (user's standing instruction)
+
+After every competition battle, analyse its replays for inefficiencies in how our dragons
+move. The user drops the server's zip (`battle-M<id>-replays.zip`) in the repo root: leave it
+untracked (never commit it), unpack it to `../syeyoung-tokens.league/replays/M<id>/`, and have a
+subagent decode it (`replays/*/analysis/decode.py` from the first analysis) and report per
+match (map, side, result, lengths and dragon counts over time) plus a **movement
+inefficiencies** section: oscillation/circling, target switching, non-progress steps, detours,
+dead-end entries, idle turns, feeders that never arrive, allies crowding one pearl, pearls left
+uneaten; quantified, with worst examples (match, round, dragon) and a proposed code fix. Write
+it to `replays/M<id>/analysis/REPORT.md`, turn its fixes into tasks, and add confirmed findings
+to KNOWLEDGE.md. Real opponents are the one thing the league can't simulate: weight these
+findings accordingly.
+
 ## Rules
 
 - **The league is the only judge.** A worker's own numbers are hints. Decisions use league
