@@ -149,6 +149,13 @@ against the RL policy, native engine, 2026-09-28). `g<N>` = `league/generations/
   36-26 vs their parents, mostly on worldgen (+31..+62 total). Port it with a per-ChooseGoal mine
   mask: Occupied(t) per tile walks the body (O(board × length), 8 → 52 ms). (g13-28, g14-2/3/5)
 
+- **Champion dead-end skip + unknown-portal length gate (body-wall-15, league #1):** a frozen
+  champion skips dead-end goals; unknown portals are crossed only at length ≥ 4 when a split is
+  possible (a 3-kelp exit killed 17 of 17 crossers). body-wall-15 53-27 on worldgen, counter-swarm-29
+  45-35, late-surge-24 46-34, swarm-hunt-24 thin (33-29) — but gather-split-trade-51 36-44: its
+  cap-safety no-trap gate already covers the champion case and an outright dead-end ban costs
+  growth there; the portal gate alone read 21-19. The fix depends on the line. (g14-15, g15-1..4)
+
 ## Growth and roles
 
 - **Late-surge beats the champion-feeding line on worldgen:** a quiet swarm (never trade
