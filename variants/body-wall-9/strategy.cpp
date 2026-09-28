@@ -22,6 +22,14 @@ static long g_escape = 0, g_turnout = 0, g_calls = 0;
 #define BW9_COUNT(x) ++(x)
 // idle-loop measurement: turns where the last 12 heads cover <= 6 tiles with nothing eaten
 static std::atomic<long> g_turns{0}, g_idle{0}, g_eaten{0}, g_cross{0}, g_bans{0};
+static std::atomic<long> g_seal_made{0}, g_seal_dead{0}, g_seal_alive{0}, g_seal_lost{0};
+static struct SealReport {
+  ~SealReport() {
+    if (g_seal_made)
+      std::fprintf(stderr, "BW9 multi-seal enemies %ld: gone with head tile in view %ld, alive after 4 %ld, lost sight %ld\n",
+                   g_seal_made.load(), g_seal_dead.load(), g_seal_alive.load(), g_seal_lost.load());
+  }
+} g_seal_report;
 static struct IdleReport {
   ~IdleReport() {
     if (g_turns) std::fprintf(stderr, "BW9 turns %ld idle %ld (%.2f%%) eaten %ld crossings %ld bans %ld\n", g_turns.load(),
@@ -741,14 +749,19 @@ bool StrategyAgent::Wall(bot::Action* out, bool* squeezed) {
     for (const auto& [id, b] : allies) ally_room.push_back(EnemyReach(id, *b, ours, false, p_.squeeze_room));
   ours.insert(ours.begin(), -1);
   ours.pop_back();
+  int32_t safe_steps = 0;
+  std::vector<int32_t> sealed_by(enemies.size(), 0);   // safe single steps that seal enemy e
   for (int d = 0; d < 4; ++d) {
     const int32_t to = board_.Step(head_, d);
     if (Classify(to) != Cell::kFree || !board_.Current(to) || Exposed(to)) continue;
     ours[0] = to;
     if (EscapeLevel(ours, EscapeCap(length_)) < 1 || Liberties(to, ours) < 1) continue;
     int32_t seal = 0, sq = 0;
-    for (const auto& [id, b] : enemies) {
+    ++safe_steps;
+    for (size_t e = 0; e < enemies.size(); ++e) {
+      const auto& [id, b] = enemies[e];
       if (EnemyReach(id, *b, ours, true, p_.wall_cap) < p_.wall_cap) {
+        ++sealed_by[e];
         seal += static_cast<int32_t>(b->size());
       } else if (squeeze) {
         sq += p_.squeeze_room - EnemyReach(id, *b, ours, false, p_.squeeze_room);
@@ -771,7 +784,11 @@ bool StrategyAgent::Wall(bot::Action* out, bool* squeezed) {
   // before the enemy moves again
   if (p_.seal_steps >= 2 && length_ >= 3 && best_seal <= std::max(worst_seal, 0) && round_ < p_.wall_until) {
     bot::Action multi;
-    if (MultiSeal(enemies, &multi)) {
+    // an enemy every safe step seals is doomed anyway: it earns the multi-step nothing
+    std::vector<std::pair<int32_t, const std::vector<int32_t>*>> open_enemies;
+    for (size_t e = 0; e < enemies.size(); ++e)
+      if (safe_steps == 0 || sealed_by[e] < safe_steps) open_enemies.push_back(enemies[e]);
+    if (!open_enemies.empty() && MultiSeal(open_enemies, &multi)) {
       *squeezed = false;
       *out = multi;
       return true;
@@ -797,9 +814,10 @@ bool StrategyAgent::MultiSeal(const std::vector<std::pair<int32_t, const std::ve
   if (max_steps < 2) return false;
   // tiles next to the room enemies have now (static, in view): a seal must touch one
   std::unordered_set<int32_t> near;
+  std::vector<std::unordered_set<int32_t>> near_of;   // per enemy (only these are flooded for a path touching them)
   {
-    std::vector<int32_t> ours(body_.begin(), body_.end());
     for (const auto& [id, b] : enemies) {
+      near_of.emplace_back();
       std::unordered_set<int32_t> seen{(*b)[0]};
       std::vector<int32_t> q{(*b)[0]};
       for (size_t i = 0; i < q.size() && q.size() < static_cast<size_t>(p_.wall_cap); ++i)
@@ -808,7 +826,8 @@ bool StrategyAgent::MultiSeal(const std::vector<std::pair<int32_t, const std::ve
           if (to < 0 || !board_.Current(to) || seen.count(to)) continue;
           seen.insert(to);
           near.insert(to);
-          if (Occupied(to)) continue;
+          near_of.back().insert(to);
+          if (Mine(to) || std::find(b->begin(), b->end(), to) != b->end()) continue;   // other bodies move on
           q.push_back(to);
         }
     }
@@ -837,16 +856,27 @@ bool StrategyAgent::MultiSeal(const std::vector<std::pair<int32_t, const std::ve
           if (i > 0) ours.pop_back();
         }
         const int32_t spent = std::max(0, (k - 1) - eaten);
-        ++evals;
-        if (static_cast<int32_t>(ours.size()) >= 2 && EscapeLevel(ours, EscapeCap(static_cast<int32_t>(ours.size()))) >= 1 &&
-            Liberties(at, ours) >= 1) {
+        if (static_cast<int32_t>(ours.size()) >= 2) {
+          // enemies first (only those whose room the path touches), our own safety only for a winner
           int32_t sealed = 0;
-          for (const auto& [id, b] : enemies)
-            if (EnemyReach(id, *b, ours, true, p_.wall_cap) < p_.wall_cap) sealed += static_cast<int32_t>(b->size());
+          for (size_t e = 0; e < enemies.size(); ++e) {
+            bool touched = false;
+            for (const int32_t t : path) touched |= near_of[e].count(t) > 0;
+            if (!touched) continue;
+            ++evals;
+            if (EnemyReach(enemies[e].first, *enemies[e].second, ours, true, p_.wall_cap) < p_.wall_cap)
+              sealed += static_cast<int32_t>(enemies[e].second->size());
+          }
           const int32_t gain = sealed - static_cast<int32_t>(p_.seal_cost * spent);
-          if (sealed > 0 && gain > best_gain) {
+          if (sealed > 0 && gain > best_gain && Liberties(at, ours) >= 1 &&
+              EscapeLevel(ours, EscapeCap(static_cast<int32_t>(ours.size()))) >= 1) {
             best_gain = gain;
             best_steps = steps;
+#ifdef BW9_DEBUG
+            dbg_sealed_.clear();
+            for (const auto& [id, b] : enemies)
+              if (EnemyReach(id, *b, ours, true, p_.wall_cap) < p_.wall_cap) dbg_sealed_.push_back({id, (*b)[0], round_});
+#endif
           }
         }
       }
@@ -865,6 +895,12 @@ bool StrategyAgent::MultiSeal(const std::vector<std::pair<int32_t, const std::ve
   };
   dfs(head_);
   if (best_steps.empty()) return false;
+#ifdef BW9_DEBUG
+  for (const auto& x : dbg_sealed_) {
+    dbg_pending_.push_back(x);
+    ++g_seal_made;
+  }
+#endif
   *out = bot::Action{bot::Action::kMove, best_steps, 0, false, {}};
   return true;
 }
@@ -904,6 +940,23 @@ bot::Action StrategyAgent::Turn(const rl::Observation& o) {
 
 bot::Action StrategyAgent::Decide(const rl::Observation& o) {
   Remember(o);
+#ifdef BW9_DEBUG
+  for (size_t i = 0; i < dbg_pending_.size();) {
+    const auto [id, head, r] = dbg_pending_[i];
+    const auto it = seen_.find(id);
+    const bool visible = it != seen_.end() && it->second.round == round_;
+    int verdict = 0;
+    if (!visible && board_.Current(head)) verdict = 1;
+    else if (visible && round_ - r >= 4) verdict = 2;
+    else if (round_ - r >= 4) verdict = 3;
+    if (verdict) {
+      (verdict == 1 ? g_seal_dead : verdict == 2 ? g_seal_alive : g_seal_lost)++;
+      dbg_pending_.erase(dbg_pending_.begin() + i);
+    } else {
+      ++i;
+    }
+  }
+#endif
 
   // 1. feeding: late in the game every dragon but the champion walks to it and dies next to
   // it, leaving it pearls (a leader only near the end, and only when it knows where it is)

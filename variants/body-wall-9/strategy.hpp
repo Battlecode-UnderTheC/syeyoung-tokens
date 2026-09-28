@@ -14,6 +14,7 @@
 
 #include <cstdint>
 #include <deque>
+#include <tuple>
 #include <unordered_map>
 #include <vector>
 
@@ -136,7 +137,7 @@ struct Params {
   // bw9 multi-step seal: a MOVE of up to this many steps that seals an enemy head in view
   int32_t seal_steps = 4;
   double seal_cost = 1.0;           // enemy length a spent tail segment must buy
-  int32_t seal_evals = 60;          // paths fully checked per turn at most
+  int32_t seal_evals = 64;          // enemy floods per turn at most (bounds the time)
 };
 
 class StrategyAgent : public bot::Agent {
@@ -234,6 +235,9 @@ class StrategyAgent : public bot::Agent {
   bool UnknownPortal(int32_t t, int d) const { return (portal_[t] >> d & 1) && board_.Step(t, d) == kUnknown; }
   bool BodyInView() const;
   bool WillCross() const { return p_.portal_cross && round_ < p_.cross_until; }
+#ifdef BW9_DEBUG
+  mutable std::vector<std::tuple<int32_t, int32_t, int32_t>> dbg_sealed_, dbg_pending_;   // enemy id, head, round
+#endif
   // loop breaker (bw9)
   std::deque<int32_t> recent_;                          // the last heads
   int32_t last_length_ = 0, last_eat_ = 0;
