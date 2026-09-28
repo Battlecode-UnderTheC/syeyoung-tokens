@@ -89,10 +89,12 @@ struct Params {
   int32_t trust_visible = 1;        // 1: an ally whose whole body is in view is as long as it looks
   // two-stage surge (big maps): a feeder with no known path to the champion feeds the nearest
   // reachable ally clearly longer than itself (a regional champion) instead of gathering on ...
-  int32_t regional = 1;
+  int32_t regional = 0;
   int32_t regional_margin = 2;      // ... at least this much longer than us (known length) ...
+  double regional_ratio = 2.0;      // ... and at least this many times our length ...
   int32_t regional_age = 3;         // ... located at most this many rounds ago ...
-  int32_t regional_reach = 24;      // ... at most this many steps away over known tiles
+  int32_t regional_reach = 24;      // ... at most this many steps away over known tiles,
+  int32_t regional_far = 0;         // ... when the champion is at least this far (torus steps; a path blocked for a moment by bodies is not the case)
   // ... then late, a feeder at least this long with no known path to the champion walks
   // towards its reported area (seek_champion, for the long ones only)
   int32_t converge_from = 440;

@@ -601,14 +601,19 @@ bot::Action StrategyAgent::Decide(const rl::Observation& o) {
   // 1b. two-stage surge: no known path to the champion (it stands where we never explored, on a
   // big map): feed the nearest ally we can reach that is clearly longer than us (a regional
   // champion), a short walk instead of gathering on through the surge
-  const bool no_path = feeding && ally_head >= 0 && paths.dist[ally_head] < 0;
+  auto torus_dist = [&](int32_t a, int32_t b) {
+    const int32_t dx = std::abs(board_.X(a) - board_.X(b)), dy = std::abs(board_.Y(a) - board_.Y(b));
+    return std::min(dx, board_.width() - dx) + std::min(dy, board_.height() - dy);
+  };
+  const bool no_path = feeding && ally_head >= 0 && paths.dist[ally_head] < 0 &&
+                       torus_dist(head_, ally_head) >= p_.regional_far;
   int32_t regional_goal = -1;
   if (p_.regional && no_path) {
     int32_t best = p_.regional_reach + 1;
     bool best_view = false;
     for (const auto& [id, r] : reports_) {
       if (id == spawn_.id || id == champ.id || r.tile < 0 || round_ - r.round > p_.regional_age ||
-          r.length < length_ + p_.regional_margin)
+          r.length < length_ + p_.regional_margin || r.length < p_.regional_ratio * length_)
         continue;
       int32_t near = -1, nd = 1 << 30;               // the nearest tile next to its head we can reach
       for (int d = 0; d < 4; ++d) {
