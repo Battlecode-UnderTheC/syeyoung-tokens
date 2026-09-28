@@ -138,7 +138,10 @@ against the RL policy, native engine, 2026-09-28). `g<N>` = `league/generations/
 - **Giants don't survive on official maps:** giant-8's round-0 leaders split at 4 until r100, sit at
   2–4 long and die trapped by r150–300, so the line plays like the main line with a different leader
   split cutoff. Stopping leaders splitting (length ≥ 8) loses the opening (6-16). Making the giant
-  real needs protection by movement, not fewer splits. (g12-9)
+  real needs protection by movement, not fewer splits. (g12-9) Neither worked: movement guards
+  (giant-11) and shedding SPLIT 2 instead of halving plus an heir handoff (giant-12) never kept a
+  round-0 leader to r499; delaying the opening split is fatal (7-15). Early numbers beat leader
+  length; the long dragon comes from the late surge. The giant idea is parked. (g12-15, g12-22)
 - **Portal pockets fragment consolidation:** on trauma 8+ champions are believed at once (sonar
   doesn't cross pockets); longest 6 at r380 with 93 total. (g12-9, g11-6)
 - **The late-surge endgame transfers to every line** (g8): vs its own parent swarm-hunt-9
