@@ -55,6 +55,7 @@ struct Params {
   int32_t turnout_budget = 3000;    // moves searched to find a way out of a small region the flood calls doomed (0: off)
   int32_t escape_steps = 1;
   int32_t doom_first = 0;
+  int32_t avoid_blind = 1;          // 1: a step through a portal to a tile out of view counts as crowded
   int32_t doomed_split_room = 0;   // every step is a dead end with at most this many tiles: split now           // 1: avoid a dead end before avoiding enemy heads         // 1: judge steps by whether we can get back out (timed flood); 0: room only
   int32_t trap_small = 1;           // 1: dragons too short to split out of a dead end don't enter one               // no target: walk towards the tiles seen longest ago            // 1: prefer steps that leave a free tile no other head can take first          // 1: split only where both halves can get out
   // kamikaze (a head-to-head kills both dragons)

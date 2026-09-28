@@ -11,6 +11,7 @@
 #include <unordered_set>
 #ifdef GST1_DEBUG
 #include <cstdio>
+#include <cstdlib>
 #endif
 
 namespace gst1 {
@@ -36,7 +37,7 @@ StrategyAgent::StrategyAgent(const rl::Spawn& spawn, Params params)
       GST1_SET(room_margin) GST1_SET(room_min) GST1_SET(escape_slack) GST1_SET(escape_min) GST1_SET(check_split)
       GST1_SET(liberties) GST1_SET(share_factor) GST1_SET(patrol) GST1_SET(hunt_radius) GST1_SET(explore_value)
       GST1_SET(escape_steps) GST1_SET(trap_small)
-      GST1_SET(split_headroom) GST1_SET(turnout_budget) GST1_SET(doom_first) GST1_SET(ally_memory) GST1_SET(doomed_split_room) GST1_SET(leader_split_until) GST1_SET(share_leader) GST1_SET(feed_distance) GST1_SET(big_split_length)
+      GST1_SET(split_headroom) GST1_SET(turnout_budget) GST1_SET(doom_first) GST1_SET(ally_memory) GST1_SET(avoid_blind) GST1_SET(doomed_split_room) GST1_SET(leader_split_until) GST1_SET(share_leader) GST1_SET(feed_distance) GST1_SET(big_split_length)
 #undef GST1_SET
     }
   }
@@ -407,7 +408,10 @@ bot::Action StrategyAgent::SafeStep(int preferred, bool trap_ok) {
     int32_t count = 0;
     int level = p_.escape_steps ? EscapeLevel(body, cap, &count) : 1;
     if (level == 0 && p_.turnout_budget > 0) level = TurnOut(body, count + length_ + 2) == 0 ? 0 : 2;
-    const int libs = p_.liberties ? Liberties(to, body) : 2;
+    int libs = p_.liberties ? Liberties(to, body) : 2;
+    // through a portal to a tile out of view: someone may be lying there
+    const bool blind = p_.avoid_blind && !board_.Current(to);
+    if (blind) libs = std::min(libs, 1);
     if (k == 0 && preferred >= 0 && !exposed && libs >= 2 && ((level >= 1 && room >= need) || (trap_ok && level >= 1)))
       return Because(room >= need ? "toward goal" : "into a dead end worth it", bot::Action::Move(d));
     if (k == 0 && preferred >= 0 && !exposed && libs >= 2 && trap_ok && (length_ >= 4 || !p_.trap_small))
@@ -449,6 +453,10 @@ bot::Action StrategyAgent::SafeStep(int preferred, bool trap_ok) {
 bot::Action StrategyAgent::Turn(const rl::Observation& o) {
 #ifdef GST1_DEBUG
   bot::Action a = TurnImpl(o);
+  if (const char* w = std::getenv("GST1_ID"); w && std::atoi(w) == spawn_.id) {
+    Dump(reason_);
+    std::fprintf(stderr, "action kind %d dir %d\n", a.kind, a.steps.empty() ? -1 : a.steps[0]);
+  }
   if (a.kind == bot::Action::kSplit)
     std::fprintf(stderr, "SPLIT id %d round %d len %d n %d leader %d units %d: %s\n", spawn_.id, round_, length_, a.split, leader_, units_, reason_);
   return a;
