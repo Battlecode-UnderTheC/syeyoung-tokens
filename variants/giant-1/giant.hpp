@@ -50,6 +50,7 @@ struct Params {
   int32_t intercept_ahead = 2;      // and walks to this many steps in front of it
   double body_time_factor = 1.5;    // room check: own segment frees after (steps until it would) * this (eating stalls the tail)
   int32_t unknown_room = 4;         // room check: an unexplored edge is worth this many tiles (0: a sure way out)
+  int32_t strict_early = 1;         // 1: a giant avoids every head even while still splitting
   int32_t tight_factor = 1000;         // no roomy step: move anyway if room * this >= need, else split out
 };
 
@@ -78,6 +79,7 @@ class GiantAgent : public bot::Agent {
   strat::BoardMemory board_;
   bool first_turn_ = true;
   bool demoted_ = false;                      // a giant turned helper (never splits)
+  bool strict_ = false;                       // a giant done splitting: avoids every enemy head
   bool giant_ = false;                        // alive at round 0; else a helper
   bool Tradeable(int32_t enemy_head) const;
   int32_t EnemiesSeen() const;

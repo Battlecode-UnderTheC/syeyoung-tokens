@@ -35,7 +35,7 @@ static Params FromEnv(Params p) {
     P(pearl_decay) P(ripe_bed_value) P(explore_value) P(room_margin) P(room_min) P(threat_radius) P(evade_distance)
     P(feed_from_round) P(feed_max_length) P(giant_split_until) P(giant_child_length) P(helper_split_until) P(split_min_length)
     P(hunt_radius) P(hunt_min_units) P(helper_room_margin) P(helper_room_min) P(outnumbered_factor)
-    P(king_ttl) P(king_decay) P(demote_ratio) P(intercept_ahead) P(unknown_room) P(body_time_factor) P(tight_factor) P(feed_early_length) P(feed_distance)
+    P(king_ttl) P(strict_early) P(king_decay) P(demote_ratio) P(intercept_ahead) P(unknown_room) P(body_time_factor) P(tight_factor) P(feed_early_length) P(feed_distance)
 #undef P
     pos = end + 1;
   }
@@ -54,6 +54,7 @@ void GiantAgent::Remember(const rl::Observation& o) {
   length_ = o.length;
   units_ = o.unit_count;
   round_ = o.round;
+  strict_ = giant_ && (round_ >= p_.giant_split_until || p_.strict_early);
   std::vector<int32_t> visible;   // own segments in view, head to tail
   for (const rl::Segment& s : o.segments)
     if (s.id == spawn_.id) visible.push_back(board_.Tile(s.x, s.y));
@@ -148,7 +149,8 @@ bool GiantAgent::Tradeable(int32_t enemy_head) const {
   const int32_t id = head_id_[enemy_head];
   const auto it = seen_len_.find(id);
   const int32_t theirs = it == seen_len_.end() ? 0 : it->second;
-  if (giant_) return length_ <= 2;
+  if (strict_) return length_ <= 2;
+  if (giant_) return theirs > length_;   // still splitting: a leader, trades only up
   if (p_.outnumbered_factor > 0 && units_ < EnemiesSeen()) return theirs >= p_.outnumbered_factor * length_;
   return theirs >= length_;
 }
@@ -392,7 +394,7 @@ bot::Action GiantAgent::Decide() {
     bool lethal;
   };
   std::vector<Cand> cands;
-  const int32_t need = giant_ ? std::max(length_ + p_.room_margin, p_.room_min)
+  const int32_t need = strict_ ? std::max(length_ + p_.room_margin, p_.room_min)
                               : std::max(length_ + p_.helper_room_margin, p_.helper_room_min);
   bool unknown_step[4] = {false, false, false, false};
   for (int d = 0; d < 4; ++d) {
