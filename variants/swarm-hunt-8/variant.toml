@@ -1,0 +1,7 @@
+name = "swarm-hunt-8"
+parents = ["swarm-hunt-7"]
+operator = "tweak"
+archetype = "swarm-hunt"
+author = "claude-sonnet-5"
+created = "2026-09-28"
+task = "g7-2"
