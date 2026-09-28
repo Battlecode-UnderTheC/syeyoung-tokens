@@ -343,6 +343,10 @@ against the RL policy, native engine, 2026-09-28). `g<N>` = `league/generations/
   strikes 2-3 tiles in one turn, an escort of length 2-4 reaches 1-3 and must also act first. Escorts
   cost feeding (they crowd the champion). Only the giant's own avoidance is left to try. (g17-2, g17-7)
 
+- **A 40-game worldgen win can be seed luck.** gather-split-trade-90 went 29-11 vs its parent on one set
+  and 17-23 on an independent one (g17-12). Always confirm a promising worker result on a second set
+  (seeds >= 20 apart) before building on it; the league decides.
+
 ## Walls
 
 - **Multi-step seals work, but matter little:** laying the head across a pocket exit in one
