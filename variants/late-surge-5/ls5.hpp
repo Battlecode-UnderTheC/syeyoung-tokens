@@ -81,7 +81,12 @@ struct Params {
   int32_t avoid_heads = 1;          // 1: every dragon keeps off tiles next to enemy heads it won't trade with; 0: leaders only
   int32_t survivor_units = 0;       // down to this many dragons and outnumbered: flee enemy heads (0: off; fleeing lost games in simulation)
   // the lunge (from swarm-hunt-2): a MOVE of up to length-1 steps onto an enemy head worth a trade
-  int32_t lunge_reach = 6;          // at most this many steps (bounds the search)
+  int32_t lunge_reach = 6;
+  // champion safety: from champ_freeze the champion keeps off tiles an enemy head in view could
+  // lunge onto, assuming it is at least this long + 1 (we see only part of its body; 0: off)
+  int32_t lunge_guard_min = 3;
+  int32_t seek_champion = 1;        // 1: a feeder with no known path to the champion walks to the known tile nearest it
+  int32_t trust_visible = 1;        // 1: an ally whose whole body is in view is as long as it looks          // at most this many steps (bounds the search)
 };
 
 class StrategyAgent : public bot::Agent {
@@ -105,7 +110,8 @@ class StrategyAgent : public bot::Agent {
   bool Occupied(int32_t tile) const;                    // a dragon on it right now (as far as we know)
   bool Mine(int32_t tile) const;                        // one of this dragon's own segments
   bool WorthTrading(int32_t enemy_id) const;            // a head-to-head with it pays off
-  bool Exposed(int32_t tile) const;                     // an enemy head we won't trade with could step onto it
+  bool Exposed(int32_t tile) const;
+  bool LungeThreat(int32_t tile) const;                 // the champion: an enemy head seen now could lunge onto it                     // an enemy head we won't trade with could step onto it
   int FleeDirection() const;                            // the step furthest from the enemy heads seen (-1: none seen)
   int32_t EnemiesSeen() const;
   struct Report {
@@ -148,6 +154,7 @@ class StrategyAgent : public bot::Agent {
   rl::Spawn spawn_;
   BoardMemory board_;
   bool leader_ = false;
+  bool champ_guard_ = false;                            // this turn: we are the champion, late
   bool first_turn_ = true;
   int32_t born_ = 0;
   // this turn

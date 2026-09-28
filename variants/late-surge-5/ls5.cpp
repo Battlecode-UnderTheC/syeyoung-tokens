@@ -6,7 +6,7 @@
 #include <functional>
 #include <unordered_map>
 #include <unordered_set>
-#ifdef LS5_DEBUG
+#if defined(LS5_DEBUG) || defined(LS5_DIAG)
 #include <cstdio>
 #include <cstdlib>
 #endif
@@ -41,9 +41,17 @@ void StrategyAgent::Remember(const rl::Observation& o) {
   if (body_.empty() || body_.front() != head_) body_.push_front(head_);
   while (static_cast<int32_t>(body_.size()) > length_) body_.pop_back();
   std::unordered_map<int32_t, int32_t> segments;
+  // dragons whose last segment in view is on the window's border: their body may go on out of view
+  std::unordered_map<int32_t, bool> cut;
+  auto on_border = [&](const rl::Segment& s) {
+    int32_t dx = std::abs(s.x - o.head_x()), dy = std::abs(s.y - o.head_y());
+    dx = std::min(dx, board_.width() - dx), dy = std::min(dy, board_.height() - dy);
+    return dx >= 3 || dy >= 3;
+  };
   for (const rl::Segment& s : o.segments) {
     if (s.id == spawn_.id) continue;
     ++segments[s.id];
+    cut[s.id] = on_border(s);                  // head to tail: the last one written is the last in view
     Sighting& w = seen_[s.id];
     w.team = s.team;
     w.round = round_;
@@ -60,7 +68,9 @@ void StrategyAgent::Remember(const rl::Observation& o) {
     const bool fresh = have.id >= 0 && round_ - have.round <= p_.report_memory;
     have.id = id;
     have.tile = w.head;
-    have.length = fresh ? std::max(have.length, n) : n;
+    // the whole body in view: its length is known (a champion that split out of a trap left a
+    // short stub under its id; the max of old reports would have its feeders die next to the stub)
+    have.length = fresh && (cut[id] || !p_.trust_visible) ? std::max(have.length, n) : n;
     have.round = round_;
   }
   reports_[spawn_.id] = Report{spawn_.id, head_, length_, round_};
@@ -107,6 +117,20 @@ bool StrategyAgent::Exposed(int32_t t) const {
   for (int d = 0; d < 4; ++d)
     if (const int32_t n = board_.Step(t, d); n >= 0 && Classify(n) == Cell::kEnemyHead && !WorthTrading(board_.at(n).occupant))
       return true;
+  return false;
+}
+
+// The champion, late: an enemy head seen now could lunge onto tile t (a MOVE of up to its
+// length - 1 steps; we only see part of its body, so assume at least lunge_guard_min).
+// Enemy lunges killed the champion in traced big_empty games once feeders reached it.
+bool StrategyAgent::LungeThreat(int32_t t) const {
+  if (!champ_guard_) return false;
+  for (const auto& [id, w] : seen_) {
+    if (w.team == spawn_.team || w.round != round_ || w.head < 0) continue;
+    const int32_t dx = std::abs(board_.X(t) - board_.X(w.head)), dy = std::abs(board_.Y(t) - board_.Y(w.head));
+    const int32_t d = std::min(dx, board_.width() - dx) + std::min(dy, board_.height() - dy);
+    if (d <= std::max(w.length - 1, p_.lunge_guard_min)) return true;
+  }
   return false;
 }
 
@@ -454,7 +478,7 @@ bot::Action StrategyAgent::SafeStep(int preferred, bool trap_ok) {
     const int32_t to = board_.Step(head_, d);
     if (Classify(to) != Cell::kFree) continue;
     const int32_t room = RoomAround(board_, to, open, need);
-    const bool exposed = Exposed(to);
+    const bool exposed = Exposed(to) || LungeThreat(to);
     body[0] = to;
     int32_t count = 0;
     int level = p_.escape_steps ? EscapeLevel(body, cap, &count) : 1;
@@ -548,6 +572,7 @@ bot::Action StrategyAgent::Decide(const rl::Observation& o) {
   // 1. feeding: late in the game every dragon but the champion walks to it and dies next to
   // it, leaving it pearls (a leader only near the end, and only when it knows where it is)
   const Report champ = Champion();
+  champ_guard_ = p_.lunge_guard_min > 0 && round_ >= p_.champ_freeze && champ.id == spawn_.id;
   const bool feeding = champ.id >= 0 && champ.id != spawn_.id && champ.length >= length_ &&
                        (leader_ ? round_ >= p_.leader_feed_from && round_ - champ.round <= p_.leader_feed_fresh
                                 : round_ >= p_.feed_from_round);
@@ -564,6 +589,12 @@ bot::Action StrategyAgent::Decide(const rl::Observation& o) {
   const Paths paths = Search(board_, head_, [&](int32_t t) {
     return !Occupied(t) || Classify(t) == Cell::kEnemyHead || t == ally_head;
   });
+#ifdef LS5_DIAG
+  if (round_ % 10 == 0) {
+    auto tor = [&](int32_t a, int32_t b) { const int32_t dx = std::abs(board_.X(a) - board_.X(b)), dy = std::abs(board_.Y(a) - board_.Y(b)); return std::min(dx, board_.width() - dx) + std::min(dy, board_.height() - dy); };
+    std::fprintf(stderr, "DIAG r%d t%d id%d L%d lead%d | champ id%d L%d age%d at(%d,%d) tor%d | feeding%d inview%d allyhead%d pd%d\n", round_, spawn_.team, spawn_.id, length_, leader_, champ.id, champ.length, round_ - champ.round, champ.id>=0?board_.X(champ.tile):-1, champ.id>=0?board_.Y(champ.tile):-1, champ.id>=0?tor(head_, champ.tile):-1, feeding, in_view, ally_head, ally_head>=0?paths.dist[ally_head]:-9);
+  }
+#endif
   if (in_view && paths.dist[ally_head] >= 0 && paths.dist[ally_head] <= p_.feed_distance)
     return Because("feed champion", bot::Action::Resign());
 
@@ -595,7 +626,24 @@ bot::Action StrategyAgent::Decide(const rl::Observation& o) {
     return Because("split", bot::Action::Split(length_ / 2));
 
   // 5. a goal, and the first safe step towards it
-  const Goal target = ally_head >= 0 && paths.dist[ally_head] > 0 ? Goal{ally_head, false} : ChooseGoal(paths);
+  Goal target = ally_head >= 0 && paths.dist[ally_head] > 0 ? Goal{ally_head, false} : Goal{};
+  // the champion is somewhere this dragon has never explored (a big map): no known path to
+  // it, so walk to the known tile nearest it (usually on the edge of the known map) and
+  // explore on from there, instead of gathering on through the whole surge
+  if (p_.seek_champion && target.tile < 0 && ally_head >= 0 && ally_head != head_) {
+    auto torus = [&](int32_t a, int32_t b) {
+      const int32_t dx = std::abs(board_.X(a) - board_.X(b)), dy = std::abs(board_.Y(a) - board_.Y(b));
+      return std::min(dx, board_.width() - dx) + std::min(dy, board_.height() - dy);
+    };
+    int32_t best_key = torus(head_, ally_head) * 2;
+    for (int32_t t = 0; t < board_.size(); ++t) {
+      const int32_t d = paths.dist[t];
+      if (d <= 0 || Occupied(t)) continue;
+      const int32_t key = torus(t, ally_head) * 2 + d;
+      if (key < best_key) best_key = key, target = Goal{t, false};
+    }
+  }
+  if (target.tile < 0) target = ChooseGoal(paths);
   const int32_t goal = target.tile;
   const int preferred = goal >= 0 ? paths.first[goal] : -1;
   bot::Action a = SafeStep(preferred, target.trap);
