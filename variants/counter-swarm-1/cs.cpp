@@ -16,7 +16,7 @@ StrategyAgent::StrategyAgent(const rl::Spawn& spawn, Params params)
   auto env = [](const char* k, auto& v) { if (const char* e = getenv(k)) v = static_cast<std::remove_reference_t<decltype(v)>>(atof(e)); };
   env("P_SPLIT", p_.split_min_length); env("P_SPLITR", p_.split_until_round); env("P_FEED", p_.feed_from_round);
   env("P_LIBS", p_.min_libs); env("P_MARGIN", p_.trade_margin); env("P_HUNT", p_.hunt_radius); env("P_HUNTU", p_.hunt_min_units);
-  env("P_ROOMM", p_.room_margin); env("P_ROOMMIN", p_.room_min); env("P_TRAP", p_.trap_cost); env("P_REACH", p_.strike_reach); env("P_GOSSIP", p_.gossip); env("P_TTL", p_.rumor_ttl); env("P_X1", p_.x1); env("P_X2", p_.x2); env("P_X3", p_.x3);
+  env("P_ROOMM", p_.room_margin); env("P_ROOMMIN", p_.room_min); env("P_TRAP", p_.trap_cost); env("P_REACH", p_.strike_reach); env("P_GOSSIP", p_.gossip); env("P_FEEDD", p_.feed_distance); env("P_ALLYM", p_.ally_memory); env("P_TTL", p_.rumor_ttl); env("P_X1", p_.x1); env("P_X2", p_.x2); env("P_X3", p_.x3);
 #endif
 }
 

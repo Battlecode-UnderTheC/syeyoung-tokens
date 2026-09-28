@@ -30,7 +30,7 @@ struct Params {
   // feeding: a worker gives its body to a bigger ally
   int32_t feed_from_round = 340;
   int32_t feed_distance = 2;        // dies when its head is this close to the ally's head (steps)
-  int32_t ally_memory = 80;         // rounds an ally sighting stays worth walking to
+  int32_t ally_memory = 200;        // rounds an ally sighting stays worth walking to
   // targets: each tile's value per round it takes to collect it (see TileValue)
   double pearl_decay = 0.97;        // per round since a pearl was seen: the chance it is still there
   double ripe_bed_value = 0.6;      // a bed whose countdown ran out out of view (grown, unless eaten)
