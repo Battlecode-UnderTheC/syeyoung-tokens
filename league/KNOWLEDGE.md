@@ -94,6 +94,14 @@ against the RL policy, native engine, 2026-09-28). `g<N>` = `league/generations/
   195-45) on worldgen games; it loses to trading swarms on small crowded official maps. The
   surge sweet spot is 380–400 (350 too early). A crowding switch to even trades fixes the
   trading-swarm matchup but hurts vs counter-swarm (late-surge-2). (g6-8, g6-14, g6-15)
+- **Late-surge on official maps:** late-surge-1 loses 8-14 to gather-split-trade-27 there (it
+  wins worldgen). On big_empty feeders can't path to a champion in unexplored territory (~5
+  feeds a match). Fixes: trust an ally's visible length when its whole body is in view (the
+  "stub ghost": heirs fed a 2-long stub still reported as 55), feed only a champion ≥ 25%
+  longer (late-surge-6, 37-25), and a late walk (from 440, only feeders ≥ 10 long) toward an
+  unreachable champion (late-surge-7: 11-11 vs gst27 on official). Regional champions (feed
+  the nearest longer ally, then merge) lose everywhere: two hops deliver ~1/4 of the mass.
+  (g7-4, g7-5, g7-6)
 - **The split window matters across lines:** workers splitting until ~350 (not 300) helped in
   all three older lines: gather-split-trade-13 (+80 Elo), counter-swarm-12 (its collapse after
   300), swarm-hunt-8 (37-25). late-surge splits until 400. (g4-4, g6-9, g7-2)
