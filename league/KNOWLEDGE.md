@@ -208,6 +208,11 @@ against the RL policy, native engine, 2026-09-28). `g<N>` = `league/generations/
   late-surge (its frontier scoring already covers it; the push fired 1-2 times) and in body-wall (its
   length >= 4 unknown-portal gate blocks it). (g16-20, g16-26, g17-3, g17-4)
 
+- **Opening fan-out (exclude a frontier tile an ally in view is nearer to, before r80) helps only gst**
+  (gather-split-trade-84 55-47); late-surge 27-35, counter-swarm 50-52 with totals down: their own
+  frontier scoring already spreads dragons. Discounting instead of excluding left dragons goalless
+  (26-36). Most cross-line ports now come out neutral: lines have diverged. (g16-25, g16-27, g17-5, g17-6)
+
 ## Growth and roles
 
 - **Late-surge beats the champion-feeding line on worldgen:** a quiet swarm (never trade
