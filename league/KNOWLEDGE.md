@@ -102,6 +102,10 @@ against the RL policy, native engine, 2026-09-28). `g<N>` = `league/generations/
   unreachable champion (late-surge-7: 11-11 vs gst27 on official). Regional champions (feed
   the nearest longer ally, then merge) lose everywhere: two hops deliver ~1/4 of the mass.
   (g7-4, g7-5, g7-6)
+- **Hunting enemy heads is the costly part of the busy mid game:** gather-split-trade-31 with
+  hunt_radius 0 (still accepting even trades that come to it) beat its parent 54-48 and
+  late-surge-6 60-42 (parent: 47-55), without losing the small crowded official maps. Late-surge's
+  other quiet trait, trading only with strictly longer enemies, lost 44-58 on its own. (g10-2)
 - **Most of late-surge's edge is its endgame:** gather-split-trade-27 with late-surge-6's
   endgame (split until 400; everyone incl. leaders feeds the champion from 380 within 3 if
   < 80% of it; trust_visible; champion freeze at 330) went 27-13 vs gst27 on worldgen and
