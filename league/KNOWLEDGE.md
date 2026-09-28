@@ -78,7 +78,11 @@ against the RL policy, native engine, 2026-09-28). `g<N>` = `league/generations/
   through the wall. (g12-25, g13-3)
   At r400 (4 portal maps vs gst39) 61 of 136 dragons knew no path to the team champion, only 10
   of them in pockets; pockets held ~3.6 length a dragon. Feeding a regional champion instead
-  lost (44-58): the team's length ends split. Cut-off dragons must find the champion. (g13-12)
+  lost (44-58): the team's length ends split. (g13-12) "No known path" mostly means unexplored, not
+  walled off: 80–90% of such feeders have a path through unseen ground, ~1% are boxed in by portals.
+  Letting feeders of length ≥ 6 path through unseen ground from r380 delivered 25% more length to
+  the champion but barely moved wins (33-29 on unbiased sets); every feeder seeking lost (stops
+  gathering). (g13-20)
   Mostly the team names a DEAD champion (39 of 48 dragons naming one dead id), not an isolated one:
   the slower late fade keeps its old report alive and the corrected stub report never spreads.
   Obituary pings (relay a sharply shrunk or dead champion's correction for 20 rounds) raised
