@@ -102,6 +102,10 @@ against the RL policy, native engine, 2026-09-28). `g<N>` = `league/generations/
   unreachable champion (late-surge-7: 11-11 vs gst27 on official). Regional champions (feed
   the nearest longer ally, then merge) lose everywhere: two hops deliver ~1/4 of the mass.
   (g7-4, g7-5, g7-6)
+- **Most of late-surge's edge is its endgame:** gather-split-trade-27 with late-surge-6's
+  endgame (split until 400; everyone incl. leaders feeds the champion from 380 within 3 if
+  < 80% of it; trust_visible; champion freeze at 330) went 27-13 vs gst27 on worldgen and
+  12-10 on official, and closed most of the gap to late-surge-6 (18-22). (g7-7)
 - **The split window matters across lines:** workers splitting until ~350 (not 300) helped in
   all three older lines: gather-split-trade-13 (+80 Elo), counter-swarm-12 (its collapse after
   300), swarm-hunt-8 (37-25). late-surge splits until 400. (g4-4, g6-9, g7-2)
