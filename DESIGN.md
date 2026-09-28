@@ -186,6 +186,11 @@ The league trusts our engine port. Keep it honest in CI: the lockstep test again
 official wasm engine (`dragons-env/tests/lockstep.py`) runs on every engine change and
 nightly on random maps. When a new unswbc version ships (1.1.0 is out; we use 1.0.0),
 re-run parity before trusting results.
+Checked 2026-09-28 against unswbc 1.2.2: with every bed's gap fixed (min = max), lockstep
+agrees on 90,446 dragon-turns (all official maps plus 120 random ones), so the rules are
+unchanged. The one difference: 1.2.2 draws pearl gaps from a random seed per match (the
+judge picks it), while our port always seeds 0x5eed5eed, so the league plays one fixed
+pearl schedule per map.
 
 ## Build order
 
