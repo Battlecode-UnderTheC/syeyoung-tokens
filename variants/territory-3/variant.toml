@@ -1,0 +1,7 @@
+name = "territory-3"
+parents = ["territory-2", "late-surge-17"]
+operator = "crossover"
+archetype = "territory"
+author = "claude-opus-5-5"
+created = "2026-09-29"
+task = "g13-26"
