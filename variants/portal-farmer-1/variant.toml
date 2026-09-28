@@ -1,0 +1,7 @@
+name = "portal-farmer-1"
+parents = ["gather-split-trade-39"]
+operator = "fresh"
+archetype = "portal-farmer"
+author = "claude-opus-5-5"
+created = "2026-09-28"
+task = "g12-25"
