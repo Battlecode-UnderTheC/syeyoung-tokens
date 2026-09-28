@@ -71,7 +71,7 @@ StrategyAgent::StrategyAgent(const rl::Spawn& spawn, Params params)
       BW15_SET(escape_steps) BW15_SET(trap_small)
       BW15_SET(split_headroom) BW15_SET(turnout_budget) BW15_SET(doom_first) BW15_SET(ally_memory) BW15_SET(avoid_blind) BW15_SET(doomed_split_room) BW15_SET(leader_split_until) BW15_SET(share_leader) BW15_SET(feed_distance) BW15_SET(big_split_length)
       BW15_SET(portal_cross) BW15_SET(portal_explore) BW15_SET(loop_break) BW15_SET(loop_ban) BW15_SET(known_portal) BW15_SET(blind_fallback) BW15_SET(exit_risk_max) BW15_SET(exit_risk_ping)
-      BW15_SET(wait_factor) BW15_SET(cluster_bonus) BW15_SET(cluster_radius)
+      BW15_SET(wait_factor) BW15_SET(cluster_bonus) BW15_SET(cluster_radius) BW15_SET(champ_no_trap) BW15_SET(cross_min_length) BW15_SET(never_cross)
 #undef BW15_SET
     }
   }
