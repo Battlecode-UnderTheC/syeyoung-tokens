@@ -88,10 +88,10 @@ struct Params {
   int32_t wall_leader_round = 300;  // the champion-to-be stops walling from this round
   // squeeze: a dragon this long, with no seal on offer, takes the step that most shrinks the
   // tiles enemy heads in view can reach (counted up to squeeze_room, bodies static) ...
-  int32_t squeeze_length = 5;
+  int32_t squeeze_length = 3;
   // wallers: split children with id % waller_mod == 0 grow long (split only from waller_split)
   // to have a body to wall with
-  int32_t waller_mod = 4;           // 0: none
+  int32_t waller_mod = 0;           // 0: none
   int32_t waller_split = 10;
   int32_t waller_chase_radius = 12; // a waller walks towards enemy heads this many steps away ...
   int32_t waller_chase_memory = 5;  // ... seen this many rounds ago at most
