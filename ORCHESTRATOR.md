@@ -121,8 +121,9 @@ copies the first parent into `variants/<variant>/` (fresh: an empty directory), 
 
 Then spawn a worker subagent with the Agent tool: `general-purpose`, **in the background**,
 without the tool's own worktree isolation (the task already has its worktree). Its prompt is
-`league/BRIEF.md` with every `{placeholder}` filled in. Paste the brief in full; the worker
-starts with no context and must not depend on this conversation. Use the strongest model
+`league/BRIEF.md` with every `{placeholder}` filled in: write the filled brief to a file in
+your scratchpad and give the worker its path ("read it in full first and follow it"). The
+worker starts with no context and must not depend on this conversation. Use the strongest model
 for fresh and crossover tasks; a cheaper one is fine for tweaks.
 
 Launch into any free slot at once; keep 6 running.
