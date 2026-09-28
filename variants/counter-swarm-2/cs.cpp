@@ -392,6 +392,15 @@ int StrategyAgent::EscapeLevel(const std::vector<int32_t>& body, int32_t cap, in
         continue;
       }
       if (board_.Current(to) && board_.at(to).occupant >= 0 && board_.at(to).occupant != spawn_.id) continue;
+      if (m == 1 && p_.contest_first) {             // another head next to it may take it before our next move
+        bool contested = false;
+        for (int e = 0; e < 4 && !contested; ++e) {
+          const int32_t h = board_.Step(to, e);
+          contested = h >= 0 && h != t && board_.Current(h) && board_.at(h).occupant >= 0 && board_.at(h).occupant_head &&
+                      board_.at(h).occupant != spawn_.id;
+        }
+        if (contested) continue;
+      }
       when[to] = m;
       if (++reached >= cap) return done(1);
       queue.push_back(to);

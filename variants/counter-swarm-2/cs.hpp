@@ -69,6 +69,7 @@ struct Params {
   int32_t escape_slack = 12;        // no way back out, but this many tiles more than twice our length: fine
   int32_t escape_min = 24;
   int32_t turnout_budget = 3000;    // moves searched to find a way out of a region the flood calls doomed
+  int32_t contest_first = 0;        // 1: the flood's first ring skips tiles next to another dragon's head (lost: 8-14 / 20-20 vs counter-swarm-1)
   int32_t min_libs = 2;             // the goal step must leave this many (half-)liberties       // down to this many dragons and outnumbered: flee enemy heads (0: off; fleeing lost games in simulation)
 };
 
