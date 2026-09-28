@@ -3,7 +3,8 @@
 // sonar every turn (the champion's length/position, relayed), portal crossing when no
 // pearl is reachable in view, the reverse split when boxed in, and late consolidation
 // (from r380 short dragons resign beside a much longer ally so it eats their pearls).
-// No sonar, no memory. Every dragon: trade heads whenever it can (adjacent enemy heads
+// trading-swarm-4: routes over a remembered board (BoardMemory) through portal pairs.
+// Originally: no sonar, no memory. Every dragon: trade heads whenever it can (adjacent enemy heads
 // always; 2-4 step lunges from short dragons onto enemy heads at least as long), otherwise
 // greedy nearest pearl in view, otherwise drift toward the map centre. Short dragons keep
 // splitting off 2-long children (parent length 4-6) all game long; long ones don't.
@@ -232,7 +233,7 @@ class SwarmAgent : public bot::Agent {
         if (m.pearl && age <= kPearlAge && dd < best_d) best_d = dd, best = t;
         if (!m.pearl && m.countdown >= 0 && dd >= 2) {
           const int left = m.countdown - age;
-          if (left >= -3 && left - dd < bed_s) bed_s = left - dd, bed = t;
+          if (left >= 0 && dd <= kBedDist && left - dd < bed_s) bed_s = left - dd, bed = t;
         }
       }
       if (best >= 0) {
@@ -388,7 +389,7 @@ class SwarmAgent : public bot::Agent {
     return cand[std::uniform_int_distribution<int>(0, nc - 1)(rng_)];
   }
 
-  static constexpr int kPearlAge = 60, kMaxDist = 40, kExploreDist = 16;
+  static constexpr int kPearlAge = 25, kMaxDist = 40, kExploreDist = 16, kBedDist = 10;
 
   void Remember(const rl::Observation& o) {
     mem_.Update(o);
