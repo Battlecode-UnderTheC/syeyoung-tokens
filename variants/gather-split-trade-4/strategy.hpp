@@ -32,7 +32,7 @@ struct Params {
   int32_t split_headroom = 0;       // ... leaving this many dragons below the unit limit (to split out of traps)
   int32_t big_split_length = 0;     // unused
   // feeding: a worker gives its body to a bigger ally
-  int32_t feed_from_round = 400;
+  int32_t feed_from_round = 360;
   int32_t feed_distance = 2;        // dies when its head is this close to the ally's head (steps)
   int32_t ally_memory = 80;         // rounds an ally sighting stays worth walking to
   // consolidation: every dragon reports itself by sonar and relays the longest ally it knows
