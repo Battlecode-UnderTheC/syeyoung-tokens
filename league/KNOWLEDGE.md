@@ -121,6 +121,9 @@ against the RL policy, native engine, 2026-09-28). `g<N>` = `league/generations/
   contest/share scoring, portal fix) with the giant roles: 77-25 vs giant-7, about even with gst34,
   total length at r50/r100 now equal or ahead. Giant-7's surge at 340 was also wrong once movement
   improved: gst34's timing (surge 380, splits until 400) was needed. (g11-4)
+  Confirmed on counter-swarm: counter-swarm-19 (the same wholesale swap, keeping strikes/trade
+  rules/guard) closed its growth gap too (official total at r340: 71 → 133), 54-48 vs its parent,
+  51-51 vs gst34. Piecewise ports never did this; swap the layer whole. (g12-6)
 - **The late-surge endgame transfers to every line** (g8): vs its own parent swarm-hunt-9
   34-28, counter-swarm-14 38-1-23, body-wall-3 36-26, giant-4 35-1-26; each closed most of its
   worldgen gap to gather-split-trade-31 (e.g. counter-swarm 13-27 → 18-22, body-wall 22-40 →
