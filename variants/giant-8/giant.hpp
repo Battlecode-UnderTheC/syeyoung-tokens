@@ -34,12 +34,12 @@ using namespace strat;
 struct Params {
   // growth: split off a worker (the child takes the tail half)
   int32_t split_min_length = 4;     // at least this long ... (numbers win the head-to-head attrition: 4 beat 6, 8, 12 in simulation)
-  int32_t split_until_round = 350;  // giant-7: helpers split until 350  // ... and before this round
+  int32_t split_until_round = 400;  // gst34 (giant-7's 350 measured worse here)  // ... and before this round
   int32_t leader_split_until = 100; // giant-7: giants split only early, then grow // leaders (alive at the start) stop splitting at this round, to grow
   int32_t split_headroom = 0;       // ... leaving this many dragons below the unit limit (to split out of traps)
   int32_t big_split_length = 0;     // unused
   // feeding: a worker gives its body to a bigger ally
-  int32_t feed_from_round = 340;   // giant-7 surge   // late-surge endgame
+  int32_t feed_from_round = 380;   // gst34 late surge (giant-7's 340 measured worse here)   // late-surge endgame
   int32_t champ_freeze = 330;      // the champion stops splitting from here (it only grows)
   int32_t feed_distance = 3;        // dies when its head is this close to the ally's head (steps)
   int32_t ally_memory = 80;         // rounds an ally sighting stays worth walking to
@@ -48,7 +48,7 @@ struct Params {
   // next to it, so the mass ends up in one dragon
   int32_t report_memory = 40;       // rounds a sonar report of an ally stays usable
   double report_fade = 0.5;         // a report's weight when choosing the champion: its length less this per round of age
-  int32_t leader_feed_from = 340;   // a leader that is not the champion feeds it from this round ...
+  int32_t leader_feed_from = 380;   // a leader that is not the champion feeds it from this round ...
   int32_t leader_feed_fresh = 20;   // ... when the champion was located at most this many rounds ago
   // targets: each tile's value per round it takes to collect it (see TileValue)
   double pearl_decay = 0.97;        // per round since a pearl was seen: the chance it is still there
