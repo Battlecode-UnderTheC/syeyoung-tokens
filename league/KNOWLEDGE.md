@@ -53,6 +53,14 @@ against the RL policy, native engine, 2026-09-28). `g<N>` = `league/generations/
   and die only when they see it within reach. gather-split-trade-4 beat its parent 29-11
   (+70 Elo); counter-swarm-5 +30. Feed deaths are still only ~5–8 a match: reaching the
   champion is the limit. Feeding from 260 is clearly worse than 300–360. (g2-3, g3-1, g3-3)
+- **Ghost champions (a bug in every champion-feeding variant up to gst22):** a trapped
+  champion splits (length − 2); the child walks off with the mass under a new id and the stub
+  that keeps the champion's id dies. Reports ranked by length with a 40-round expiry keep
+  naming the dead one: 50–100% of our dragons fed a ghost from round 340 on. Rank by
+  `length − 0.5 × age` (gather-split-trade-23): the live heir takes over in a few rounds;
+  longest at 499 went 39 → 78 in a traced game. (g5-7)
+- **Trapped long dragons resign whole at the unit cap** (no split escape): ~110 dragons of
+  length 4–19 in one worldgen match. (g5-7)
 - **Don't grow the champion early:** a lone gatherer grows ~0.05–0.1 length a round; an heir
   that stops splitting from round 150–200 cost the swarm more than it gained (15-25 on
   worldgen at 150). Freezing the champion from 300 (no splits/trades/lunges) went 57-45. (g5-6)
