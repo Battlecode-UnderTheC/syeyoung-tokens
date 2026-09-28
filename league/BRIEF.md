@@ -71,6 +71,8 @@ Limits your variant must respect (the competition judge):
   `-std=c++20 -O2`, standard library only, no files, no threads. As a rule of thumb, `check`'s
   "slowest turn" must stay under **0.5 ms** (strategy-v1's is 0.1 ms ≈ 9M points).
 - No exceptions escaping, no avoidable deaths into walls or itself (`check` catches these).
+- No `getenv` or other runtime knobs: every setting is a constant in your sources (the
+  league and the judge run your code as committed). Debug output must be compiled out.
 - 500 rounds; the longest single dragon at the end wins, then total length. A team with no
   dragons left loses immediately.
 
