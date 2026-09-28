@@ -195,7 +195,7 @@ def suites(con):
 
 
 # ---- matches ----
-def play(a, b, map_path, suite):
+def play(a, b, suite, map_path):
     """One match in its own process: (a, b, suite, map, winner, rounds, result json, error)."""
     cmd = [str(DATA / 'tools' / 'match'), str(plugin(a)), str(plugin(b)), str(map_path)]
     try:
@@ -341,9 +341,10 @@ def schedule(con, suite_maps):
     todo.sort(key=len, reverse=True)   # the pairs missing the most games first
     jobs = [j for js in todo for j in js]
     if not jobs:
+        # each other, and anchor-greedy: a fixed yardstick (holdout vs public rate against it shows overfitting)
         top = [a for a in active if a not in ANCHORS][:HOLDOUT_TOP]
         for i, a in enumerate(top):
-            for b in top[i + 1:]:
+            for b in top[i + 1:] + (['anchor-greedy'] if 'anchor-greedy' in active else []):
                 jobs += pair_jobs(con, a, b, 'holdout', suite_maps['holdout'])
     return jobs[:BATCH]
 
