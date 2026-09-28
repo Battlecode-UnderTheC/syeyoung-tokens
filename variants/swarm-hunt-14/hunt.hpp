@@ -4,7 +4,7 @@
 // length L reaches an enemy head up to L-1 steps away before it can react (a head-to-head
 // kills both). Dragons alive at round 0 are KEEPERS (the round-499 fallback: they split off
 // hunters, trade only for a longer enemy, keep out of enemy lunge range). Split children
-// are HUNTERS: they gather, split, close in on enemy heads (hunt_radius) and lunge.
+// are HUNTERS: they gather, split, and strike or lunge at enemy heads in reach.
 // Movement (SafeStep escape levels + TurnOut, dead ends worth entering, contest/share goal
 // scoring, sonar-checked portal crossing, loop breaker) is gather-split-trade-38's.
 #pragma once
@@ -26,7 +26,7 @@ struct Params {
   int32_t split_min_length = 4;     // at least this long ... (numbers win the head-to-head attrition: 4 beat 6, 8, 12 in simulation)
   int32_t split_until_round = 400;  // ... and before this round
   int32_t keeper_split_until = 300; // leaders (alive at the start) stop splitting at this round, to grow
-  int32_t split_headroom = 6;       // ... leaving this many dragons below the unit limit (to split out of traps)
+  int32_t split_headroom = 0;       // (swh13: 6, lost 12-28 vs 19-21 on worldgen set 1) ... leaving this many dragons below the unit limit (to split out of traps)
   int32_t big_split_length = 0;     // unused
   // feeding: a worker gives its body to a bigger ally
   int32_t feed_from_round = 380;   // late-surge endgame
@@ -84,8 +84,9 @@ struct Params {
   int32_t keeper_guard = 2;         // keepers keep this many steps from enemy heads (1: adjacency only)
   int32_t cap_feed_max_length = 3;  // the unit cap: a short hunter near the cap next to a longer ally's head dies there (0: off)
   int32_t cap_feed_until = 340;     // ... before this round
+  int32_t cap_feed_slots = 6;       // ... when at most this many unit slots are free
   // kamikaze (a head-to-head kills both dragons)
-  int32_t hunt_radius = 6;          // hunters close in on enemy heads this many steps away (swarm-hunt) ...
+  int32_t hunt_radius = 0;          // hunters close in on enemy heads this many steps away (swh13: 6; costs growth here) ...
   int32_t hunt_min_units = 3;       // ... when we have at least this many dragons
   // A worker trades evenly when we have this many times the enemies it has seen. Off by
   // default (0): we see only a few of theirs, and in simulation these trades lost games.

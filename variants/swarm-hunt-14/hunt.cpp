@@ -766,7 +766,7 @@ bot::Action HuntAgent::Decide(const rl::Observation& o) {
   }
 
   // 2c. the unit cap: a short hunter gives its slot (and pearls) to a longer ally right next to it
-  if (!keeper_ && length_ <= p_.cap_feed_max_length && FreeSlots() <= p_.split_headroom && round_ < p_.cap_feed_until) {
+  if (!keeper_ && length_ <= p_.cap_feed_max_length && FreeSlots() <= p_.cap_feed_slots && round_ < p_.cap_feed_until) {
     for (const auto& [id, w] : seen_) {
       if (w.team != spawn_.team || w.round != round_ || w.head < 0 || w.length <= length_) continue;
       bool near = false;
