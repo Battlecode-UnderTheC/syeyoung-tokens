@@ -196,6 +196,9 @@ against the RL policy, native engine, 2026-09-28). `g<N>` = `league/generations/
 - **Don't trigger consolidation on a static "champion still short" test.** Starting to feed at r300
   when the champion is <= 6 lost 13-27 on worldgen: it fires on games that are still growing normally.
   Round-robin staggering of feeders cost more than the corpse pile-ups it avoided. (g16-8)
+  Don't gate feeding on the champion's length either: feed_min_champ 12 lost 9-13 on official maps
+  (13 v 56 longest; the champion is short at r380 and grows by being fed). Gating on team size vs
+  enemies seen (units > max(6, enemies)) halved fatal feed turns on gst84 but rarely fires on gst68. (g17-9, g17-10)
 
 - **"No goal" means hemmed in, not idle.** On 97% of goalless turns the dragon's whole reachable region
   was in view and smaller than the room it needs: the goal search treats every body as a wall, so no
