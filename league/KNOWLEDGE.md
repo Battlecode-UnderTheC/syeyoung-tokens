@@ -162,6 +162,11 @@ against the RL policy, native engine, 2026-09-28). `g<N>` = `league/generations/
   and fewer allies to recycle its trapped dead. Fix earlier (dragons alive when sides meet).
   Letting an enemy head contest only its 2 nearest targets (gst56) helped a little (55-47). (g15-6)
 
+- **A mild early centre pull on small maps beats swarms.** Multiplying goal scores by
+  1 + 0.3 × closeness-to-centre before r50 on maps ≤ 1,024 tiles (most worldgen maps qualify): body-wall-17
+  83-19 vs trading-swarm-5 (parent 73-29), 54-48 vs its parent; at 1.0 it lost 8-14 (the team crowds
+  the middle, trapped deaths double). A split needs length ≥ 4 (2 ≤ n ≤ length − 2). (g15-14)
+
 ## Growth and roles
 
 - **Late-surge beats the champion-feeding line on worldgen:** a quiet swarm (never trade
