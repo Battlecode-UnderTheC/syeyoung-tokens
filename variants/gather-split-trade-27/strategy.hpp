@@ -84,7 +84,7 @@ struct Params {
   // dragon can't split out of a dead end and resigns whole
   int32_t cap_safety = 1;           // 1: with fewer than cap_margin free slots, a dragon plans as if it can't split out
   int32_t cap_margin = 2;           // free slots needed to count on a split escape (other dragons split the same round)
-  int32_t reserve_slots = 2;        // growth splits leave this many slots free for trapped long dragons ...
+  int32_t reserve_slots = 0;        // growth splits leave this many slots free for trapped long dragons ...
   int32_t reserve_length = 6;       // ... this long (shorter ones split out only above the reserve)
 };
 
