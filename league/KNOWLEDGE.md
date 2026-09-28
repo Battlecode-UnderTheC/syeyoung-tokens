@@ -113,7 +113,8 @@ against the RL policy, native engine, 2026-09-28). `g<N>` = `league/generations/
   being spread out. After g8 the top ~8 span four lines within ~20 Elo. (g8-1..4)
 - **The split window matters across lines:** workers splitting until ~350 (not 300) helped in
   all three older lines: gather-split-trade-13 (+80 Elo), counter-swarm-12 (its collapse after
-  300), swarm-hunt-8 (37-25). late-surge splits until 400. (g4-4, g6-9, g7-2)
+  300), swarm-hunt-8 (37-25). late-surge splits until 400. It's the workers' window: leaders'
+  (g4-10) and keepers' (g9-2) windows at 350 were washes. (g4-4, g6-9, g7-2, g9-2)
 - **League caveat (fixed 21:10):** the scheduler played a pair's worldgen games before its
   official ones, so new variants' early ratings were worldgen-only.
 
