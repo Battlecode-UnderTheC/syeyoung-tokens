@@ -1,0 +1,7 @@
+name = "gather-split-trade-1"
+parents = ["strategy-v1"]
+operator = "mutate"
+archetype = "gather-split-trade"
+author = "claude-opus-5-5"
+created = "2026-09-28"
+task = "g1-1"
