@@ -72,7 +72,7 @@ struct Params {
   int32_t survivor_units = 0;
   // the lunge: a MOVE of up to length-1 steps reaches an enemy head before it can react
   int32_t lunge_reach = 6;          // at most this many steps (bounds the search)
-  int32_t keeper_guard = 2;         // leaders keep this many steps from enemy heads they won't trade with
+  int32_t keeper_guard = 1;         // leaders keep this many steps from enemy heads they won't trade with
   int32_t threat_budget = 400;       // tiles searched per enemy head for the guard       // down to this many dragons and outnumbered: flee enemy heads (0: off; fleeing lost games in simulation)
 };
 
