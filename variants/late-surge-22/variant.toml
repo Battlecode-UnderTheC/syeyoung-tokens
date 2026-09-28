@@ -1,0 +1,7 @@
+name = "late-surge-22"
+parents = ["late-surge-21", "late-surge-20"]
+operator = "crossover"
+archetype = "late-surge"
+author = "claude-sonnet-5"
+created = "2026-09-29"
+task = "g14-8"
