@@ -46,6 +46,16 @@ against the RL policy, native engine, 2026-09-28). `g<N>` = `league/generations/
 
 ## Targets and economy
 
+- **Consolidate into one champion late: the biggest single gain so far.** 70% of the
+  leaders' losses were round-499 longest-dragon losses with more total length. A 64-bit
+  sonar word pinged in all four directions each turn, naming the longest ally known
+  (relayed, newest per id), lets the team agree on one champion; workers feed it from ~360
+  and die only when they see it within reach. gather-split-trade-4 beat its parent 29-11
+  (+70 Elo); counter-swarm-5 +30. Feed deaths are still only ~5–8 a match: reaching the
+  champion is the limit. Feeding from 260 is clearly worse than 300–360. (g2-3, g3-1, g3-3)
+- **Defending against strikes/lunges didn't pay** (g2-2, g2-7: even or worse); neither did a
+  look-ahead safety layer on counter-swarm-1 (g2-5: 16-24 vs parent). (g2)
+
 - **Target sharing is a big win:** a worker leaves a pearl or bed to an ally in view that is
   nearer to it. It was gather-split-trade-1's biggest single gain (rated 1922 vs
   strategy-v1's 1775, 45-0-17 head to head); swarm-hunt-1 found the same. (g1-1, g1-5)
