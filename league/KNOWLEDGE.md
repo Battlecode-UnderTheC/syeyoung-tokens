@@ -66,6 +66,12 @@ against the RL policy, native engine, 2026-09-28). `g<N>` = `league/generations/
   reacting at the cap (g6-13) both did nothing; forecasting the cap before trusting a split
   escape didn't either (g6-16): long dragons walk in on steps that looked open. Caution on the
   long dragon's side is a dead end; try the supply side (fewer idle slots). (g6-13, g6-16)
+- **Partial sightings under-report the champion (likely in every champion-feeding line):** an
+  ally whose body runs past the 7×7 window is reported at its visible length, stamped fresh, so
+  it beats the champion's own exact report and mid-size dragons elect themselves. At r460 on
+  trauma only 0–3 of ~10 dragons knew the real champion. Fix: flag partial reports as lower
+  bounds that never lower a known length (swarm-hunt-13; neutral in sims, but the mechanism is
+  real). Isolated champions in portal pockets still don't get fed. (g11-6)
 - **Trapped long dragons resign whole at the unit cap** (no split escape): ~110 dragons of
   length 4–19 in one worldgen match. (g5-7)
 - **Don't grow the champion early:** a lone gatherer grows ~0.05–0.1 length a round; an heir
