@@ -15,6 +15,12 @@
 #endif
 
 namespace gst1 {
+#ifdef GST1_DEBUG
+static long g_escape = 0, g_turnout = 0, g_calls = 0;
+#define GST1_COUNT(x) ++(x)
+#else
+#define GST1_COUNT(x)
+#endif
 
 StrategyAgent::StrategyAgent(const rl::Spawn& spawn, Params params)
     : p_(params), spawn_(spawn), board_(spawn.width, spawn.height) {
@@ -308,6 +314,7 @@ int StrategyAgent::TurnOut(const std::vector<int32_t>& body, int32_t max_depth) 
       if (board_.Current(n) && board_.at(n).occupant >= 0 && board_.at(n).occupant != spawn_.id) continue;
       if (orig[n]) return 2;
       if (--budget < 0) return 1;
+      GST1_COUNT(g_turnout);
       const int32_t tail = snake.back();
       snake.pop_back();
       --occ[tail];
@@ -370,7 +377,9 @@ int StrategyAgent::EscapeLevel(const std::vector<int32_t>& body, int32_t cap, in
     if (count) *count = std::min(reached, cap);
     return level;
   };
+  GST1_COUNT(g_calls);
   for (size_t qi = 0; qi < queue.size(); ++qi) {
+    GST1_COUNT(g_escape);
     const int32_t t = queue[qi], m = when[t] + 1;     // the move that would enter a neighbour
     for (int d = 0; d < 4; ++d) {
       const int32_t to = board_.Step(t, d);
@@ -452,7 +461,14 @@ bot::Action StrategyAgent::SafeStep(int preferred, bool trap_ok) {
 
 bot::Action StrategyAgent::Turn(const rl::Observation& o) {
 #ifdef GST1_DEBUG
+  g_escape = g_turnout = g_calls = 0;
   bot::Action a = TurnImpl(o);
+  static long worst = 0;
+  const long work = g_escape + g_turnout * 3 + g_calls * board_.size() / 8;
+  if (work > worst) {
+    worst = work;
+    std::fprintf(stderr, "WORK %ld: escape pops %ld turnout nodes %ld calls %ld board %d len %d\n", work, g_escape, g_turnout, g_calls, board_.size(), length_);
+  }
   if (const char* w = std::getenv("GST1_ID"); w && std::atoi(w) == spawn_.id) {
     Dump(reason_);
     std::fprintf(stderr, "action kind %d dir %d\n", a.kind, a.steps.empty() ? -1 : a.steps[0]);
