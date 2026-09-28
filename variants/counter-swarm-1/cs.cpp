@@ -16,7 +16,7 @@ StrategyAgent::StrategyAgent(const rl::Spawn& spawn, Params params)
   auto env = [](const char* k, auto& v) { if (const char* e = getenv(k)) v = static_cast<std::remove_reference_t<decltype(v)>>(atof(e)); };
   env("P_SPLIT", p_.split_min_length); env("P_SPLITR", p_.split_until_round); env("P_FEED", p_.feed_from_round);
   env("P_LIBS", p_.min_libs); env("P_MARGIN", p_.trade_margin); env("P_HUNT", p_.hunt_radius); env("P_HUNTU", p_.hunt_min_units);
-  env("P_ROOMM", p_.room_margin); env("P_ROOMMIN", p_.room_min); env("P_TRAP", p_.trap_cost); env("P_X1", p_.x1); env("P_X2", p_.x2); env("P_X3", p_.x3);
+  env("P_ROOMM", p_.room_margin); env("P_ROOMMIN", p_.room_min); env("P_TRAP", p_.trap_cost); env("P_REACH", p_.strike_reach); env("P_X1", p_.x1); env("P_X2", p_.x2); env("P_X3", p_.x3);
 #endif
 }
 
@@ -125,6 +125,11 @@ const StrategyAgent::Sighting* StrategyAgent::BiggestAlly() const {
   return best;
 }
 
+int32_t StrategyAgent::Torus(int32_t a, int32_t b) const {
+  const int32_t dx = std::abs(board_.X(a) - board_.X(b)), dy = std::abs(board_.Y(a) - board_.Y(b));
+  return std::min(dx, board_.width() - dx) + std::min(dy, board_.height() - dy);
+}
+
 // ---- where to go --------------------------------------------------------------------------------
 
 // A pearl seen there is worth 1, discounted by how long ago (someone may have eaten it);
@@ -164,11 +169,18 @@ StrategyAgent::Goal StrategyAgent::ChooseGoal(const Paths& paths) const {
     double score;
   };
   std::vector<Candidate> candidates;
+  std::vector<int32_t> allies;   // ally heads in view now
+  for (const auto& [id, w] : seen_)
+    if (w.team == spawn_.team && w.round == round_ && w.head >= 0) allies.push_back(w.head);
   for (int32_t t = 0; t < board_.size(); ++t) {
     const int32_t d = paths.dist[t];
     if (d <= 0) continue;
     int32_t ready;
     double score = TileValue(t, d, &ready) / (ready + 1);
+    // another of ours is closer to it: leave it to them (a crowd on one pearl boxes itself in)
+    if (score > 0 && p_.x1 > 0)
+      for (const int32_t a : allies)
+        if (Torus(a, t) < d) { score *= 1.0 - p_.x1; break; }
     for (int dir = 0; dir < 4; ++dir)
       if (board_.Step(t, dir) == kUnknown) {
         score = std::max(score, p_.explore_value / (d + 1));
@@ -205,6 +217,42 @@ StrategyAgent::Goal StrategyAgent::ChooseGoal(const Paths& paths) const {
     }
   }
   return best;
+}
+
+// Shortest path of free, currently seen tiles ending on an enemy head worth trading with,
+// 2..reach steps long; empty if none.
+std::vector<int> StrategyAgent::StrikePath() const {
+  const int32_t reach = std::min(length_ - 1, p_.strike_reach);
+  std::vector<int32_t> frontier{head_}, tiles{head_};
+  std::unordered_map<int32_t, std::pair<int32_t, int>> parent;   // tile -> (previous, dir)
+  parent[head_] = {-1, -1};
+  int32_t found = -1, found_len = -1;
+  for (int32_t depth = 1; depth <= reach && found < 0; ++depth) {
+    std::vector<int32_t> next;
+    for (const int32_t t : frontier)
+      for (int d = 0; d < 4; ++d) {
+        const int32_t n = board_.Step(t, d);
+        if (n < 0 || parent.count(n) || !board_.Current(n)) continue;
+        const Cell c = Classify(n);
+        if (c == Cell::kEnemyHead) {
+          if (depth >= 2 && WorthTrading(board_.at(n).occupant)) {
+            const auto it = seen_.find(board_.at(n).occupant);
+            const int32_t len = it == seen_.end() ? 0 : it->second.length;
+            if (len > found_len) { found = n; found_len = len; parent[n] = {t, d}; }
+          }
+          continue;
+        }
+        if (c != Cell::kFree) continue;
+        parent[n] = {t, d};
+        next.push_back(n);
+      }
+    frontier.swap(next);
+  }
+  std::vector<int> steps;
+  if (found < 0) return steps;
+  for (int32_t t = found; t != head_; t = parent[t].first) steps.push_back(parent[t].second);
+  std::reverse(steps.begin(), steps.end());
+  return steps;
 }
 
 // ---- how to step ----------------------------------------------------------------------------------
@@ -306,6 +354,15 @@ bot::Action StrategyAgent::Turn(const rl::Observation& o) {
     if (Classify(to) == Cell::kEnemyHead && WorthTrading(board_.at(to).occupant))
       return Because("kamikaze", bot::Action::Move(d));
   }
+
+  // 2b. strike: a multi-step MOVE onto an enemy head 2..reach steps away (strategy-v1 never
+  // looks further than one step, so it neither strikes like this nor keeps out of reach)
+  if (p_.strike_reach >= 2 && length_ >= 3)
+    if (auto steps = StrikePath(); !steps.empty()) {
+      bot::Action a = bot::Action::Move(steps[0]);
+      a.steps = steps;
+      return Because("strike", a);
+    }
 
   // 3. survival: our last dragons, outnumbered, keep away from enemy heads (losing them all loses the game)
   if (units_ <= p_.survivor_units && EnemiesSeen() > units_)

@@ -53,6 +53,7 @@ struct Params {
   // danger: an enemy head next to ours can step onto it and take both dragons
   int32_t avoid_heads = 1;          // 1: every dragon keeps off tiles next to enemy heads it won't trade with; 0: leaders only
   int32_t survivor_units = 0;
+  int32_t strike_reach = 3;         // multi-step strikes onto enemy heads up to this many steps away
   double x1 = 0, x2 = 0, x3 = 0;    // experiment knobs
   int32_t min_libs = 2;             // the goal step must leave this many (half-)liberties       // down to this many dragons and outnumbered: flee enemy heads (0: off; fleeing lost games in simulation)
 };
@@ -91,6 +92,8 @@ class StrategyAgent : public bot::Agent {
   int32_t RoomNeeded() const;
   Goal ChooseGoal(const Paths& paths) const;            // `paths` searched from the head
   int32_t Liberties(int32_t to) const;
+  int32_t Torus(int32_t a, int32_t b) const;
+  std::vector<int> StrikePath() const;
   bot::Action SafeStep(int preferred_dir, bool trap_ok); // the preferred step if safe, else the roomiest
   bot::Action Because(const char* why, bot::Action a) {
     reason_ = why;
