@@ -1,0 +1,7 @@
+name = "body-wall-19"
+parents = ["body-wall-15"]
+operator = "mutate"
+archetype = "body-wall"
+author = "claude-opus-5-5"
+created = "2026-09-29"
+task = "g15-18"
