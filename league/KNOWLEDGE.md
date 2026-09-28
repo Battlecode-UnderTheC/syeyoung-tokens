@@ -205,6 +205,13 @@ against the RL policy, native engine, 2026-09-28). `g<N>` = `league/generations/
   maps alone can't separate variants. Native turn times under machine load spike 10–100×;
   count search work instead. (g1-1, g1-3)
 
+## Walls
+
+- **Multi-step seals work, but matter little:** laying the head across a pocket exit in one
+  2–4-step MOVE seals 6–8 enemies a worldgen match with ~85% confirmed kills (single steps: ~2, rarely
+  lethal), worth 54-48; ~7 kills is small next to ~230 trapped deaths a side. Skip enemies already
+  doomed; when flooding the enemy's options, treat other bodies as passable. (g12-18)
+
 ## Sonar tricks
 
 - **A ping checks a tile out of view:** pings go straight (and through portals) and ECHOES
