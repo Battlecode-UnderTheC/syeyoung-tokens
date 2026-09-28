@@ -1,0 +1,7 @@
+name = "counter-swarm-11"
+parents = ["counter-swarm-5", "gather-split-trade-23", "gather-split-trade-20"]
+operator = "crossover"
+archetype = "counter-swarm"
+author = "claude-opus-5-5"
+created = "2026-09-28"
+task = "g6-3"
