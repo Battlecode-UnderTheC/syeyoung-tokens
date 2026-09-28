@@ -1,0 +1,7 @@
+name = "gather-split-trade-62"
+parents = ["gather-split-trade-56"]
+operator = "mutate"
+archetype = "gather-split-trade"
+author = "claude-opus-5-5"
+created = "2026-09-29"
+task = "g15-15"
