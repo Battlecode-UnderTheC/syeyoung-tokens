@@ -87,7 +87,7 @@ struct Params {
   int32_t cap_feed_slack = 0;       // ... when our count is at least unit_limit - this
   // the heir: from this round the dragon the team's sonar names champion (the longest known)
   // stops splitting, trading and hunting, keeps off enemy heads, and just gathers
-  int32_t heir_from_round = 300;
+  int32_t heir_from_round = 100000;
 };
 
 class StrategyAgent : public bot::Agent {
