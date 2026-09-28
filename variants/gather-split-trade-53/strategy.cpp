@@ -10,7 +10,7 @@
 #endif
 #include <unordered_map>
 #include <unordered_set>
-#if defined(GST53_DEBUG) || defined(GST53_TRACE)
+#if defined(GST53_DEBUG) || defined(GST53_TRACE) || defined(GST53_CAPLOSS)
 #include <atomic>
 #include <cstdio>
 #include <cstdlib>
@@ -31,6 +31,13 @@ static struct IdleReport {
 } g_idle_report;
 #else
 #define GST53_COUNT(x)
+#endif
+#ifdef GST53_CAPLOSS
+// trapped-at-cap resignations of long dragons (length >= 10): count and length lost
+static std::atomic<long> g_cap_n{0}, g_cap_len{0};
+static struct CapReport {
+  ~CapReport() { std::fprintf(stderr, "GST53 capdeaths L10+ %ld length %ld\n", g_cap_n.load(), g_cap_len.load()); }
+} g_cap_report;
 #endif
 
 StrategyAgent::StrategyAgent(const rl::Spawn& spawn, Params params)
@@ -56,6 +63,7 @@ StrategyAgent::StrategyAgent(const rl::Spawn& spawn, Params params)
       GST53_SET(escape_steps) GST53_SET(trap_small)
       GST53_SET(split_headroom) GST53_SET(turnout_budget) GST53_SET(doom_first) GST53_SET(ally_memory) GST53_SET(avoid_blind) GST53_SET(doomed_split_room) GST53_SET(leader_split_until) GST53_SET(share_leader) GST53_SET(feed_distance) GST53_SET(big_split_length)
       GST53_SET(portal_cross) GST53_SET(portal_explore) GST53_SET(loop_break) GST53_SET(loop_ban) GST53_SET(known_portal) GST53_SET(blind_fallback) GST53_SET(exit_risk_max) GST53_SET(exit_risk_ping)
+      GST53_SET(late_split_free) GST53_SET(cap_feed_max) GST53_SET(cap_feed_ally) GST53_SET(cap_feed_dist) GST53_SET(goal_room_cap)
       GST53_SET(wait_factor) GST53_SET(cluster_bonus) GST53_SET(cluster_radius) GST53_SET(cluster_pool)
 #undef GST53_SET
     }
@@ -847,6 +855,9 @@ bot::Action StrategyAgent::SafeStep(int preferred, bool trap_ok) {
     if (Classify(board_.Step(head_, d)) == Cell::kUnknown) return Because("trapped: unknown portal", bot::Action::Move(d));
 #ifdef GST53_DEBUG
   Dump("trapped: no move");
+#endif
+#ifdef GST53_CAPLOSS
+  if (length_ >= 10 && FreeSlots() <= 1) { ++g_cap_n; g_cap_len += length_; }
 #endif
   return Because(Bucket("trapped: no move"), bot::Action::Resign());
 }
