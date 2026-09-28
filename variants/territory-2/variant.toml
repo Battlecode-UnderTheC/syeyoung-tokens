@@ -1,0 +1,7 @@
+name = "territory-2"
+parents = ["gather-split-trade-39"]
+operator = "fresh"
+archetype = "territory"
+author = "claude-opus-5-5"
+created = "2026-09-29"
+task = "g13-4"
