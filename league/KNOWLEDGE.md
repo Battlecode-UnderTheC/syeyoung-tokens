@@ -76,6 +76,9 @@ against the RL policy, native engine, 2026-09-28). `g<N>` = `league/generations/
   the slower late fade keeps its old report alive and the corrected stub report never spreads.
   Obituary pings (relay a sharply shrunk or dead champion's correction for 20 rounds) raised
   knowledge 48% → 64% on a worldgen set; gather-split-trade-39 55-47. (g12-10)
+  A heartbeat (drop a champion whose self-report round stops rising) cut dead-champion naming
+  further but didn't move wins (48-54): the champion-knowledge lever is saturated; most games are
+  decided before the endgame. (g12-19)
 - **Trapped long dragons resign whole at the unit cap** (no split escape): ~110 dragons of
   length 4–19 in one worldgen match. (g5-7)
 - **Don't grow the champion early:** a lone gatherer grows ~0.05–0.1 length a round; an heir
