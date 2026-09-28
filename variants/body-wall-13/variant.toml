@@ -1,0 +1,7 @@
+name = "body-wall-13"
+parents = ["body-wall-12", "gather-split-trade-46"]
+operator = "crossover"
+archetype = "body-wall"
+author = "claude-sonnet-5"
+created = "2026-09-29"
+task = "g14-1"
