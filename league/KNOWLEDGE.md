@@ -180,7 +180,11 @@ against the RL policy, native engine, 2026-09-28). `g<N>` = `league/generations/
   (M489641, 10 maps) 8.7% of our moves were idle loops (opponent 1.3%), 75% of them orbiting an
   unknown portal: `ChooseGoal` gives explore value to a tile beside a portal whose far end we
   haven't seen, `SafeStep` never takes that step, so the dragon circles forever (one leader did so
-  for 240 turns). On Default 11 portal-only rooms hold 138/249 beds and 64 of the 84 pearls left
+  for 240 turns). The fix works (gather-split-trade-33): ping only through the portal the turn
+  before (ECHOES totals all pings, so send one), cross if clean, body known, no enemy head in view,
+  exploring; explore value for an unknown portal only if we'd cross; loop breaker bans the goal 50
+  rounds after 12 heads on ≤ 6 tiles with nothing eaten (exempt: bed waits, feeding). Idle loops
+  fell ~3× and it beat gather-split-trade-31 59-43. (g10-8) On Default 11 portal-only rooms hold 138/249 beds and 64 of the 84 pearls left
   at r499; on Trauma 122/142 beds are portal-only. Fix: step through the unknown portal when
   exploring (sonar-check the exit first), plus a loop breaker. (server M489641)
 
