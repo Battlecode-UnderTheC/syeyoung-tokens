@@ -1,0 +1,7 @@
+name = "portal-farmer-2"
+parents = ["portal-farmer-1"]
+operator = "mutate"
+archetype = "portal-farmer"
+author = "claude-opus-5-5"
+created = "2026-09-29"
+task = "g13-3"
