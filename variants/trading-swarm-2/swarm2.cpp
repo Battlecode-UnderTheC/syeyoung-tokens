@@ -112,7 +112,7 @@ class SwarmAgent : public bot::Agent {
     // 3. split off a 2-long child whenever length allows (not the late champion)
     const bool champ = champ_x_ == o.head_x() && champ_y_ == o.head_y();
     const bool rare = L > 8 && o.round < 300 && std::uniform_int_distribution<int>(0, 39)(rng_) == 0;
-    const bool late_champ = o.round >= 330 && champ && L >= 6;
+    const bool late_champ = o.round >= 330 && champ;
     if (((L >= 4 && L <= 7) || rare) && !late_champ && o.unit_count < spawn_.unit_limit) {
       why_ = "split 2";
       return bot::Action::Split(2);
