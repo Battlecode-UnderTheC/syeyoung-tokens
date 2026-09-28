@@ -48,19 +48,19 @@ every other variant on maps you can't see, so play well in general; don't tune f
 
 ```sh
 cd {worktree}
-cmake -S . -B build >/dev/null && cmake --build build -j 4 --target {variant} sim check
+cmake -S . -B build >/dev/null && cmake --build build -j 2 --target {variant} sim check
 build/tools/check {variant} maps/official          # must say "all checks passed"
-build/tools/sim --a {variant} --b <parent> --maps maps/official --threads 4
+build/tools/sim --a {variant} --b <parent> --maps maps/official --threads 2
 python3 league/league.py quick build/variants/lib{variant}.so --vs <opponent> --vs <opponent>
 build/tools/sim --a {variant} --b <parent> --maps maps/official --trace <map name>   # one match, verbosely
 python3 maps/worldgen/worldgen.py --batch 20 --outdir {worktree}/build/practice           # more maps
-build/tools/sim --a {variant} --b <parent> --maps {worktree}/build/practice --threads 4
+build/tools/sim --a {variant} --b <parent> --maps {worktree}/build/practice --threads 2
 ```
 
 `sim` prints W-D-L, final length margins, deaths by cause, and each side's action reasons
 and the reasons behind fatal turns. Use `--trace` on a loss to see what went wrong, round by
 round. Measure on the official maps **and** fresh worldgen maps; a change that only helps on
-one set is suspect. Keep at most 4 threads busy: other agents and the league share the machine.
+one set is suspect. Keep at most 2 threads busy (builds `-j 2`, `sim --threads 2`): other agents and the league share the machine.
 
 Limits your variant must respect (the competition judge):
 

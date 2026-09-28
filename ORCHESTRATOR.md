@@ -54,8 +54,9 @@ submission), `anchor-random` and `anchor-greedy`.
 
 ## A generation
 
-Default brood: **6 tasks, at most 3 workers running at once** (each worker's builds and
-quick matches compete with the league's 6 match processes for 10 cores). The user may give
+Default brood: **6 tasks, all running at once**. Workers spend most of their time reading
+and writing code, not simulating, so CPU is not the bottleneck; each uses at most 2 threads
+(builds `-j 2`, `sim --threads 2`) so their bursts share the 10 cores with the league. The user may give
 you a different size or number of generations; otherwise run generations until told to stop
 or until the stopping rule below.
 
@@ -112,7 +113,7 @@ without the tool's own worktree isolation (the task already has its worktree). I
 starts with no context and must not depend on this conversation. Use the strongest model
 for fresh and crossover tasks; a cheaper one is fine for tweaks.
 
-Start the next task whenever a worker finishes, keeping at most 3 running.
+Launch every task of the generation at once.
 
 ### 4. Collect
 
