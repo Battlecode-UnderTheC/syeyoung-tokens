@@ -109,6 +109,43 @@ class SwarmAgent : public bot::Agent {
       }
     }
 
+    // 2b. pincer: a 2-3 long dragon closes on a long enemy head (in front of it), so the
+    //     next turn's adjacent-head trade can take it
+    if (L <= 3) {
+      int best_k = -1, best_len = 0, best_face = 0;
+      for (const rl::Segment& sg : o.segments) {
+        if (!sg.head || sg.team == spawn_.team) continue;
+        const int k = TileOf(o, sg.x, sg.y);
+        if (k < 0 || enemy_head_len[k] < 5) continue;
+        const int md = std::abs(k / 7 - 3) + std::abs(k % 7 - 3);
+        if (md > 4 || md < 2) continue;
+        if (enemy_head_len[k] > best_len) best_len = enemy_head_len[k], best_k = k, best_face = sg.facing;
+      }
+      if (best_k >= 0) {
+        const int front = win::Step(o, best_k, best_face);   // the tile it's about to enter
+        int first[rl::kWindowTiles];
+        std::fill(std::begin(first), std::end(first), -1);
+        std::deque<int> q;
+        for (int d = 0; d < 4; ++d)
+          if (const int k = win::Step(o, win::kCenter, d); k >= 0 && !occ[k]) first[k] = d, q.push_back(k);
+        int go = -1, go_alt = -1;
+        for (; !q.empty() && go < 0; q.pop_front()) {
+          const int k = q.front();
+          if (k == front) go = first[k];
+          const int kd = std::abs(best_k / 7 - k / 7) + std::abs(best_k % 7 - k % 7);
+          if (kd == 1 && go_alt < 0) go_alt = first[k];
+          for (int d = 0; d < 4; ++d)
+            if (const int n = win::Step(o, k, d); n >= 0 && n != win::kCenter && first[n] < 0 && !occ[n])
+              first[n] = first[k], q.push_back(n);
+        }
+        if (go < 0) go = go_alt;
+        if (go >= 0) {
+          why_ = "pincer";
+          return bot::Action::Move(go);
+        }
+      }
+    }
+
     // 3. split off a 2-long child whenever length allows (not the late champion)
     const bool champ = champ_x_ == o.head_x() && champ_y_ == o.head_y();
     const bool rare = L > 8 && o.round < 300 && std::uniform_int_distribution<int>(0, 39)(rng_) == 0;
