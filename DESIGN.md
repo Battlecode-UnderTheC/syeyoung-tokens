@@ -68,58 +68,56 @@ is local; git tags and branches are the interface between agents and the league.
   symbols, loaded by `sim`, `check` and the league) and an unswbc bot
   (`scripts/make-bot.sh`, flat directory, the judge's flags).
 
-### 2. League service (a background process on this Mac)
+### 2. League service (built: `league/league.py serve`)
 
-A long-running process; everything it learns goes into `league/league.sqlite` (copied
-aside daily) and committed reports.
+A background process on this Mac (`nohup nice -n 10 league/league.py serve`). Standard-library
+Python; configuration is the constants at the top of `league.py`, in git. It owns
+`../syeyoung-tokens.league/` (never in git):
 
-- **Ingest:** polls the repository for new `variant/*` tags; builds each new variant.
-- **Gates**, in order; a failure is recorded with its log and the variant is rejected:
-  1. builds as a plugin and as an unswbc bot with the judge's flags; zip under 4 MB;
-  2. safety: memory audit and "no wall or self death with a safe move" (today's
-     `strategy_tests`), no crash in 20 matches, no turn over a CPU cap (native
-     instruction count, calibrated against the wasm meter);
-  3. sanity: beats random and greedy on the official maps.
-  Champion candidates also pass the judge's sandbox (`unswbc run --sandbox`, p99 CPU
-  under 50% of the 100M points per turn).
-- **Matches:** every match runs in a forked child process with a wall-clock and memory
-  limit, so a crashing or looping variant can't hurt the league. Pairing is continuous:
-  new variants first play the anchors, then opponents chosen by rating uncertainty
-  (TrueSkill), both sides of each map.
-- **Maps**, three suites:
-  - *public:* the 11 official maps. Reports show per-map results.
-  - *rotating:* ~200 pool maps, a new slice each generation. Reports show aggregates.
-  - *holdout:* ~100 maps agents never see results for. Used for selection and champion
-    decisions. Replaced if they leak.
-  Structured generated maps (rooms, corridors, pearl fields) are added so the pool
-  resembles the official ones.
-- **Anchors** (fixed, always playing): strategy-v1 (server v3), the RL policy at update
-  50753 (as a plugin via `policy_agent`), greedy, random, and every former champion.
-  They keep ratings comparable over time.
-- **Match row:** variant ids, their commits, map id and suite, side, engine commit, result,
-  rounds, final longest and total per side, deaths by cause per side, reason tallies,
-  CPU per turn (p50, p99, max), wall time.
-- **Ratings:** TrueSkill per variant, on holdout plus rotating maps; also win rate against
-  each anchor, mean length margins, and behaviour descriptors (below).
-- **Reports** (`league/reports/<id>.md`, regenerated as matches arrive): standings, results
-  by map (public) and by opponent, deaths by cause, reason tallies, the reasons behind
-  fatal turns, and 2-3 traced losses (`--trace` output) with official `.replay` files
-  (recorded commands replayed through the unswbc engine).
-- **Generation reports** (`league/generations/<n>.md`, committed): what was bred from
-  what, results, what worked, the new leaderboard.
+| Path | What |
+|---|---|
+| `league.db` | SQLite: `variants` (commit, ABI, status, why rejected, variant.toml, Elo), `matches` (one row per match: players, suite, map, winner, the match tool's JSON, error, tools commit) |
+| `tools/` | `match`, `check`, `sim`, rebuilt from `main` whenever main moves |
+| `plugins/lib<name>.so` | each variant, built once from its tag's own tree: frozen |
+| `maps/public/` | the official maps |
+| `maps/rotating/e<N>/` | 20 worldgen maps (seeds N*1000..), a new set every 7 days |
+| `maps/holdout/` | 60 pool maps + 40 worldgen maps from a secret seed range; agents never see these or per-map results |
+| `maps/practice/` | worldgen seeds 900000+, for `league quick` |
+| `maps/pool_maps.txt` | the RL generator's 4000-map pool, the holdout's source |
+| `reports/` | `LEADERBOARD.md` and `<variant>.md`, rewritten after every batch |
+| `logs/serve.log` | what the service did |
 
-### 3. `league` CLI (for agents and humans)
+Each pass:
+- **Ingest:** new `variant/*` tags. A variant whose Agent ABI (`ABI_FILES`: agent.hpp,
+  plugin.hpp, observation.hpp, core.hpp) differs from main's is rejected: the tools could
+  not call it. So those four files are frozen; changing them means rebuilding the league.
+- **Gates:** `check` on the public maps (no crash, no avoidable wall/self death, board
+  memory right), then at least 75% wins against anchor-random on public maps, both sides.
+- **Matches:** one `match` process each (180 s timeout; a crash or hang is an error row,
+  not a result), 6 at once, batches of 120. Up to 24 variants everyone plays everyone;
+  past that, rating neighbours plus the anchors and the leader. Every pair plays every
+  public and rotating map from both sides. When nothing is owed, the top 4 play each
+  other and anchor-greedy on the holdout.
+- **Ratings:** Bradley–Terry (MM iteration, draws half a win, a weak prior) on public +
+  rotating results, in Elo with anchor-random fixed at 1000; ± from the Fisher information.
+  The holdout never feeds the rating: it's for selection and spotting overfitting.
+- **Anchors:** anchor-random, anchor-greedy (fixed, `variants/anchor-*`), and strategy-v1.
+  The RL policy is not an anchor (RL was abandoned; its plugin would need the weights).
 
-The only way agents touch the league. Every call's results are recorded.
+Not built yet: the judge-sandbox gate for champion candidates (CPU points, zip size),
+traced losses and `.replay` files in reports, generation reports.
+
+### 3. `league` CLI (built)
 
 | Command | Does |
 |---|---|
-| `league status` | Leaderboard, current generation, gate queue. |
-| `league report <id>` | A variant's report (as above). |
-| `league quick <dir> [--vs <id>...]` | Builds a work-in-progress variant and plays it against given opponents on public + rotating maps (never holdout). Recorded as a "draft" result, so an agent can iterate within its budget without polluting ratings. |
-| `league trace <dir> <map> --vs <id>` | One verbose match (the simulator's `--trace`). |
-| `league check <dir>` | Runs the gates locally. |
-| `league submit <dir>` | Freezes the variant, pushes `variant/<id>`, enters it in the league. |
+| `league status` | The leaderboard, match count, errors. |
+| `league report <variant>` | A variant's report: W-D-L by opponent and side, by map (worst first), deaths by cause, reason tallies and the reasons behind fatal turns, turn times, errors, holdout aggregate. |
+| `league quick <lib.so> [--vs V]... [--maps N]` | A work-in-progress build against league variants (default the top 3) on public + practice maps. Records nothing. |
+| `league trace <A> <B> <map file>` | One match round by round (`sim --trace`). |
+| `league rate` | Recompute ratings and reports from the database alone. |
+
+Submitting stays `scripts/submit.sh` (check, commit, tag); the service picks the tag up.
 
 ### 4. Orchestrator (scheduler)
 
@@ -187,6 +185,8 @@ nightly on random maps. When a new unswbc version ships (1.1.0 is out; we use 1.
 re-run parity before trusting results.
 
 ## Build order
+
+Done: 1-3 (2026-09-28). Next: 4.
 
 1. **Plugin contract:** `league_make_agent`, the `.so` build, strategy-v1 as the first
    variant, the simulator loading plugins. Also the RL policy and greedy/random as plugins

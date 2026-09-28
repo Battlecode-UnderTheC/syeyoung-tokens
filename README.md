@@ -13,9 +13,11 @@ part: the layout and the git workflow every agent follows.
 | `shared/bot/` | The `Agent` interface, the plugin entry point, the stdin/stdout protocol loop. | humans only |
 | `shared/lib/` | Helpers any variant may use: `BoardMemory` (what a dragon knows of the map), `pathing` (search, dead ends). | humans only |
 | `variants/<name>/` | One strategy: its source, `variant.toml`, `NOTES.md`. | one agent task each |
-| `tools/` | The simulator (plays variant plugins against each other) and the checks. | humans only |
+| `tools/` | `sim` (many matches, a summary), `match` (one match as JSON), `check` (the gate); `play.*` is what they share. | humans only |
+| `league/` | The league service and CLI (`league/league.py`; DESIGN.md section 2). | humans only |
 | `scripts/` | The git workflow (below) and building a variant as an unswbc bot. | humans only |
 | `maps/official/` | The 11 official maps. More suites live outside git (see DESIGN.md). | — |
+| `maps/worldgen/` | A procedural map generator (vendored, see `SOURCE.md`): unlimited practice maps. | — |
 
 `shared/VENDORED.md` records where the shared code came from.
 
@@ -59,3 +61,16 @@ cmake -S . -B build && cmake --build build -j
 build/tools/sim --a strategy-v1 --b strategy-v1 --maps maps/official
 build/tools/check strategy-v1 maps/official        # memory audit, no avoidable wall/self deaths
 ```
+
+## The league
+
+```sh
+nohup nice -n 10 league/league.py serve >> ../syeyoung-tokens.league/logs/serve.log 2>&1 &   # the service
+league/league.py status                        # leaderboard
+league/league.py report <variant>              # what to improve
+league/league.py quick build/variants/lib<name>.so --vs strategy-v1   # a draft, before submitting
+league/league.py trace <A> <B> <map file>
+python3 maps/worldgen/worldgen.py --batch 20 --outdir /tmp/practice   # practice maps
+```
+
+Tag a variant (`scripts/submit.sh`) and the service builds, gates and plays it within a minute.
