@@ -84,8 +84,8 @@ Outcome Play(const std::string& map_text, const std::array<const Variant*, 2>& s
   Outcome out;
   int32_t last_round = -1;
   while (!g.done()) {
-    for (int s = 0; s < 2; ++s)
-      if (g.round() == (s ? 100 : 50) && !out.snapped[s]) {
+    for (int s = 0; s < 6; ++s)
+      if (g.round() == kSnapRounds[s] && !out.snapped[s]) {
         out.snapped[s] = true;
         for (int t = 0; t < 2; ++t)
           for (const auto& dr : g.dragons())
