@@ -116,7 +116,7 @@ struct Params {
   // our grown body plus a tile (we follow our tail out), else the stub a split leaves behind
   // (trap_stub segments); a 2-3 long dragon may enter when the pocket's pearls grow it to >= 4
   // and a unit slot is free (it can then split out)
-  int32_t trap_loss = 1;
+  int32_t trap_loss = 0;            // gst131 (strategist-o Exp 3): off, flat trap_cost beat the loss model (see NOTES)
   double trap_stub = 2.0;
   // g22-1/gst115 (strategist-g P1, P3): the opening (r < opening_end) is a pearl-throughput
   // race, not a farming problem; ts8's simple greedy nearest-pearl search out-throughputs our
@@ -125,7 +125,7 @@ struct Params {
   // pearl (ignoring all the scoring machinery above) rather than idling or patrolling when
   // nothing scored.
   int32_t opening_end = 150;
-  double trap_opening_cost = 0.5;   // trap_cost while round_ < opening_end (was flat trap_cost)
+  double trap_opening_cost = 3.0;   // trap_cost while round_ < opening_end; gst131: unified with trap_cost (was 0.5)
   int32_t opening_pearl_radius = 40;  // nearest-pearl fallback only within this many tiles
   // round 2 (orchestrator feedback): the fallback above only fired when best.tile<0, which
   // never happens on Devil's open centre. Take the nearest pearl instead of the scored best
