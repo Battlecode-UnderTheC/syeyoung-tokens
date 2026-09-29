@@ -34,6 +34,7 @@ struct Outcome {
   int32_t rounds = 0;
   std::array<int32_t, 2> longest{}, total{};       // at the end, by team
   std::array<std::array<int32_t, 5>, 2> deaths{};  // by team and cause (kCauses)
+  std::array<std::array<int32_t, 5>, 2> own_move{};  // ... of which the dragon died on its own turn (self-inflicted)
   std::array<std::array<int32_t, 2>, 2> lunged{};  // by team: dragons killed head-to-head by an enemy's
   std::array<std::array<int32_t, 2>, 2> lunged_len{};  // multi-step move, [shorter than 10, 10+], and their length
   std::map<std::string, int64_t> reasons[2];       // by team: why its dragons acted

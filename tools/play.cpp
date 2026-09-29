@@ -131,6 +131,7 @@ Outcome Play(const std::string& map_text, const std::array<const Variant*, 2>& s
                     kCauses[death.reason], death.id == d ? "its own" : "another dragon's",
                     why.empty() ? "" : ", acting: ", why.c_str());
       ++out.deaths[death.team][death.reason];
+      if (death.id == d) ++out.own_move[death.team][death.reason];
       if (multi && death.team != team && death.reason == 3 && death.id < static_cast<int32_t>(before.size())) {
         const int32_t len = before[death.id];
         ++out.lunged[death.team][len >= 10];

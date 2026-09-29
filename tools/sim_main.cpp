@@ -80,6 +80,7 @@ int main(int argc, char** argv) {
     int w = 0, d = 0, l = 0;
     double longest = 0, total = 0, rounds = 0;
     std::array<std::array<double, 5>, 2> deaths{};     // [a, b][cause]
+    std::array<std::array<double, 5>, 2> own{};        // [a, b][cause], died on its own turn
     std::array<std::array<double, 4>, 2> lunged{};     // [a, b][killed short, their length, killed 10+, their length]
     std::map<std::string, int64_t> reasons[2], fatal[2];
     std::array<std::array<std::array<double, 3>, 2>, 2> snap{};  // [r50, r100][a, b][dragons, longest, total]
@@ -101,7 +102,7 @@ int main(int argc, char** argv) {
         }
       for (int s = 0; s < 2; ++s) {
         const int team = s ? 1 - ta : ta;
-        for (int c = 0; c < 5; ++c) deaths[s][c] += o.deaths[team][c];
+        for (int c = 0; c < 5; ++c) deaths[s][c] += o.deaths[team][c], own[s][c] += o.own_move[team][c];
         for (int k = 0; k < 2; ++k) lunged[s][2 * k] += o.lunged[team][k], lunged[s][2 * k + 1] += o.lunged_len[team][k];
         for (const auto& [k, v] : o.reasons[team]) reasons[s][k] += v;
         for (const auto& [k, v] : o.fatal[team]) fatal[s][k] += v;
@@ -127,6 +128,8 @@ int main(int argc, char** argv) {
     for (int s = 0; s < 2; ++s) {
       std::printf("  deaths per match, %s:", (s ? b : a).name.c_str());
       for (int c = 0; c < 5; ++c) std::printf(" %s %.1f", kCauses[c], deaths[s][c] / n);
+      std::printf("; on its own move:");
+      for (int c = 0; c < 5; ++c) std::printf(" %s %.1f", kCauses[c], own[s][c] / n);
       std::printf("; lunged by the enemy: %.1f short (length %.1f), %.1f of 10+ (length %.1f)\n", lunged[s][0] / n,
                   lunged[s][1] / n, lunged[s][2] / n, lunged[s][3] / n);
       if (reasons[s].empty()) continue;
