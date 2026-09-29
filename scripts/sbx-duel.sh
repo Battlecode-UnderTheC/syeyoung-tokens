@@ -1,6 +1,6 @@
 #!/bin/sh
-# A multi-seed duel in the judge's sandbox (per-match pearl seeds, unlike `sim`, which always uses the
-# engine's one fixed seed and so overfits it).
+# A multi-seed duel in the judge's sandbox. `build/tools/sim --seed 11,12` now plays the same games
+# (move for move, see scripts/sim-vs-judge.sh) in a fraction of the time; this stays as the ground truth.
 #   scripts/sbx-duel.sh <variant-a> <variant-b> [seeds (default "11 12")] [maps dir (default maps/official)] [jobs (default 3)]
 # Builds both as unswbc bots under build/sbx-bots/, plays every map x seed x both seats, prints each
 # result and A's W-D-L.
