@@ -77,7 +77,69 @@ gst96 check are out of scope for this task; did the gst96 check anyway since it'
   closes the r50 gap on the maps where it matters most (Devil-like open-centre maps against
   ts8-style opponents).
 
+## Round 2 (orchestrator feedback)
+
+Round 1's P1 fallback only fired when `best.tile < 0` (nothing scored at all), which never
+happens on Devil's open, densely-seeded centre -- the orchestrator's measurement showed the
+Devil-vs-ts8 r50/r100 numbers exactly unchanged from baseline, confirming the fallback was dead
+code there.
+
+Changed the trigger: added `opening_pearl_factor` (1.0) and now prefer the nearest reachable
+pearl whenever `round_ < opening_end` and either nothing scored, **or** the best scored
+candidate's score is weaker than the pearl's own plain (undiscounted -- no crowd/share/contest/
+cluster multipliers, matching how ts8's greedy search works) score times `opening_pearl_factor`.
+The nearest-pearl distance/score are still tracked inside the existing full-board pass (no
+second scan; `check` stayed at 0.1-0.2ms slowest turn everywhere on official maps).
+
+### Devil vs trading-swarm-8 (target metric)
+
+Note: Devil is a single fixed official map and `sim` turned out to be fully deterministic here
+(reran the same 2-match batch twice, byte-identical results both times) -- there is no seed
+knob exposed by `sim`, and `worldgen.py` has no "devil" style/landmark to generate seeded
+variants of it from. So "two seeds" wasn't achievable for Devil specifically; reporting the
+only reproducible measurement (2 matches, both seats):
+
+- r50: gst115 9.0 dragons / 20.5 total vs ts8 18.5 dragons / 47.5 total
+  (baseline was 9.5 / 22.5 vs 20.5 / 50.0)
+- r100: gst115 11.5 dragons / 29.0 total vs ts8 27.0 dragons / 65.5 total
+  (baseline was 8.0 / 19.0 vs 28.5 / 68.5)
+- Still 0-0-2 (loss both seats). r50 gap is essentially unchanged (still ~2.3x); r100 total-length
+  gap narrows a bit (19.0->29.0 for us) but dragon count still falls far behind ts8's.
+- ts8's `nearest pearl` (6708 calls/match) still fires ~1.8x more than our `toward goal`
+  (3679/match) -- the fallback is no longer dead code (its own action isn't separately tallied,
+  it reuses "toward goal"/"into a dead end worth it" reasons downstream), but it isn't enough to
+  flip Devil: the deeper issue -- congestion/death-mode asymmetry (strategist-f) and Devil's map
+  shape favoring ts8's centre-push timing -- is untouched by P1/P3 alone.
+
+### Aggregate W-D-L (all measured with the round-2 change)
+
+- vs gather-split-trade-101 (parent): official **15-0-7** (up from 12-0-10), r50 11.3/28.5 (us)
+  vs 9.2/22.8 (parent); worldgen (seed 91000, 20 maps) **22-0-18** (up from 18-0-22), r50
+  20.9/54.4 vs 22.3/57.3.
+- vs gather-split-trade-96 (live v7): official **13-0-9** (up from 11-0-11); worldgen **23-0-17**
+  (up from 20-0-20).
+- vs trading-swarm-8: official **16-1-5** (up from 11-1-10), r50 10.7/26.5 (us) vs 11.2/27.3;
+  worldgen **37-0-3** (up from even, a big jump) -- r50 22.5/58.5 (us) vs 16.3/41.9, r100
+  41.6/109.0 vs 22.3/56.1. The score-comparison trigger clearly helps broadly across official
+  and especially worldgen maps against all three opponents, even though it doesn't close the
+  Devil-specific gap yet.
+
+### Takeaway
+
+The "prefer nearest pearl over a weak scored candidate" trigger (not just "nothing scored")
+is a much bigger lever than round 1's version, and it's a clean win against parents and ts8 on
+official and worldgen maps broadly. But Devil is the one map type where the original diagnosis
+was made, and it remains close to unchanged there: ts8 still out-throughputs us by roughly the
+same margin. Devil's issue looks less like "our scan misses pearls" and more like a structural
+throughput/congestion gap (P2's sonar hotspot broadcast, or strategist-f's congestion proposals)
+that P1/P3 alone can't fix. Next step: check whether our per-tile discounts (share/crowd/contest)
+are suppressing scores across Devil's whole (open, many-allies-in-view) board, not just at a few
+contested tiles -- `opening_pearl_factor` may need to be higher than 1.0, or those discounts
+themselves need a lighter touch in the opening, specifically on open-centre maps like Devil.
+
 ## Submit
 
-`check` passes, everything is at least even with parents in the maps/opponents measured.
-Submitting.
+`check` passes ("all checks passed", 0 avoidable deaths). Round 2 measurements show a clear
+improvement vs all three opponents on official and worldgen maps (parent 15-0-7 / 22-0-18, gst96
+13-0-9 / 23-0-17, ts8 16-1-5 / 37-0-3) -- well above "at least even". Devil-vs-ts8 specifically
+is essentially unchanged (still a loss, still ~2.3x behind at r50). Submitting.

@@ -68,7 +68,7 @@ StrategyAgent::StrategyAgent(const rl::Spawn& spawn, Params params)
       GST115_SET(crowd_threshold) GST115_SET(stale_divisor) GST115_SET(stale_cap)
       GST115_SET(centre_bonus) GST115_SET(centre_until) GST115_SET(centre_max_tiles)
       GST115_SET(fan_out_until) GST115_SET(fan_out_radius)
-      GST115_SET(opening_end) GST115_SET(trap_opening_cost) GST115_SET(opening_pearl_radius)
+      GST115_SET(opening_end) GST115_SET(trap_opening_cost) GST115_SET(opening_pearl_radius) GST115_SET(opening_pearl_factor)
 #undef GST115_SET
     }
   }
@@ -483,6 +483,7 @@ StrategyAgent::Goal StrategyAgent::ChooseGoal(const Paths& paths) const {
   // every tile (a second full-board scan just for the opening fallback below was 5x slower on
   // dense maps: `check` showed default's slowest turn jump from 0.4ms to 2.1ms).
   int32_t nearest_pearl = -1, nearest_pearl_d = p_.opening_pearl_radius + 1;
+  double nearest_pearl_score = 0.0;
   const bool want_pearl_fallback = round_ < p_.opening_end;
   for (int32_t t = 0; t < board_.size(); ++t) {
     const int32_t d = paths.dist[t];
@@ -493,6 +494,7 @@ StrategyAgent::Goal StrategyAgent::ChooseGoal(const Paths& paths) const {
     if (want_pearl_fallback && d < nearest_pearl_d && board_.at(t).pearl && !Banned(t)) {
       nearest_pearl = t;
       nearest_pearl_d = d;
+      nearest_pearl_score = base[t] / (d + 1.0);
     }
     const double value0 = base[t];
     int32_t ready = d;
@@ -676,7 +678,15 @@ StrategyAgent::Goal StrategyAgent::ChooseGoal(const Paths& paths) const {
   // above (or every candidate got trapped and no_trap refused it) -- ts8's plain greedy
   // nearest-pearl search out-throughputs that caution. Fall back to the nearest reachable
   // pearl, unscored, rather than idling into patrol or roomiest-step stalling.
-  if (best.tile < 0 && want_pearl_fallback && nearest_pearl >= 0) best = {nearest_pearl, false};
+  // g22-1 (round 2): don't wait for best.tile<0 -- Devil's open centre means the scored scan
+  // almost always finds *something*, so "nothing scored" never fires there and the fallback
+  // was dead code (orchestrator's finding: r50 numbers unchanged from baseline). Prefer the
+  // nearest reachable pearl whenever the best scored candidate is weak relative to it: either
+  // there's no candidate at all, or the pearl's own plain score (ignoring crowd/share/contest/
+  // cluster discounts, same as ts8's greedy search) beats what the careful scan settled on.
+  if (want_pearl_fallback && nearest_pearl >= 0 &&
+      (best.tile < 0 || best_score < nearest_pearl_score * p_.opening_pearl_factor))
+    best = {nearest_pearl, false};
   // nothing worth going for: patrol, towards what we have not seen for longest
   if (best.tile < 0 && p_.patrol) {
     double top = 0;

@@ -127,6 +127,11 @@ struct Params {
   int32_t opening_end = 150;
   double trap_opening_cost = 0.5;   // trap_cost while round_ < opening_end (was flat trap_cost)
   int32_t opening_pearl_radius = 40;  // nearest-pearl fallback only within this many tiles
+  // round 2 (orchestrator feedback): the fallback above only fired when best.tile<0, which
+  // never happens on Devil's open centre. Take the nearest pearl instead of the scored best
+  // whenever the best is this much weaker than the pearl's own plain (undiscounted) score;
+  // 1.0: prefer the pearl unless the scored best is at least as good on the same scale.
+  double opening_pearl_factor = 1.0;
   // safety
   int32_t room_margin = 3;          // a step must leave at least length + this many tiles reachable ...
   int32_t room_min = 8;             // ... and never fewer than this (short dragons get boxed in too)
