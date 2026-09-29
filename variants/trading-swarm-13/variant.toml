@@ -1,0 +1,7 @@
+name = "trading-swarm-13"
+parents = ["trading-swarm-11"]
+operator = "mutate"
+archetype = "trading-swarm"
+author = "claude-opus-5-5"
+created = "2026-09-30"
+task = "g26-9"
