@@ -3,6 +3,12 @@
 //
 //   sim --a <variant> --b <variant> --maps <dir of .map | pool file> [--limit N] [--threads N]
 //   sim --a <variant> --b <variant> --maps <dir> --trace <map name>      one match, verbosely
+//   ... --seed S[,S...]   pearl seeds (the judge's `unswbc run --seed`; decimal or 0x hex): every
+//                         map is played from both sides at each seed (default: kPearlRngSeed,
+//                         0x5eed5eed = 1592614637). --trace uses the first.
+//
+// With the same seed a match here is the judge's (`unswbc run ... --sandbox --seed S`) move for
+// move: tools/judge_engine.cpp draws pearls as unswbc 1.2 does.
 //
 // A variant is a name (loaded from build/variants/lib<name>.so) or a path to a plugin.
 // Prints W-D-L from a's side, final length margins, deaths by cause, and the tallies of
@@ -12,6 +18,7 @@
 #include <chrono>
 #include <cstdio>
 #include <map>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <thread>
@@ -23,6 +30,7 @@ using namespace tools;
 
 int main(int argc, char** argv) {
   std::string a_arg, b_arg, maps_path, trace_map;
+  std::vector<uint64_t> seeds;
   int threads = static_cast<int>(std::thread::hardware_concurrency());
   size_t limit = 1u << 30;
   for (int i = 1; i + 1 < argc; i += 2) {
@@ -33,16 +41,22 @@ int main(int argc, char** argv) {
     else if (k == "--threads") threads = std::stoi(v);
     else if (k == "--limit") limit = std::stoul(v);
     else if (k == "--trace") trace_map = v;
+    else if (k == "--seed" || k == "--seeds") {
+      std::stringstream list(v);
+      for (std::string item; std::getline(list, item, ',');)
+        if (!item.empty()) seeds.push_back(std::stoull(item, nullptr, 0));
+    }
     else {
       std::fprintf(stderr, "unknown option %s\n", k.c_str());
       return 2;
     }
   }
   if (a_arg.empty() || b_arg.empty() || maps_path.empty()) {
-    std::fprintf(stderr, "usage: %s --a VARIANT --b VARIANT --maps DIR_OR_POOL [--limit N] [--threads N] [--trace MAP]\n",
+    std::fprintf(stderr, "usage: %s --a VARIANT --b VARIANT --maps DIR_OR_POOL [--limit N] [--threads N] [--seed S[,S...]] [--trace MAP]\n",
                  argv[0]);
     return 2;
   }
+  if (seeds.empty()) seeds.push_back(dragons::kPearlRngSeed);
   try {
     const Variant a = Load(a_arg, argv[0]), b = Load(b_arg, argv[0]);
     const auto maps = ReadMaps(maps_path, limit);
@@ -50,7 +64,9 @@ int main(int argc, char** argv) {
       for (const auto& [name, text] : maps)
         if (name == trace_map) {
           std::printf("== %s: %s is team A, %s team B\n", name.c_str(), a.name.c_str(), b.name.c_str());
-          const Outcome o = Play(text, {&a, &b}, true);
+          std::printf("== seed %llu (0x%016llx)\n", static_cast<unsigned long long>(seeds[0]),
+                      static_cast<unsigned long long>(seeds[0]));
+          const Outcome o = Play(text, {&a, &b}, true, seeds[0]);
           std::printf("== %s after %d rounds\n", o.winner < 0 ? "draw" : (o.winner == 0 ? "A wins" : "B wins"), o.rounds);
           return 0;
         }
@@ -59,10 +75,12 @@ int main(int argc, char** argv) {
     struct Job {
       size_t map;
       bool a_is_team_a;
+      uint64_t seed;
     };
     std::vector<Job> jobs;
     for (size_t m = 0; m < maps.size(); ++m)
-      for (const bool side : {true, false}) jobs.push_back({m, side});
+      for (const uint64_t seed : seeds)
+        for (const bool side : {true, false}) jobs.push_back({m, side, seed});
     std::vector<Outcome> results(jobs.size());
     std::atomic<size_t> next{0};
     const auto t0 = std::chrono::steady_clock::now();
@@ -72,7 +90,8 @@ int main(int argc, char** argv) {
         for (size_t i; (i = next++) < jobs.size();) {
           const Job& j = jobs[i];
           results[i] = Play(maps[j.map].second, j.a_is_team_a ? std::array<const Variant*, 2>{&a, &b}
-                                                              : std::array<const Variant*, 2>{&b, &a});
+                                                              : std::array<const Variant*, 2>{&b, &a},
+                            false, j.seed);
         }
       });
     for (auto& t : pool) t.join();
@@ -107,15 +126,17 @@ int main(int argc, char** argv) {
         for (const auto& [k, v] : o.reasons[team]) reasons[s][k] += v;
         for (const auto& [k, v] : o.fatal[team]) fatal[s][k] += v;
       }
-      if (maps.size() <= 32)
+      if (jobs.size() <= 64) {
+        if (seeds.size() > 1) std::printf("  seed %-20llu", static_cast<unsigned long long>(jobs[i].seed));
         std::printf("  %-18s %s as %c: %s after %d rounds (longest %d-%d, total %d-%d)\n",
                     maps[jobs[i].map].first.c_str(), a.name.c_str(), ta ? 'B' : 'A',
                     o.winner < 0 ? "draw" : (o.winner == ta ? "WIN " : "loss"), o.rounds, o.longest[ta],
                     o.longest[1 - ta], o.total[ta], o.total[1 - ta]);
+      }
     }
     const double n = static_cast<double>(jobs.size());
-    std::printf("%s vs %s: %d-%d-%d (W-D-L) over %zu matches, %.1fs\n", a.name.c_str(), b.name.c_str(), w, d, l,
-                jobs.size(), std::chrono::duration<double>(std::chrono::steady_clock::now() - t0).count());
+    std::printf("%s vs %s: %d-%d-%d (W-D-L) over %zu matches (%zu seed%s), %.1fs\n", a.name.c_str(), b.name.c_str(), w,
+                d, l, jobs.size(), seeds.size(), seeds.size() == 1 ? "" : "s", std::chrono::duration<double>(std::chrono::steady_clock::now() - t0).count());
     std::printf("  mean rounds %.0f; at the end %s leads by %.1f longest, %.1f total\n", rounds / n, a.name.c_str(),
                 longest / n, total / n);
     for (int r = 4; r < 6; ++r)

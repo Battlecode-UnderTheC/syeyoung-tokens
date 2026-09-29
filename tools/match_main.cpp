@@ -1,7 +1,10 @@
 // One match, as one line of JSON: what the league runs, one process per match (a
 // crashing or hanging variant takes down only its own match).
 //
-//   match <variant A> <variant B> <map file>
+//   match <variant A> <variant B> <map file> [pearl seed]
+//
+// The seed is the judge's `unswbc run --seed` (decimal or 0x hex; default kPearlRngSeed):
+// with it the match is the judge's, move for move (judge_engine.cpp).
 //
 // Variants by name or plugin path. Output fields: winner ("A", "B", "draw"), rounds, and
 // per team (arrays [A, B]): longest, total, deaths {cause: n}, reasons {why: n},
@@ -42,14 +45,15 @@ std::string Percentiles(std::vector<float> v) {
 }  // namespace
 
 int main(int argc, char** argv) {
-  if (argc != 4) {
-    std::fprintf(stderr, "usage: %s <variant A> <variant B> <map file>\n", argv[0]);
+  if (argc != 4 && argc != 5) {
+    std::fprintf(stderr, "usage: %s <variant A> <variant B> <map file> [pearl seed]\n", argv[0]);
     return 2;
   }
   try {
     const tools::Variant a = tools::Load(argv[1], argv[0]), b = tools::Load(argv[2], argv[0]);
     const auto maps = tools::ReadMaps(argv[3], 1);
-    const tools::Outcome o = tools::Play(maps[0].second, {&a, &b});
+    const uint64_t seed = argc == 5 ? std::stoull(argv[4], nullptr, 0) : dragons::kPearlRngSeed;
+    const tools::Outcome o = tools::Play(maps[0].second, {&a, &b}, false, seed);
     std::string deaths[2];
     for (int t = 0; t < 2; ++t) {
       std::map<std::string, int64_t> m;

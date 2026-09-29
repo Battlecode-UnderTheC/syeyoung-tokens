@@ -77,7 +77,8 @@ void Apply(dragons::Game& g, const bot::Action& a) {
   }
 }
 
-Outcome Play(const std::string& map_text, const std::array<const Variant*, 2>& sides, bool trace) {
+Outcome Play(const std::string& map_text, const std::array<const Variant*, 2>& sides, bool trace, uint64_t seed) {
+  SetPearlSeed(seed);
   dragons::Game g;
   g.Reset(dragons::LoadBoard(map_text));
   std::map<int32_t, std::unique_ptr<bot::Agent>> live;

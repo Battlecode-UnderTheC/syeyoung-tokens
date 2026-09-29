@@ -40,7 +40,8 @@ foreach(dir ${variant_dirs})
 endforeach()
 
 # the tools; play.* is what they share: loading plugins, reading maps, playing a match
-add_library(play STATIC tools/play.cpp)
+# judge_engine.cpp: game.cpp with the judge's pearl RNG (mt19937_64, per-match seed), linked ahead of shared's
+add_library(play STATIC tools/play.cpp tools/judge_engine.cpp)
 target_link_libraries(play PUBLIC shared ${CMAKE_DL_LIBS})
 target_compile_options(play PRIVATE -O2 -Wall -Wextra)
 add_executable(sim tools/sim_main.cpp)

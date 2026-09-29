@@ -46,7 +46,14 @@ struct Outcome {
   std::array<bool, 6> snapped{};                   // whether the game reached that round
 };
 
-// One match: sides[0] plays team A, sides[1] team B. trace: print each round's counts and every death.
-Outcome Play(const std::string& map_text, const std::array<const Variant*, 2>& sides, bool trace = false);
+// The pearl seed of every later game this thread resets (judge_engine.cpp): the judge's
+// `unswbc run --seed S`, a replay's seed. dragons::kPearlRngSeed until set.
+void SetPearlSeed(uint64_t seed);
+uint64_t PearlSeed();
+
+// One match: sides[0] plays team A, sides[1] team B, pearls drawn from `seed` as the judge
+// draws them. trace: print each round's counts and every death.
+Outcome Play(const std::string& map_text, const std::array<const Variant*, 2>& sides, bool trace = false,
+             uint64_t seed = dragons::kPearlRngSeed);
 
 }  // namespace tools
