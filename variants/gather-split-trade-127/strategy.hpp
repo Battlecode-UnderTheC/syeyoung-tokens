@@ -106,8 +106,8 @@ struct Params {
   // our head, per step spent reaching it: frontiers leading out of the spawn corridors towards
   // the middle beat ones going sideways or back. Pearl/bed scores are untouched (centre-claim-1:
   // goals that override pearl-chasing lost), and it works on every map size (unlike centre_pull).
-  int32_t route_until = 100;
-  double route_bonus = 1.0;
+  int32_t route_until = 60;
+  double route_bonus = 0.4;
   int32_t route_arrive = 4;
   // late-surge-17 (crossover g13-15): waiting on a bed is charged more than walking, and a
   // pearl/bed in a field is worth more than a lone one
