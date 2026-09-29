@@ -25,6 +25,7 @@ namespace ts9 {
 
 inline constexpr bool kNew = true;
 inline constexpr bool kSplitAll = true;   // ts9
+inline constexpr bool kNoHomeBeds = true;   // ts9
 
 class SwarmAgent : public bot::Agent {
  public:
@@ -300,7 +301,7 @@ class SwarmAgent : public bot::Agent {
         const int age = o.round - m.seen_round;
         const bool room = kNew && !home_comp_[t];   // a portal-only store
         if (m.pearl && age <= (room ? kRoomPearlAge : kPearlAge) && dd < best_d) best_d = dd, best = t;
-        if (!m.pearl && m.countdown >= 0 && dd >= 2) {
+        if (!m.pearl && m.countdown >= 0 && dd >= 2 && (!kNoHomeBeds || room)) {
           const int left = m.countdown - age;
           // portal-only beds: go from further, and earlier (farm them on their timers)
           const int slack = room ? kRoomBedSlack : 8;
