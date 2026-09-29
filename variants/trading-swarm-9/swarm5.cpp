@@ -389,7 +389,10 @@ class SwarmAgent : public bot::Agent {
     // 6. drift toward the centre (the pearl fields) or the champion, else straight on / wander
     int free[4], nf = 0;
     for (int d = 0; d < 4; ++d)
-      if (const int k = win::Step(o, win::kCenter, d); k >= 0 && !occ[k] && Room(o, occ, k) >= 3) free[nf++] = d;
+      if (const int k = win::Step(o, win::kCenter, d); k >= 0 && !occ[k] && Room(o, occ, k) >= std::min(L + 2, 8)) free[nf++] = d;
+    if (nf == 0)
+      for (int d = 0; d < 4; ++d)
+        if (const int k = win::Step(o, win::kCenter, d); k >= 0 && !occ[k] && Room(o, occ, k) >= 3) free[nf++] = d;
     if (nf == 0 && L >= 5 && o.unit_count < spawn_.unit_limit) {
       why_ = "reverse split";
       return bot::Action::Split(L - 2);
