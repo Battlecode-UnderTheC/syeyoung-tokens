@@ -1,0 +1,7 @@
+name = "corridor-farm-1"
+parents = ["gather-split-trade-107"]
+operator = "fresh"
+archetype = "corridor-farm"
+author = "claude-sonnet-5"
+created = "2026-09-29"
+task = "g20-9"
