@@ -201,7 +201,10 @@ def suites(con):
 # ---- matches ----
 def play(a, b, suite, map_path):
     """One match in its own process: (a, b, suite, map, winner, rounds, result json, error)."""
-    cmd = [str(DATA / 'tools' / 'match'), str(plugin(a)), str(plugin(b)), str(map_path)]
+    # a pearl seed per match (the judge's --seed), derived from the pairing and map so it is
+    # reproducible but differs across matches: one fixed pearl schedule was being overfitted
+    seed = int.from_bytes(hashlib.sha256(f'{a}|{b}|{suite}|{map_path.stem}'.encode()).digest()[:8], 'little')
+    cmd = [str(DATA / 'tools' / 'match'), str(plugin(a)), str(plugin(b)), str(map_path), str(seed)]
     try:
         r = subprocess.run(cmd, capture_output=True, text=True, timeout=MATCH_TIMEOUT)
         out = json.loads(r.stdout.strip().splitlines()[-1]) if r.stdout.strip() else {}
