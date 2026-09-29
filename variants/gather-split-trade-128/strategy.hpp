@@ -216,6 +216,8 @@ struct Params {
   // so opening dragons reach portal-only maze pearls on Trauma/Default instead of pacing the edge.
   int32_t opening_portal_cross = 1;
   int32_t opening_portal_end = 150; // ... only while round_ is below this (matches opening_end)
+  // ... and even a never-seen exit (the maze behind the portal), unless our ping found a dragon there
+  int32_t opening_portal_blind = 1;
   int32_t portal_explore = 1;       // 1: an unknown portal gives explore value only when we would cross it
   // (gst128, ported from gst83/gst98 via g16-26 g16-20) a poor home region: few known reachable
   // pearls/beds per ally seen nearby, or nothing eaten for a while, and more seen-but-unreachable

@@ -63,7 +63,7 @@ StrategyAgent::StrategyAgent(const rl::Spawn& spawn, Params params)
       GST128_SET(liberties) GST128_SET(share_factor) GST128_SET(patrol) GST128_SET(hunt_radius) GST128_SET(explore_value)
       GST128_SET(escape_steps) GST128_SET(trap_small)
       GST128_SET(split_headroom) GST128_SET(turnout_budget) GST128_SET(doom_first) GST128_SET(ally_memory) GST128_SET(avoid_blind) GST128_SET(doomed_split_room) GST128_SET(leader_split_until) GST128_SET(share_leader) GST128_SET(feed_distance) GST128_SET(big_split_length) GST128_SET(champ_no_trap)
-      GST128_SET(portal_cross) GST128_SET(portal_explore) GST128_SET(loop_break) GST128_SET(loop_ban) GST128_SET(known_portal) GST128_SET(blind_fallback) GST128_SET(opening_portal_cross) GST128_SET(opening_portal_end) GST128_SET(poor_per_unit) GST128_SET(poor_min) GST128_SET(starve_rounds) GST128_SET(poor_portal_mult) GST128_SET(poor_cross)
+      GST128_SET(portal_cross) GST128_SET(portal_explore) GST128_SET(loop_break) GST128_SET(loop_ban) GST128_SET(known_portal) GST128_SET(blind_fallback) GST128_SET(opening_portal_cross) GST128_SET(opening_portal_end) GST128_SET(opening_portal_blind) GST128_SET(poor_per_unit) GST128_SET(poor_min) GST128_SET(starve_rounds) GST128_SET(poor_portal_mult) GST128_SET(poor_cross)
       GST128_SET(wait_factor) GST128_SET(cluster_bonus) GST128_SET(cluster_radius) GST128_SET(cluster_pool)
       GST128_SET(crowd_threshold) GST128_SET(stale_divisor) GST128_SET(stale_cap)
       GST128_SET(centre_bonus) GST128_SET(centre_until) GST128_SET(centre_max_tiles)
@@ -911,7 +911,8 @@ bot::Action StrategyAgent::SafeStep(int preferred, bool trap_ok, bool trap_grow)
       else if (m.seen_round >= round_ - 2 && m.seen_round >= 0 && m.occupant < 0) lifted = "portal: exit seen empty";
       // g24-2 (strategist-m P2): opening only, any portal exit we've ever seen before (visited
       // territory, not just recently) is safe to cross even if it's out of view right now
-      else if (p_.opening_portal_cross && round_ < p_.opening_portal_end && m.seen_round >= 0)
+      else if (p_.opening_portal_cross && round_ < p_.opening_portal_end &&
+               (m.seen_round >= 0 || p_.opening_portal_blind) && !(exit_dirty_ && here))
         lifted = "portal: opening known";
       else if (p_.blind_fallback > 0 && k == 0 && preferred >= 0 && cur_goal_ >= 0 && blind_goal_ == cur_goal_ &&
                blind_streak_ >= p_.blind_fallback && round_ - blind_round_ <= 30 && !(exit_dirty_ && here))
@@ -1225,7 +1226,8 @@ bot::Action StrategyAgent::Decide(const rl::Observation& o) {
   last_goal_ = goal;
   // exploring beside an unknown portal whose exit our ping found clear: step through it
   if (WillCross() && exit_clear_ && ping_tile_ == head_ && !target.trap && length_ >= 2 && UnknownPortal(head_, ping_dir_) &&
-      BodyInView() && (goal < 0 || (poor_ && p_.poor_cross > 0 && paths.dist[goal] >= p_.poor_cross) || [&] {
+      BodyInView() &&
+      (goal < 0 || ((poor_ || (p_.opening_portal_cross && round_ < p_.opening_portal_end)) && p_.poor_cross > 0 && paths.dist[goal] >= p_.poor_cross) || [&] {
         int32_t ready;
         return TileValue(goal, paths.dist[goal], &ready) == 0.0;
       }())) {
