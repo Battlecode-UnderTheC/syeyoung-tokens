@@ -436,3 +436,11 @@ against the RL policy, native engine, 2026-09-28). `g<N>` = `league/generations/
 ## Turn time: `check`'s slowest turn is a load artefact (arena round 6, hunter team)
 `check` reports only the single slowest turn, and on a loaded machine (load average 170-260) that turn is an OS pause of 20-55 ms, not bot work. Measure CPU with `build/tools/match <a> <b> <map> <seed>`, which prints per-turn `turn_us`, and compare the 99th percentile against a reference bot in the same game. arena-hunter-6: median 2.6-11.4 us, p99 8-70 us; v8: median 14-48 us, p99 36-219 us. The judge limit (100M points, about 1.1 ms by the 0.1 ms ≈ 9M rule) is far above either.
 The real CPU price comes from the judge sandbox: `unswbc run <map> <botA> <botB> --sandbox --seed S` prints "team X points per turn: p50 .. p99 .. max ..". arena-search-5 on big_empty (its heaviest map): p50 15.4M, p99 30.4M, max 45.9M, under the 100M limit; v8 in the same game: max 7.2M. Wall-clock p99 under load (12.7 ms vs 0.28 ms) overstated the gap; the 0.1 ms ≈ 9M rule does not hold under load.
+
+## Late hunting of the enemy champion doesn't pay (arena round 6, hunter team)
+v8's champion (40-60 long) stays in its own ground and almost never enters our dragons' 7×7 view: after r350 the longest enemy any of our dragons saw was 7-15. Every way of finding it measured neutral or worse against v8 (tuning seeds 1-10, 300 games; arena-hunter-6 159-141):
+- sharing enemy sightings over sonar: 157-143;
+- scouts to the last sighting: 145-154;
+- a strike group sent to an estimate of the enemy's home from early head sightings: 142-158, and it never found a 25+ enemy.
+The early-sighting estimate marks where the two sides met, not where the enemy champion lives. Dragons sent looking cost our own consolidation more than they gain.
+Territory, same round: the team splits into up to 3 groups with separate champions that never hear each other's sonar, and the champion ends with only ~32% of total length (swarm confirmed, same for v8).
