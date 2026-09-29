@@ -243,6 +243,12 @@ class StrategyAgent : public bot::Agent {
   void Decode(uint64_t word);
   void Note(const Report& r);
   Report Champion() const;                              // the longest ally known (maybe us)
+  struct Farm {
+    int32_t id = -1;                // unique farm id
+    std::vector<int32_t> tiles;     // tiles in the loop/pocket
+    int32_t farmer = -1;            // dragon id assigned to this farm (-1 if unassigned)
+    int32_t last_seen = -1;         // last round farmer was seen (for timeout)
+  };
   struct Goal {
     int32_t tile = -1;
     bool trap = false;              // in a dead end worth entering (its gain beats trap_cost)
@@ -286,8 +292,11 @@ class StrategyAgent : public bot::Agent {
   BoardMemory board_;
   bool leader_ = false;
   bool farmer_ = false;         // farming mode: stay small, farm tight spaces
+  int32_t farm_id_ = -1;        // assigned farm id (-1 if not assigned)
   bool first_turn_ = true;
   int32_t born_ = 0;
+  std::vector<Farm> farms_;     // detected farms on this map
+  int32_t last_farm_claim_ = -1; // last round we sent a farm claim
   // this turn
   int32_t head_ = 0, length_ = 0, units_ = 1, round_ = 0;
   std::unordered_map<int32_t, Sighting> seen_;          // other dragons by id
@@ -328,6 +337,12 @@ class StrategyAgent : public bot::Agent {
     const auto it = banned_.find(t);
     return it != banned_.end() && it->second > round_;
   }
+
+  // farm detection and management
+  void DetectFarms();                           // find corridor farms at spawn
+  void ProcessFarmClaims(const rl::Observation& o); // decode farm assignments from sonar
+  void SendFarmClaim(bot::Action& a);           // relay farm claim to team
+  int32_t GetFarmCenter() const;                // get center tile of assigned farm for navigation
 };
 
 }  // namespace cf1

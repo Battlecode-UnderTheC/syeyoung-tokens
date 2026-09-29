@@ -43,6 +43,8 @@ static struct IdleReport {
 
 StrategyAgent::StrategyAgent(const rl::Spawn& spawn, Params params)
     : p_(params), spawn_(spawn), board_(spawn.width, spawn.height), portal_(spawn.width * spawn.height, 0) {
+  // detect corridor farms at initialization (before game starts)
+  DetectFarms();
 #ifdef CF1_TUNE
   // CF1_P="name=value,..." overrides parameters (tuning builds only)
   if (const char* env = std::getenv("CF1_P")) {
@@ -89,6 +91,8 @@ void StrategyAgent::Remember(const rl::Observation& o) {
     first_turn_ = false;
     for (const rl::Segment& s : o.segments)         // the part of the body in view, head to tail
       if (s.id == spawn_.id) body_.push_back(board_.Tile(s.x, s.y));
+    // assign this dragon to a farm if it's a worker
+    ProcessFarmClaims(o);
   }
   if (body_.empty() || body_.front() != head_) body_.push_front(head_);
   while (static_cast<int32_t>(body_.size()) > length_) body_.pop_back();
@@ -649,6 +653,25 @@ StrategyAgent::Goal StrategyAgent::ChooseGoal(const Paths& paths) const {
       }
     }
   }
+
+  // farmers prefer tiles in their assigned farm (boost scoring)
+  if (farmer_ && farm_id_ >= 0 && farm_id_ < static_cast<int32_t>(farms_.size())) {
+    const Farm& f = farms_[farm_id_];
+    if (!f.tiles.empty()) {
+      // if no goal yet, pick a random tile from the farm; otherwise prefer farm tiles
+      if (best.tile < 0) {
+        best.tile = f.tiles[round_ % f.tiles.size()];
+      } else {
+        // check if best goal is in farm; if not, try farm tiles instead
+        bool in_farm = false;
+        for (const int32_t t : f.tiles) if (t == best.tile) { in_farm = true; break; }
+        if (!in_farm && !f.tiles.empty()) {
+          best.tile = f.tiles[round_ % f.tiles.size()];
+        }
+      }
+    }
+  }
+
   return best;
 }
 
@@ -1187,6 +1210,88 @@ bot::Action StrategyAgent::Decide(const rl::Observation& o) {
     return Because("hunt: trade", bot::Action::Move(preferred));
   if (held && std::string(reason_) == "toward goal") reason_ = "held: peer not clearly longer";
   return a;
+}
+
+// ---- corridor farm detection and assignment ----
+
+void StrategyAgent::DetectFarms() {
+  // Simplified farm detection: find small enclosed areas (10-50 tiles) with corridor structure
+  // A farm is a connected region where a small dragon can loop indefinitely
+  const int32_t n = board_.size();
+  std::vector<bool> visited(n, false);
+
+  for (int32_t start = 0; start < n; ++start) {
+    if (visited[start] || !board_.Current(start)) continue;
+
+    // BFS to find connected region
+    std::vector<int32_t> region;
+    std::deque<int32_t> queue{start};
+    visited[start] = true;
+    int32_t bed_count = 0, exit_count = 0;
+
+    while (!queue.empty()) {
+      const int32_t t = queue.front();
+      queue.pop_front();
+      region.push_back(t);
+      if (board_.at(t).countdown >= 0) ++bed_count;
+
+      // count exits (neighbors outside the region)
+      for (int d = 0; d < 4; ++d) {
+        const int32_t to = board_.Step(t, d);
+        if (to < 0 || !board_.Current(to)) { ++exit_count; continue; }
+        if (!visited[to]) {
+          visited[to] = true;
+          queue.push_back(to);
+        }
+      }
+    }
+
+    // A farm: 10-50 tiles, has beds, 1-3 exits (corridor/pocket)
+    const int32_t sz = region.size();
+    if (sz >= 10 && sz <= 50 && bed_count > 0 && exit_count >= 1 && exit_count <= 3) {
+      Farm f;
+      f.id = static_cast<int32_t>(farms_.size());
+      f.tiles = region;
+      f.farmer = -1;
+      f.last_seen = -1;
+      farms_.push_back(f);
+    }
+  }
+}
+
+void StrategyAgent::ProcessFarmClaims(const rl::Observation& o) {
+  // Decode farm assignment claims from sonar (future: implement sonar encoding for farm claims)
+  // For now, assign farms sequentially to workers
+  if (first_turn_ && !farms_.empty() && !leader_) {
+    // This is a worker; assign to first unassigned farm
+    for (auto& f : farms_) {
+      if (f.farmer < 0) {
+        farm_id_ = f.id;
+        f.farmer = spawn_.id;
+        f.last_seen = round_;
+        break;
+      }
+    }
+  }
+}
+
+void StrategyAgent::SendFarmClaim(bot::Action& a) {
+  // Relay farm assignment claim via sonar (simplified: send farm id and farmer id)
+  // Future: encode as (farm_id, farmer_id, round) in sonar word
+  if (farm_id_ >= 0 && round_ - last_farm_claim_ > 10) {
+    // Would send encoded claim; simplified version just marks it
+    last_farm_claim_ = round_;
+  }
+}
+
+int32_t StrategyAgent::GetFarmCenter() const {
+  if (farm_id_ < 0 || farm_id_ >= static_cast<int32_t>(farms_.size())) return -1;
+  const Farm& f = farms_[farm_id_];
+  if (f.tiles.empty()) return -1;
+  // Return median tile (rough center)
+  std::vector<int32_t> sorted = f.tiles;
+  std::sort(sorted.begin(), sorted.end());
+  return sorted[sorted.size() / 2];
 }
 
 }  // namespace cf1
