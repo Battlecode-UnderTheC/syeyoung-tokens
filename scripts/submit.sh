@@ -11,6 +11,13 @@ cd "$top"
 dir="variants/$name"
 { [ -f "$dir/variant.toml" ] && [ -f "$dir/NOTES.md" ]; } || { echo "$dir needs variant.toml and NOTES.md" >&2; exit 1; }
 grep -q "LEAGUE_VARIANT(" "$dir"/*.cpp || { echo "$dir has no LEAGUE_VARIANT(...) line" >&2; exit 1; }
+# no environment variables in bots, not even behind a debug macro: the judge's sandbox is not our
+# shell, and a knob read at runtime makes local results unreproducible (user rule, 2026-09-30)
+if grep -rn -E "getenv|secure_getenv|environ\b" "$dir" --include='*.cpp' --include='*.hpp' --include='*.h' --include='*.cc' >/dev/null; then
+  grep -rn -E "getenv|secure_getenv|environ\b" "$dir" --include='*.cpp' --include='*.hpp' --include='*.h' --include='*.cc' | head -5 >&2
+  echo "environment variables are forbidden in variants: use compile-time constants" >&2
+  exit 1
+fi
 if git rev-parse -q --verify "refs/tags/variant/$name" >/dev/null; then
   echo "variant/$name is already tagged: a changed strategy needs a new name" >&2
   exit 1
