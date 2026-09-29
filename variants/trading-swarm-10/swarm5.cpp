@@ -37,6 +37,7 @@ class SwarmAgent : public bot::Agent {
 
   bot::Action Turn(const rl::Observation& o) override {
     bot::Action a = Decide(o);
+
     if (!a.resign && champ_len_ > 0 && o.round - champ_round_ <= kRelayAge) {
       const uint64_t w = (1u << 31) | (uint32_t(std::min(champ_len_, 127)) << 24) |
                          (uint32_t(champ_x_ & 0xff) << 16) | (uint32_t(champ_y_ & 0xff) << 8) |
@@ -238,7 +239,7 @@ class SwarmAgent : public bot::Agent {
       // walks off reversed, so long dragons cascade down to 2-4 long by r25 (real longest at
       // r25 ~3.9; ts8's long starters stayed 13-21 on Autarky, Slithery Fight, Dilemma).
       (void)rare;
-      if (L >= 4 && !late_champ && o.unit_count < spawn_.unit_limit) {
+      if (L >= 4 && !late_champ && o.round < kNoSplitRound && o.unit_count < spawn_.unit_limit && (!kSplitGuard || SplitSafe(o, occ))) {
         const int n = L == 5 ? (std::uniform_int_distribution<int>(0, 1)(rng_) ? 3 : 2) : L - 2;
         why_ = n == 2 ? "split 2" : "split L-2";
         return bot::Action::Split(n);
@@ -448,6 +449,9 @@ class SwarmAgent : public bot::Agent {
 
   static constexpr int kRelayAge = 12, kLateRound = 350, kFreezeRound = 330, kFeedRound = 400;
   static constexpr bool kMassFeed = true;
+  // ts10: no splitting from r400 (the real one's splits fall to ~23 a century there), so the
+  // corpses of the mass feed make long dragons instead of more 2-longs
+  static constexpr int kNoSplitRound = 400;
 
   // sonar: remember the longest ally we've heard of (or are)
   void Listen(const rl::Observation& o) {
@@ -640,6 +644,34 @@ class SwarmAgent : public bot::Agent {
     return Commit(o, d);
   }
   static constexpr bool kRoomGuard = true;
+  // ts10: split only when both halves can move: the head (kept by the parent) has a step
+  // with room for 2, and the tail (the child's head) has a free neighbour. The clone's
+  // commonest fatal chain was split -> step -> stuck (~85 a game on the server maps).
+  static constexpr bool kSplitGuard = false;
+  bool SplitSafe(const rl::Observation& o, const bool* occ) const {
+    bool head_ok = false;
+    for (int d = 0; d < 4 && !head_ok; ++d)
+      if (const int k = win::Step(o, win::kCenter, d); k >= 0 && !occ[k] && Room(o, occ, k) >= 2) head_ok = true;
+    if (!head_ok) return false;
+    bool own[rl::kWindowTiles] = {};
+    for (const rl::Segment& sg : o.segments)
+      if (sg.id == spawn_.id) {
+        const int k = TileOf(o, sg.x, sg.y);
+        if (k >= 0) own[k] = true;
+      }
+    int tail = -1, ends = 0;
+    for (int k = 0; k < rl::kWindowTiles; ++k) {
+      if (!own[k] || k == win::kCenter) continue;
+      int nb = 0;
+      for (int d = 0; d < 4; ++d)
+        if (const int m = win::Step(o, k, d); m >= 0 && own[m]) ++nb;
+      if (nb == 1) tail = k, ++ends;
+    }
+    if (ends != 1) return true;   // coiled or ambiguous: split as before
+    for (int d = 0; d < 4; ++d)
+      if (const int m = win::Step(o, tail, d); m >= 0 && !occ[m]) return true;
+    return false;
+  }
   static constexpr int kGuardCap = 8;
   const bool* occ_ = nullptr;
 

@@ -6,7 +6,7 @@ def run(item):
     rid, g = item
     ours = BOT[g["sub"]]
     a, b = (ours, clone) if g["ours"] == "A" else (clone, ours)
-    j = json.loads(subprocess.run([B + "/tools/match", a, b, B + "/servermaps/" + MF[g["map"]] + ".map", g["seed"]], capture_output=True, text=True).stdout)
+    j = json.loads(subprocess.run([B + "/tools/match", a, b, B + "/scratch/gamemaps/" + rid + ".map", g["seed"]], capture_output=True, text=True).stdout)
     oi = 1 if g["ours"] == "A" else 0
     return j["fatal"][oi], j["reasons"][oi], j["deaths"][oi]
 F = collections.Counter(); Rr = collections.Counter(); D = collections.Counter()

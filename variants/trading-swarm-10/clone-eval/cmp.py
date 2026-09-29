@@ -1,6 +1,6 @@
 import sys, json, subprocess, statistics as S
 from concurrent.futures import ThreadPoolExecutor
-B = "/Users/syeyoung/Documents/postech/unswbattlecode/syeyoung-tokens.worktrees/g26-1/build"
+B = "/Users/syeyoung/Documents/postech/unswbattlecode/syeyoung-tokens.worktrees/<task>/build"
 clone = sys.argv[1]
 verbose = "-v" in sys.argv
 real = json.load(open(B + "/scratch/real.json"))
@@ -12,7 +12,7 @@ def run(item):
     rid, g = item
     ours = BOT[g["sub"]]
     a, b = (ours, clone) if g["ours"] == "A" else (clone, ours)
-    out = subprocess.run([B + "/tools/snap", a, b, B + "/servermaps/" + MF[g["map"]] + ".map", g["seed"]],
+    out = subprocess.run([B + "/tools/snap", a, b, B + "/scratch/gamemaps/" + rid + ".map", g["seed"]],
                          capture_output=True, text=True).stdout
     return rid, json.loads(out)
 with ThreadPoolExecutor(2) as ex:
