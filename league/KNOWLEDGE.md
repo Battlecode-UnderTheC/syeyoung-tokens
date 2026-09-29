@@ -444,3 +444,4 @@ v8's champion (40-60 long) stays in its own ground and almost never enters our d
 - a strike group sent to an estimate of the enemy's home from early head sightings: 142-158, and it never found a 25+ enemy.
 The early-sighting estimate marks where the two sides met, not where the enemy champion lives. Dragons sent looking cost our own consolidation more than they gain.
 Territory, same round: the team splits into up to 3 groups with separate champions that never hear each other's sonar, and the champion ends with only ~32% of total length (swarm confirmed, same for v8).
+Late growth at the cap (stop routine splits at the dragon cap, feed only late and only near the champion) lost in every form on arena-giant-6's core. On the maps where the team reaches the cap, it scored 11-12 wins of 30 vs v8, against 17 for the base. Fewer, longer dragons eat less than a capped swarm, and late local feeding leaves the champion shorter (giant team, round 6).
