@@ -39,6 +39,9 @@ struct Outcome {
   std::map<std::string, int64_t> reasons[2];       // by team: why its dragons acted
   std::map<std::string, int64_t> fatal[2];         // ... and the reasons behind turns that killed them
   std::array<std::vector<float>, 2> turn_us;       // by team: every Turn()'s wall time, microseconds
+  // by team, at the start of rounds 50 and 100 (snaps[0], snaps[1]): dragons alive, longest, total length
+  std::array<std::array<std::array<int32_t, 3>, 2>, 2> snaps{};
+  std::array<bool, 2> snapped{};                   // whether the game reached round 50, 100
 };
 
 // One match: sides[0] plays team A, sides[1] team B. trace: print each round's counts and every death.

@@ -84,6 +84,17 @@ Outcome Play(const std::string& map_text, const std::array<const Variant*, 2>& s
   Outcome out;
   int32_t last_round = -1;
   while (!g.done()) {
+    for (int s = 0; s < 2; ++s)
+      if (g.round() == (s ? 100 : 50) && !out.snapped[s]) {
+        out.snapped[s] = true;
+        for (int t = 0; t < 2; ++t)
+          for (const auto& dr : g.dragons())
+            if (dr.alive && dr.team == t) {
+              ++out.snaps[s][t][0];
+              out.snaps[s][t][1] = std::max(out.snaps[s][t][1], dr.length);
+              out.snaps[s][t][2] += dr.length;
+            }
+      }
     if (trace && g.round() != last_round) {
       last_round = g.round();
       int32_t n[2] = {0, 0}, len[2] = {0, 0};

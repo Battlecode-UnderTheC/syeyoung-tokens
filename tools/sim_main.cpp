@@ -82,6 +82,8 @@ int main(int argc, char** argv) {
     std::array<std::array<double, 5>, 2> deaths{};     // [a, b][cause]
     std::array<std::array<double, 4>, 2> lunged{};     // [a, b][killed short, their length, killed 10+, their length]
     std::map<std::string, int64_t> reasons[2], fatal[2];
+    std::array<std::array<std::array<double, 3>, 2>, 2> snap{};  // [r50, r100][a, b][dragons, longest, total]
+    std::array<int, 2> snap_n{};                                  // matches that reached r50, r100
     for (size_t i = 0; i < jobs.size(); ++i) {
       const Outcome& o = results[i];
       const int ta = jobs[i].a_is_team_a ? 0 : 1;
@@ -91,6 +93,12 @@ int main(int argc, char** argv) {
       longest += o.longest[ta] - o.longest[1 - ta];
       total += o.total[ta] - o.total[1 - ta];
       rounds += o.rounds;
+      for (int r = 0; r < 2; ++r)
+        if (o.snapped[r]) {
+          ++snap_n[r];
+          for (int s = 0; s < 2; ++s)
+            for (int k = 0; k < 3; ++k) snap[r][s][k] += o.snaps[r][s ? 1 - ta : ta][k];
+        }
       for (int s = 0; s < 2; ++s) {
         const int team = s ? 1 - ta : ta;
         for (int c = 0; c < 5; ++c) deaths[s][c] += o.deaths[team][c];
@@ -109,6 +117,13 @@ int main(int argc, char** argv) {
                 jobs.size(), std::chrono::duration<double>(std::chrono::steady_clock::now() - t0).count());
     std::printf("  mean rounds %.0f; at the end %s leads by %.1f longest, %.1f total\n", rounds / n, a.name.c_str(),
                 longest / n, total / n);
+    for (int r = 0; r < 2; ++r)
+      if (snap_n[r])
+        std::printf("  at r%d (%d matches): %s %.1f dragons, longest %.1f, total %.1f | %s %.1f dragons, longest %.1f, "
+                    "total %.1f\n",
+                    r ? 100 : 50, snap_n[r], a.name.c_str(), snap[r][0][0] / snap_n[r], snap[r][0][1] / snap_n[r],
+                    snap[r][0][2] / snap_n[r], b.name.c_str(), snap[r][1][0] / snap_n[r], snap[r][1][1] / snap_n[r],
+                    snap[r][1][2] / snap_n[r]);
     for (int s = 0; s < 2; ++s) {
       std::printf("  deaths per match, %s:", (s ? b : a).name.c_str());
       for (int c = 0; c < 5; ++c) std::printf(" %s %.1f", kCauses[c], deaths[s][c] / n);
