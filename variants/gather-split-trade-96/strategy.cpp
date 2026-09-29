@@ -607,20 +607,30 @@ StrategyAgent::Goal StrategyAgent::ChooseGoal(const Paths& paths) const {
   for (size_t i = 0; i < k; ++i) {
     const Candidate& c = candidates[i];
     double score = c.score;
-    bool trap = false;
+    bool trap = false, grow = false;
     if (RoomAround(board_, c.tile, open, need, &pocket) < need) {
       if (no_trap) continue;                          // near the cap: a dead end is a grave
       double gain = 0;
+      int32_t pearls = 0;
       for (const int32_t t : pocket) {
         int32_t ready;
-        gain += TileValue(t, paths.dist[t] < 0 ? paths.dist[c.tile] : paths.dist[t], &ready);
+        const double v = TileValue(t, paths.dist[t] < 0 ? paths.dist[c.tile] : paths.dist[t], &ready);
+        gain += v;
+        if (v >= 0.5) ++pearls;
       }
-      score = (gain - p_.trap_cost) / (paths.dist[c.tile] + 1);
+      double cost = p_.trap_cost;
+      if (p_.trap_loss) {
+        const int32_t grown = length_ + pearls;
+        if (static_cast<int32_t>(pocket.size()) >= grown + 1) cost = 0.0;   // room to follow our tail out
+        else if (length_ >= 4) cost = p_.trap_stub;                        // split out, the stub stays
+        else if (grown >= 4 && FreeSlots() >= 1) cost = p_.trap_stub, grow = true;
+      }
+      score = (gain - cost) / (paths.dist[c.tile] + 1);
       trap = true;
     }
     if (score > best_score) {
       best_score = score;
-      best = {c.tile, trap};
+      best = {c.tile, trap, grow};
     }
   }
   // nothing worth going for: patrol, towards what we have not seen for longest
@@ -811,7 +821,7 @@ const char* StrategyAgent::Bucket(const char* base) {
   return bucket_;
 }
 
-bot::Action StrategyAgent::SafeStep(int preferred, bool trap_ok) {
+bot::Action StrategyAgent::SafeStep(int preferred, bool trap_ok, bool trap_grow) {
   // near the cap a long dragon can't split out of a dead end: plan like a short one
   const bool can_split_out = CanCountOnSplit();
   if (p_.cap_safety && length_ >= 4 && !can_split_out) trap_ok = false;
@@ -881,7 +891,7 @@ bot::Action StrategyAgent::SafeStep(int preferred, bool trap_ok) {
       if (exp_pearl_) ++g_exp_pearl;
     }
 #endif
-    if (k == 0 && preferred >= 0 && !exposed && libs >= 2 && trap_ok && (can_split_out || !p_.trap_small))
+    if (k == 0 && preferred >= 0 && !exposed && libs >= 2 && trap_ok && (can_split_out || !p_.trap_small || trap_grow))
       return Because("into a dead end worth it", bot::Action::Move(d));
     // a sure death in a dead end is worse than a tile an enemy head might take (that would be a trade)
     auto key = [&](bool e, int lv, int lb, int c, int r) {
@@ -1166,7 +1176,7 @@ bot::Action StrategyAgent::Decide(const rl::Observation& o) {
   }
   const int preferred = goal >= 0 ? paths.first[goal] : -1;
   cur_goal_ = goal;
-  bot::Action a = SafeStep(preferred, target.trap);
+  bot::Action a = SafeStep(preferred, target.trap, target.grow);
   cur_goal_ = -1;
   // the last step onto an enemy head we chose to hunt is a trade, not a mistake
   if (goal >= 0 && preferred >= 0 && board_.Step(head_, preferred) == goal && Classify(goal) == Cell::kEnemyHead &&

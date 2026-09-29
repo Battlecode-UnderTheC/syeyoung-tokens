@@ -112,6 +112,12 @@ struct Params {
   // dead ends: entering one costs a split to get out (the stub dies) and the time
   double trap_cost = 3.0;
   int32_t trap_candidates = 8;      // the best targets checked for being dead ends
+  // g18-3: a dead end's cost is the expected loss, not a flat trap_cost: 0 if the pocket holds
+  // our grown body plus a tile (we follow our tail out), else the stub a split leaves behind
+  // (trap_stub segments); a 2-3 long dragon may enter when the pocket's pearls grow it to >= 4
+  // and a unit slot is free (it can then split out)
+  int32_t trap_loss = 1;
+  double trap_stub = 2.0;
   // safety
   int32_t room_margin = 3;          // a step must leave at least length + this many tiles reachable ...
   int32_t room_min = 8;             // ... and never fewer than this (short dragons get boxed in too)
@@ -235,13 +241,14 @@ class StrategyAgent : public bot::Agent {
   struct Goal {
     int32_t tile = -1;
     bool trap = false;              // in a dead end worth entering (its gain beats trap_cost)
+    bool grow = false;              // (g18-3) too short to split now, but the pocket's pearls fix that
   };
   // what collecting tile t is worth (0..1) and when it can be collected, arriving in `dist` rounds
   double TileValue(int32_t t, int32_t dist, int32_t* ready) const;
   double TileValue(int32_t t, int32_t dist, int32_t* ready, bool occupied) const;  // occupied precomputed (ChooseGoal: Mine() is O(length))
   int32_t RoomNeeded() const;
   Goal ChooseGoal(const Paths& paths) const;            // `paths` searched from the head
-  bot::Action SafeStep(int preferred_dir, bool trap_ok); // the preferred step if safe, else the roomiest
+  bot::Action SafeStep(int preferred_dir, bool trap_ok, bool trap_grow = false); // the preferred step if safe, else the roomiest
   // Whether a dragon whose body is `body` (head first) can keep moving: a timed flood from
   // its head in which its own segments free up as its tail moves on. 2: it reaches a freed
   // segment of its own (it can follow its tail) or the unexplored edge; 1: at least `cap`
