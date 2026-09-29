@@ -250,6 +250,23 @@ class SwarmAgent : public bot::Agent {
 
     // 3b. late consolidation: a short dragon feeds itself to a much longer ally
     goal_ = 0;
+    // ts9: the real opponent's consolidation is a mass resignation from exactly r400 (4 server
+    // games: 151 resigns, 0 before r400, 57 in r400-405; lengths 2-22, always shorter than the
+    // team's longest; the nearest longer ally head at distance 1-2 in 104 of 151): count drops
+    // ~50 -> ~15 by r420 and the corpses feed the long ones (longest 8 -> 20-40 by r500).
+    if (kMassFeed && o.round >= kFeedRound && !champ) {
+      for (const rl::Segment& sg : o.segments) {
+        if (!sg.head || sg.team != spawn_.team || sg.id == spawn_.id) continue;
+        const int k = TileOf(o, sg.x, sg.y);
+        if (k < 0 || std::abs(k / 7 - 3) + std::abs(k % 7 - 3) > 2) continue;
+        int n = 0;
+        for (const rl::Segment& t : o.segments) n += t.id == sg.id;
+        if (n > L) {
+          why_ = "feed";
+          return bot::Action::Resign();
+        }
+      }
+    }
     if (o.round >= kLateRound && L <= 5 && !champ) {
       const int need = std::max(L + 3, 6);
       int best_k = -1, best_len = 0;
@@ -426,7 +443,8 @@ class SwarmAgent : public bot::Agent {
     threshold_ = r < 3 ? 4 : r < 7 ? 5 : 6;
   }
 
-  static constexpr int kRelayAge = 12, kLateRound = 350, kFreezeRound = 330;
+  static constexpr int kRelayAge = 12, kLateRound = 350, kFreezeRound = 330, kFeedRound = 400;
+  static constexpr bool kMassFeed = true;
 
   // sonar: remember the longest ally we've heard of (or are)
   void Listen(const rl::Observation& o) {
