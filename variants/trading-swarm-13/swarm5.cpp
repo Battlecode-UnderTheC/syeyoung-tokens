@@ -24,6 +24,7 @@
 namespace ts13 {
 
 inline constexpr bool kNew = true;
+inline constexpr uint32_t kSalt = 0;   // rng salt (noise checks)
 inline constexpr bool kSplitAll = true;   // ts9
 inline constexpr bool kNoHomeBeds = true;   // ts9
 inline constexpr int kDisperse = 0;   // ts11: 0 centre drift, 1 own random target, 2 no drift (wander), 3 random target before r60
@@ -31,7 +32,7 @@ inline constexpr int kDisperse = 0;   // ts11: 0 centre drift, 1 own random targ
 class SwarmAgent : public bot::Agent {
  public:
   explicit SwarmAgent(const rl::Spawn& s)
-      : spawn_(s), rng_(static_cast<uint32_t>(s.id * 2654435761u + s.team * 97u + 12345u)),
+      : spawn_(s), rng_(static_cast<uint32_t>(s.id * 2654435761u + s.team * 97u + 12345u + kSalt)),
         mem_(s.width, s.height), portal_(size_t(s.width) * s.height, 0) {
     NewThreshold();
   }
@@ -118,8 +119,11 @@ class SwarmAgent : public bot::Agent {
       enemy_head_len[k] = n;
     }
 
-    // 1. adjacent enemy head: take the even trade (a long dragon only for an enemy as long)
-    {
+    // 1. adjacent enemy head: take the even trade (a long dragon only for an enemy as long).
+    // ts13: the real opponent steps into an adjacent enemy head only ~10% of the time (45
+    // server replays, 2-3-longs, r0-199); ts11 did 25-45% and died 0.36 a turn there (real
+    // 0.14). kTradeOdds is the chance to take a trade on offer.
+    if (std::uniform_int_distribution<int>(0, 99)(rng_) < kTradeOdds) {
       int best = -1, best_len = -1;
       for (int d = 0; d < 4; ++d) {
         const int k = win::Step(o, win::kCenter, d);
@@ -240,7 +244,7 @@ class SwarmAgent : public bot::Agent {
       // walks off reversed, so long dragons cascade down to 2-4 long by r25 (real longest at
       // r25 ~3.9; ts8's long starters stayed 13-21 on Autarky, Slithery Fight, Dilemma).
       (void)rare;
-      if (L >= 4 && !late_champ && o.round < kNoSplitRound && o.unit_count < spawn_.unit_limit && (!kSplitGuard || SplitSafe(o, occ))) {
+      if (L >= 4 && !late_champ && o.round < kNoSplitRound && (!kSplitOdds || SplitRoll(o.round, L)) && o.unit_count < spawn_.unit_limit && (!kSplitGuard || SplitSafe(o, occ))) {
         const int n = L == 5 ? (std::uniform_int_distribution<int>(0, 1)(rng_) ? 3 : 2) : L - 2;
         why_ = n == 2 ? "split 2" : "split L-2";
         return bot::Action::Split(n);
@@ -426,7 +430,7 @@ class SwarmAgent : public bot::Agent {
     if (nf == 0)
       for (int d = 0; d < 4; ++d)
         if (const int k = win::Step(o, win::kCenter, d); k >= 0 && !occ[k] && Room(o, occ, k) >= 3) free[nf++] = d;
-    if (nf == 0 && L >= 5 && o.unit_count < spawn_.unit_limit) {
+    if (nf == 0 && L >= kReverseMin && o.unit_count < spawn_.unit_limit) {
       why_ = "reverse split";
       return bot::Action::Split(L - 2);
     }
@@ -546,6 +550,8 @@ class SwarmAgent : public bot::Agent {
         }
       }
       if (land >= 0 && (occ[land] || o.tile_x[land] < 0)) continue;
+      // ts13: landing out of view just after a crossing: our own body may be there
+      if (land < 0 && o.round - last_portal_round_ <= o.length + 1) continue;
       cand[nc++] = d;
     }
     if (!nc) return -1;
@@ -626,6 +632,9 @@ class SwarmAgent : public bot::Agent {
       if (id >= 0) {
         if (d == (o.facing + 2) % 4) continue;
         if (id == last_portal_ && o.round - last_portal_round_ <= o.length + 1) continue;
+        // ts13: our body may still lie past any portal crossed within L+1 rounds; an unseen
+        // landing then risks a self-death (check caught one on Schooltime)
+        if (!mem_.Current(t) && o.round - last_portal_round_ <= o.length + 1) continue;
       } else if (const int k = win::Step(o, win::kCenter, d); k < 0 || occ[k]) {
         continue;
       }
@@ -717,6 +726,20 @@ class SwarmAgent : public bot::Agent {
   static constexpr int kGuardCap = 8;
   // ts11: a 2-3 long dragon can't split its way out of a pocket: ask it for extra room
   static constexpr int kSmallExtra = 2;
+  static constexpr int kTradeOdds = 10;
+  // ts13: boxed in at length 4, split off the tail instead of dying (the real opponent splits
+  // in 48% of its boxed-in turns; ts11 needed length 5)
+  static constexpr int kReverseMin = 4;
+  // ts13: the real opponent splits at random, not whenever it can. Per-turn split odds by
+  // length, measured from the 45 server replays (turns of dragons >= 4 long): r0-49 L4 0.72,
+  // L5 0.53, L6+ 0.66; r50-199 L4 0.49, L5 0.19, L6 0.22, L7+ 0.12 (ts11 split 0.78 / 0.32 /
+  // 0.61 there). Longer dragons die far less (real death rate per turn: L2-3 0.024, L4+ 0.007),
+  // so waiting keeps more of the team alive.
+  static constexpr bool kSplitOdds = false;
+  bool SplitRoll(int round, int L) {
+    const int pct = round < 50 ? (L == 4 ? 72 : L == 5 ? 53 : 66) : (L == 4 ? 49 : L == 5 ? 19 : L == 6 ? 22 : 12);
+    return std::uniform_int_distribution<int>(0, 99)(rng_) < pct;
+  }
   static constexpr bool kGoalGuard = false;
   const bool* occ_ = nullptr;
 
