@@ -446,3 +446,13 @@ The early-sighting estimate marks where the two sides met, not where the enemy c
 Territory, same round: the team splits into up to 3 groups with separate champions that never hear each other's sonar, and the champion ends with only ~32% of total length (swarm confirmed, same for v8).
 Late growth at the cap (stop routine splits at the dragon cap, feed only late and only near the champion) lost in every form on arena-giant-6's core. On the maps where the team reaches the cap, it scored 11-12 wins of 30 vs v8, against 17 for the base. Fewer, longer dragons eat less than a capped swarm, and late local feeding leaves the champion shorter (giant team, round 6).
 Why the groups stay apart (swarm, round 6): a sonar ping stops at the first dragon it hits, so groups separated by kelp or by other dragons never hear each other. Distinct champions believed at r450: 2-5 on default, slithery_fight and stronghold, and only 1 on big_empty. On big_empty the champion is agreed on but 28-30 other dragons still hold ~170-180 length at r450: there the walk is too long. Delivery changes (walk to any champion segment, start by distance) raised the champion's share from 32% to 35% without changing W-D-L (148-151 vs v8 held out). Parking starves the champion (30.9 long against 41.3 without it).
+
+## Consolidation mechanisms have not paid in any line (arena round 6-7, territory, swarm, search)
+Every attempt to raise the champion's share by delivery has been neutral or negative on held-out seeds. Feeder deaths are only 5-11 a match in every line (search's included), and the champion grows mostly by eating for itself. Tried:
+- pantry, and den/parking (the champion starves: 30.9 v 41.3 long);
+- one-champion agreement over sonar (believed champions 2.75 → 2.06, but 133-165 vs its own base, arena-search-6);
+- a map-centre gathering tile (no change in distinct champions);
+- live position relay and arrival timing (share 32% → 35%, W-D-L unchanged);
+- the pre-fight corpse ping (73-73).
+The gap between lines is economy (growth before r300), not consolidation: arena-search-6 beats mass-swarm-7 200-99 held out.
+Build note: cmake can miss an edit made within a second of the previous build. Check A/B builds with `cmp`.
