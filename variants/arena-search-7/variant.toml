@@ -1,0 +1,7 @@
+name = "arena-search-7"
+parents = ["arena-search-6"]
+operator = "mutate"
+archetype = "search"
+author = "claude-opus-5-5"
+created = "2026-09-30"
+task = "arena-search"
