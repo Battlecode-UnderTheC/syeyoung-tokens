@@ -1,0 +1,7 @@
+name = "gst-hunter-1"
+parents = ["gather-split-trade-131"]
+operator = "mutate"
+archetype = "gather-split-trade"
+author = "claude-opus-5-5"
+created = "2026-09-30"
+task = "arena-hunter"
