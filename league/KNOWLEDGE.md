@@ -474,3 +474,10 @@ Cloning the #1 bot (hunter team, opp-clone-1..3; arena/round-7/hunter.md): no cl
 - v9 trusts 0xA5 champion words from anyone (search.cpp L141-152, L337-340), so a spoofed champion could hijack its feeding. This is a flaw only in our own bot and useless on the server; not built.
 Autarky and Dilemma vs v9 (search team, seeds 21-25, 10 games per map): gst-search-3 went 0-10 and 5-5; with the crowd gate off, 0-10 and 1-9 (so the gate isn't the cause); gst-giant-2 went 1-9 and 10-0; gst-merge-2 went 7-3 and 10-0. v9 out-splits gst there (76+ splits a game against 38). gst-merge-2's edge probably comes from hot-bed farming (Autarky has 8 beds with gap 1 and 4 with gap 5); not isolated yet.
 The late lookahead lever (search-7's per-dragon lookahead steering gst's plain moves from r250) gained on all three gst bases it was added to: gst-search-1 → gst-search-3 went 90-60 vs its base; gst-merge-2 → gst-search-4 (live v11) went 83-63 held out; gst-giant-2 → gst-search-5 went 80-70 held out and 37-23 on server maps. The gst-giant-2 and gst-merge-2 bases split the server maps between them: gst-giant-2's wins Dilemma, Default and Devil; gst-merge-2's wins Portals, Trauma and Autarky.
+
+## v10's 80 server games (strategist y, 42-38)
+- **How the 38 losses happened:** 18 small-map eliminations (Trophy 5, Autarky 4, Devil 3, Queen of Spades 3, Dilemma 2, Default 1); 14 behind on total at r499; 6 behind on longest while ahead on total.
+- **Small maps are decided by pearls eaten before r60:** 26 v 51 in our losses, 41 v 22 in wins. On the server Trophy seed 13553692030115652581, v10 and v11 eat nothing for 30 rounds (reproduces locally on maps/server/trophy.map).
+- **Strong teams open with many 2-long dragons:** splitting a 2 off every turn, or an 18-long dragon on refilling beds leaving a 2 behind every 2 rounds. We halve the starter once.
+- **Late game:** our longest dragon has a pearl in view on about 40 of the last 50 turns but eats about 8.
+- **Routed:** P1 (early food-taking) → giant, P2 (early 2-splits) → search, P3 (late champion harvest) → swarm, all on gst-search-6.
