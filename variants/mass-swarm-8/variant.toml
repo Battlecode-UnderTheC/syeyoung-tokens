@@ -1,0 +1,7 @@
+name = "mass-swarm-8"
+parents = ["mass-swarm-6"]
+operator = "fresh"
+archetype = "mass-swarm"
+author = "claude-opus-5-5"
+created = "2026-09-29"
+task = "arena-swarm-8"
