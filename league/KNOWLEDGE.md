@@ -456,3 +456,4 @@ Every attempt to raise the champion's share by delivery has been neutral or nega
 - the pre-fight corpse ping (73-73).
 The gap between lines is economy (growth before r300), not consolidation: arena-search-6 beats mass-swarm-7 200-99 held out.
 Build note: cmake can miss an edit made within a second of the previous build. Check A/B builds with `cmp`.
+Group merge (arena-search-9): a champion that hears a longer one becomes its feeder, and reports fade more slowly (0.15 a round, kept 80 rounds). Distinct champion ids at r450 fell from 2.32 to 1.82, but results didn't change: 72-5-73 vs arena-search-7 on held-out seeds. The longest dragon comes from the largest group, so a second group rarely decides a game. Fewer champions is not the lever.
