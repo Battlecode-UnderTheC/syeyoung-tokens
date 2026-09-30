@@ -1,0 +1,7 @@
+name = "gst-merge-1"
+parents = ["mass-swarm-8", "gst-hunter-1", "gst-free-1"]
+operator = "fresh"
+archetype = "mass-swarm"
+author = "claude-opus-5-5"
+created = "2026-09-29"
+task = "arena-swarm-r7-merge"
