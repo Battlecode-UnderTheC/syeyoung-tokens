@@ -481,3 +481,4 @@ The late lookahead lever (search-7's per-dragon lookahead steering gst's plain m
 - **Strong teams open with many 2-long dragons:** splitting a 2 off every turn, or an 18-long dragon on refilling beds leaving a 2 behind every 2 rounds. We halve the starter once.
 - **Late game:** our longest dragon has a pearl in view on about 40 of the last 50 turns but eats about 8.
 - **Routed:** P1 (early food-taking) → giant, P2 (early 2-splits) → search, P3 (late champion harvest) → swarm, all on gst-search-6.
+- P2 (shed-2 opening, strategist y) failed on gst-search-6: Autarky 5-15 against gst-search-6 in every form; adds about 1 dragon at r50, but the 2-long dragons get picked off, and it costs a Dilemma seat vs v9. It's in gst-search-7 (79c70e0), switched off. (search team)
