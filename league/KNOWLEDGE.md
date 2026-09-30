@@ -466,3 +466,9 @@ Context: the user chose this matchup, v9 against the #1 bot on the leaderboard. 
 Cloning the #1 bot (hunter team, opp-clone-1..3; arena/round-7/hunter.md): no clone beats v9 over the 200 games on the 10 server maps (best: v9 112-88), while the real #1 beat v9 5-0.
 - Reproduced: split 2 at length 4 up to the 64 cap, no lunges, trapped-dragon self-deaths, hot-bed farming, and 60-64 dragons by r100 on Slithery.
 - Not reproduced: 63 and 35 dragons at r100 on Schooltime and Autarky, and growing a champion out of a 64-dragon swarm. A hunter-style opening breaks gst's late consolidation.
+
+## v9's endgame edge and our resign waste (strategist x, seed 22, v8 vs v9)
+- About 45% of official games end in eliminations before the endgame. They split about 50/50 and are largely decided by seat; no systematic v9 flaw shows there. So 90% vs v9 isn't plausible (about 65-75% at best).
+- v9 wins round-limit games by consolidating from less material: its longest roughly doubles after r420 by feeding.
+- gst resigns 112-395 dragons after r300 and destroys 265-1005 length; v9 resigns 7-44. The ratio of longest to total at r350 is about 0.3-0.5 for v8 and 0.6-1.2 for v9.
+- v9 trusts 0xA5 champion words from anyone (search.cpp L141-152, L337-340), so a spoofed champion could hijack its feeding. This is a flaw only in our own bot and useless on the server; not built.
