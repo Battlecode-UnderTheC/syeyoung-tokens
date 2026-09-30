@@ -1,0 +1,7 @@
+name = "gst-search-4"
+parents = ["gst-merge-2", "gst-search-3"]
+operator = "crossover"
+archetype = "gather-split-trade"
+author = "claude-opus-5-5"
+created = "2026-10-01"
+task = "arena-search"
