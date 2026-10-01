@@ -96,6 +96,9 @@ Outcome Play(const std::string& map_text, const std::array<const Variant*, 2>& s
               out.snaps[s][t][2] += dr.length;
             }
       }
+    if (g.round() == 100 && out.queen_r100[0] < 0)
+      for (const auto& dr : g.dragons())
+        if (dr.id <= 1) out.queen_r100[dr.team] = dr.alive ? dr.length : 0;
     if (trace && g.round() != last_round) {
       last_round = g.round();
       int32_t n[2] = {0, 0}, len[2] = {0, 0};
@@ -104,8 +107,11 @@ Outcome Play(const std::string& map_text, const std::array<const Variant*, 2>& s
           ++n[dr.team];
           len[dr.team] += dr.length;
         }
-      std::printf("round %3d: A %2d dragons (length %3d) | B %2d dragons (length %3d)\n", last_round, n[0], len[0], n[1],
-                  len[1]);
+      int32_t q[2] = {0, 0};
+      for (const auto& dr : g.dragons())
+        if (dr.alive && dr.id <= 1) q[dr.team] = dr.length;
+      std::printf("round %3d: A %2d dragons (length %3d, queen %2d) | B %2d dragons (length %3d, queen %2d)\n", last_round,
+                  n[0], len[0], q[0], n[1], len[1], q[1]);
     }
     const int32_t d = g.actor();
     const int team = g.dragons()[d].team;
@@ -128,10 +134,11 @@ Outcome Play(const std::string& map_text, const std::array<const Variant*, 2>& s
     if (!why.empty()) ++out.reasons[team][why];
     for (const dragons::Death& death : g.deaths()) {
       if (trace)
-        std::printf("    %c dragon %d died (%s) on %s turn%s%s\n", death.team ? 'B' : 'A', death.id,
+        std::printf("    %c %s %d died (%s) on %s turn%s%s\n", death.team ? 'B' : 'A', death.id <= 1 ? "QUEEN" : "dragon", death.id,
                     kCauses[death.reason], death.id == d ? "its own" : "another dragon's",
                     why.empty() ? "" : ", acting: ", why.c_str());
       ++out.deaths[death.team][death.reason];
+      if (death.id <= 1) out.queen_died[death.team] = death.round;
       if (death.id == d) ++out.own_move[death.team][death.reason];
       if (multi && death.team != team && death.reason == 3 && death.id < static_cast<int32_t>(before.size())) {
         const int32_t len = before[death.id];
@@ -148,7 +155,14 @@ Outcome Play(const std::string& map_text, const std::array<const Variant*, 2>& s
   for (int t = 0; t < 2; ++t) {
     out.longest[t] = r.team[t].longest;
     out.total[t] = r.team[t].total;
+    out.queen[t] = r.team[t].queen;
   }
+  const dragons::Standing &sa = r.team[0], &sb = r.team[1];
+  out.decided = r.end_reason == 0                ? (r.winner < 0 ? kByNothing : kByElimination)
+                : sa.queen != sb.queen           ? kByQueen
+                : sa.longest != sb.longest       ? kByLongest
+                : sa.total != sb.total           ? kByTotal
+                                                 : kByNothing;
   return out;
 }
 

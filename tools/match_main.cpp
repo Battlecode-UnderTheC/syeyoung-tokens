@@ -6,9 +6,12 @@
 // The seed is the judge's `unswbc run --seed` (decimal or 0x hex; default kPearlRngSeed):
 // with it the match is the judge's, move for move (judge_engine.cpp).
 //
-// Variants by name or plugin path. Output fields: winner ("A", "B", "draw"), rounds, and
-// per team (arrays [A, B]): longest, total, deaths {cause: n}, reasons {why: n},
-// fatal {why: n}, turn_us {p50, p99, max, n}. On an error: {"error": "..."} and exit 1.
+// Variants by name or plugin path. Output fields: winner ("A", "B", "draw"), decided
+// ("elimination", "queen", "longest", "total", "draw": unswbc 1.2.3's order), rounds, and
+// per team (arrays [A, B]): queen (its length at the end, 0 if dead), queen_r100 (at the
+// start of round 100, -1 if not reached), queen_died (the round, -1 if it lived), longest,
+// total, deaths {cause: n}, reasons {why: n}, fatal {why: n}, turn_us {p50, p99, max, n}.
+// On an error: {"error": "..."} and exit 1.
 #include <algorithm>
 #include <cstdio>
 #include <string>
@@ -61,9 +64,11 @@ int main(int argc, char** argv) {
       deaths[t] = Counts(m);
     }
     std::printf(
-        "{\"winner\": \"%s\", \"rounds\": %d, \"longest\": [%d, %d], \"total\": [%d, %d], \"deaths\": [%s, %s], "
+        "{\"winner\": \"%s\", \"decided\": \"%s\", \"rounds\": %d, \"queen\": [%d, %d], \"queen_r100\": [%d, %d], "
+        "\"queen_died\": [%d, %d], \"longest\": [%d, %d], \"total\": [%d, %d], \"deaths\": [%s, %s], "
         "\"reasons\": [%s, %s], \"fatal\": [%s, %s], \"turn_us\": [%s, %s]}\n",
-        o.winner < 0 ? "draw" : (o.winner == 0 ? "A" : "B"), o.rounds, o.longest[0], o.longest[1], o.total[0],
+        o.winner < 0 ? "draw" : (o.winner == 0 ? "A" : "B"), tools::kDecided[o.decided], o.rounds, o.queen[0], o.queen[1],
+        o.queen_r100[0], o.queen_r100[1], o.queen_died[0], o.queen_died[1], o.longest[0], o.longest[1], o.total[0],
         o.total[1], deaths[0].c_str(), deaths[1].c_str(), Counts(o.reasons[0]).c_str(), Counts(o.reasons[1]).c_str(),
         Counts(o.fatal[0]).c_str(), Counts(o.fatal[1]).c_str(), Percentiles(o.turn_us[0]).c_str(),
         Percentiles(o.turn_us[1]).c_str());

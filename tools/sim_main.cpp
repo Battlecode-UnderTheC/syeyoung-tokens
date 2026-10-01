@@ -8,11 +8,14 @@
 //                         0x5eed5eed = 1592614637). --trace uses the first.
 //
 // With the same seed a match here is the judge's (`unswbc run ... --sandbox --seed S`) move for
-// move: tools/judge_engine.cpp draws pearls as unswbc 1.2 does.
+// move: tools/judge_engine.cpp draws pearls as unswbc 1.2 does; the rules are 1.2.3's.
 //
 // A variant is a name (loaded from build/variants/lib<name>.so) or a path to a plugin.
-// Prints W-D-L from a's side, final length margins, deaths by cause, and the tallies of
-// each side's reasons (Agent::reason()) and of the reasons behind its fatal turns.
+// Prints W-D-L from a's side, what decided the games (unswbc 1.2.3's order: elimination,
+// then at round 500 the longer queen, the longest dragon, the greater total), each side's
+// queen (dragon 0 or 1) at r100 and at the end and how often it died, final length margins,
+// deaths by cause, and the tallies of each side's reasons (Agent::reason()) and of the
+// reasons behind its fatal turns.
 #include <array>
 #include <atomic>
 #include <chrono>
@@ -98,6 +101,10 @@ int main(int argc, char** argv) {
 
     int w = 0, d = 0, l = 0;
     double longest = 0, total = 0, rounds = 0;
+    // queens, [a, b]: summed length at the end, at r100 (over games that reached it), deaths
+    std::array<double, 2> queen{}, queen100{}, queen_dead{};
+    int queen100_n = 0;
+    std::array<std::array<int, 5>, 3> decided{};   // [a won, draw, b won][Decided]
     std::array<std::array<double, 5>, 2> deaths{};     // [a, b][cause]
     std::array<std::array<double, 5>, 2> own{};        // [a, b][cause], died on its own turn
     std::array<std::array<double, 4>, 2> lunged{};     // [a, b][killed short, their length, killed 10+, their length]
@@ -110,6 +117,14 @@ int main(int argc, char** argv) {
       if (o.winner < 0) ++d;
       else if (o.winner == ta) ++w;
       else ++l;
+      decided[o.winner < 0 ? 1 : (o.winner == ta ? 0 : 2)][o.decided] += 1;
+      if (o.queen_r100[0] >= 0) ++queen100_n;
+      for (int s = 0; s < 2; ++s) {
+        const int team = s ? 1 - ta : ta;
+        queen[s] += o.queen[team];
+        if (o.queen_r100[team] >= 0) queen100[s] += o.queen_r100[team];
+        queen_dead[s] += o.queen_died[team] >= 0;
+      }
       longest += o.longest[ta] - o.longest[1 - ta];
       total += o.total[ta] - o.total[1 - ta];
       rounds += o.rounds;
@@ -128,10 +143,11 @@ int main(int argc, char** argv) {
       }
       if (jobs.size() <= 64) {
         if (seeds.size() > 1) std::printf("  seed %-20llu", static_cast<unsigned long long>(jobs[i].seed));
-        std::printf("  %-18s %s as %c: %s after %d rounds (longest %d-%d, total %d-%d)\n",
+        std::printf("  %-18s %s as %c: %s after %d rounds (by %s; queen %d-%d, longest %d-%d, total %d-%d)%s%s\n",
                     maps[jobs[i].map].first.c_str(), a.name.c_str(), ta ? 'B' : 'A',
-                    o.winner < 0 ? "draw" : (o.winner == ta ? "WIN " : "loss"), o.rounds, o.longest[ta],
-                    o.longest[1 - ta], o.total[ta], o.total[1 - ta]);
+                    o.winner < 0 ? "draw" : (o.winner == ta ? "WIN " : "loss"), o.rounds, kDecided[o.decided],
+                    o.queen[ta], o.queen[1 - ta], o.longest[ta], o.longest[1 - ta], o.total[ta], o.total[1 - ta],
+                    o.queen_died[ta] >= 0 ? " [own queen died]" : "", o.queen_died[1 - ta] >= 0 ? " [enemy queen died]" : "");
       }
     }
     const double n = static_cast<double>(jobs.size());
@@ -139,6 +155,22 @@ int main(int argc, char** argv) {
                 d, l, jobs.size(), seeds.size(), seeds.size() == 1 ? "" : "s", std::chrono::duration<double>(std::chrono::steady_clock::now() - t0).count());
     std::printf("  mean rounds %.0f; at the end %s leads by %.1f longest, %.1f total\n", rounds / n, a.name.c_str(),
                 longest / n, total / n);
+    std::printf("  queens: %s at r100 %.1f (%d matches), at the end %.1f, died in %.0f%% | %s at r100 %.1f, at the end "
+                "%.1f, died in %.0f%%\n",
+                a.name.c_str(), queen100_n ? queen100[0] / queen100_n : 0.0, queen100_n, queen[0] / n,
+                100 * queen_dead[0] / n, b.name.c_str(), queen100_n ? queen100[1] / queen100_n : 0.0, queen[1] / n,
+                100 * queen_dead[1] / n);
+    std::printf("  decided by:");
+    for (int k = 0; k < 5; ++k) {
+      if (k == kByNothing) {
+        if (decided[1][k]) std::printf(" draw %d", decided[1][k]);
+        continue;
+      }
+      if (decided[0][k] + decided[2][k] + decided[1][k] == 0) continue;
+      std::printf(" %s %d-%d", kDecided[k], decided[0][k], decided[2][k]);
+      if (decided[1][k]) std::printf(" (+%d drawn)", decided[1][k]);
+    }
+    std::printf(" (%s wins-losses)\n", a.name.c_str());
     for (int r = 4; r < 6; ++r)
       if (snap_n[r])
         std::printf("  at r%d (%d matches): %s %.1f dragons, longest %.1f, total %.1f | %s %.1f dragons, longest %.1f, "
