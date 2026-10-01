@@ -509,3 +509,10 @@ Strategist z1 (about 130 sandbox games, 1.2.3, maps/server):
 - **Queen id:** a starter's queen is its own id mod 2 (starting dragons alternate teams on every server map); a child needs a sonar bit or a sighting of dragon 0/1.
 - **Simple guards failed:** no trades/feeding/dead ends kept 0/40 queens alive; shed-to-3 plus hiding kept 2/40.
 - **Routed:** P1 survival core → giant (gst-queen-guard-1); P2 queen-only champion → search (gst-queen-2); P3 free-step sprints → swarm (gst-sprint-1).
+Strategist z3 (v12's 35 server games, 16-19):
+- **Results:** 12-6 on eliminations, 4-13 on longest dragon; 0 of 17 round-limit games decided by queen (both always dead).
+- **Cause:** v12's queen-only Champion() returns nothing after the queen dies (median r100), so no feeding happens (0 champion feeds a match vs gst-search-8's 22). Longest/total at r499 is 0.16 vs v11's 0.56.
+- **Fix:** an "heir champion" (the queen while heard of, else the longest-dragon election). 15-9 vs v12 in the sandbox; in the sim, longest-decided games go 6-25 → 13-13.
+- **Our queen:** a pen farmer stuck at length 4. 16 of 22 deaths self-inflicted: 9 stubs after its own 4→2 splits, 7 by our own dragons.
+- **Other teams:** nobody guards or hunts queens, and nobody uses free sprints. Winners collapse to one giant after r400.
+- **Sprint harvesting:** neutral (29-31).
