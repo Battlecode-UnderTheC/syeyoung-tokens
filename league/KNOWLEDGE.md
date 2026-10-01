@@ -516,3 +516,10 @@ Strategist z3 (v12's 35 server games, 16-19):
 - **Our queen:** a pen farmer stuck at length 4. 16 of 22 deaths self-inflicted: 9 stubs after its own 4→2 splits, 7 by our own dragons.
 - **Other teams:** nobody guards or hunts queens, and nobody uses free sprints. Winners collapse to one giant after r400.
 - **Sprint harvesting:** neutral (29-31).
+Strategist z4 (Sprint tournament, 140 replays):
+- **Rules and bot:** the Sprint ran under 1.2.2 (step costs, and no game decided by the queen); v11 played.
+- **Coverage:** winners cover the map faster (the winner had visited more of the map in 94 of 112 games). Our heads covered 23% by r100, the lowest of 17 teams.
+- **Consolidation:** winners start 50-100 rounds before us (Cutlery and others r300-370; PPP grows one champion all game).
+- **Our map failures:** Tower Defense — we never left the home box. weakhold — 2-long stubs died farming edge pockets. Around UNSW — consolidated too late.
+- **Cause:** ChooseGoal values remembered slow beds over unexplored ground, and the exploration bonus doesn't rise with hunger. maps/tournament-sprint now has bed ranges inferred from the replays and reproduces the tournament in sim.
+- **Routed:** P1, hunger-scaled exploration → swarm (after the static-state fix). P2 (field beacons) and P3 (distance-based feeding start) are queued.
