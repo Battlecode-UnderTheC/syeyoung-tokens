@@ -24,7 +24,7 @@ for v in "$a" "$b"; do
   "$root/scripts/make-bot.sh" "$v" "$out/$n" > /dev/null
   srcs=$(ls "$out/$n"/*.cpp | grep -v '/bot_main\.cpp$')
   # shellcheck disable=SC2086
-  $cxx -std=c++20 -O2 -fPIC -shared -fvisibility=hidden -fvisibility-inlines-hidden -w -I"$out/$n" $srcs \
+  $cxx -std=c++20 -O2 -ffp-contract=off -fPIC -shared -fvisibility=hidden -fvisibility-inlines-hidden -w -I"$out/$n" $srcs \
     -o "$plugins/lib$n.so"
 done
 a=$(basename "$a"); b=$(basename "$b")

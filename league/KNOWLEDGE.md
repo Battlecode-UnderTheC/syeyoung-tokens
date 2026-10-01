@@ -524,3 +524,10 @@ Strategist z4 (Sprint tournament, 140 replays):
 - **Cause:** ChooseGoal values remembered slow beds over unexplored ground, and the exploration bonus doesn't rise with hunger. maps/tournament-sprint now has bed ranges inferred from the replays and reproduces the tournament in sim.
 - **Routed:** P1, hunger-scaled exploration → swarm (after the static-state fix). P2 (field beacons) and P3 (distance-based feeding start) are queued.
 - **Queen guard (giant, gst-queen-guard-1, sim, 7 queen maps, held-out seeds 41-50):** our queen is alive at r500 in 21-30% of games (base 8%), and queen-decided games go 24-1, but the guard costs economy (13 v 19 dragons and 34 v 47 length at r100), so it loses overall: 66-74 vs gst-queen-1, 62-78 vs gst-search-8. Queens are hunted from outside the 7×7 view and, at 3-4 long, get boxed in. Allowing queen splits down to 2 did better (74-66 vs gst-search-8). Search's heir champion, gst-queen-2, beats v12 59-41 in the sandbox; its queen-protection knobs were neutral or worse.
+
+## Sim vs judge divergence was floating-point contraction (swarm team, 2026-10-01)
+Apple clang on arm64 compiles with -ffp-contract=on by default, so native sim plugins fuse a*b+c into FMA. The judge runs bots as WebAssembly, which never fuses. Floating-point scores then differ in the last bit, ties break differently, and games diverge: gst-queen-1 vs gst131 matched the judge in 18/30 and 13/20 games. With -ffp-contract=off: 30/30 and 20/20. The earlier "static state" theory was wrong; gst's release builds have no shared mutable state.
+- Fixed centrally: CMakeLists compiles the shared lib, every variant and the play lib with -ffp-contract=off, and so does scripts/sim-vs-judge.sh. Rebuild (fresh cmake) after merging main.
+- Per-source alternative: `#pragma STDC FP_CONTRACT OFF` + `#pragma clang fp contract(off)`.
+- Sim numbers for FP-scoring bots (gst line, search, rollouts) before this fix carried some noise.
+Also found: gst's body_ tracking assumes one step per turn, so any multi-step move (our sprints, or lunges) corrupts it and causes own-body deaths. gst-sprint-1 rebuilds body_ from the observed segments.

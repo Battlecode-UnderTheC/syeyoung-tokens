@@ -20,7 +20,7 @@ add_library(shared STATIC
   shared/bot/protocol_io.cpp
   shared/lib/board_memory.cpp shared/lib/pathing.cpp)
 target_include_directories(shared PUBLIC shared/engine shared/protocol shared/bot shared/lib)
-target_compile_options(shared PRIVATE -O2 -Wall -Wextra)
+target_compile_options(shared PRIVATE -O2 -ffp-contract=off -Wall -Wextra)
 
 # every variants/<name>/ with a *.cpp is a plugin: build/variants/lib<name>.so
 file(GLOB variant_dirs LIST_DIRECTORIES true CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/variants/*)
@@ -31,7 +31,7 @@ foreach(dir ${variant_dirs})
     if(sources)
       add_library(${name} MODULE ${sources})
       target_include_directories(${name} PRIVATE ${dir})
-      target_compile_options(${name} PRIVATE -O2 -Wall -Wextra)   # the judge builds with -O2
+      target_compile_options(${name} PRIVATE -O2 -ffp-contract=off -Wall -Wextra)   # the judge builds with -O2 to wasm, which never fuses a*b+c into FMA
       target_link_libraries(${name} PRIVATE shared)
       set_target_properties(${name} PROPERTIES PREFIX "lib" SUFFIX ".so"
                             LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/variants)
@@ -43,7 +43,7 @@ endforeach()
 # judge_engine.cpp: game.cpp with the judge's pearl RNG (mt19937_64, per-match seed), linked ahead of shared's
 add_library(play STATIC tools/play.cpp tools/judge_engine.cpp)
 target_link_libraries(play PUBLIC shared ${CMAKE_DL_LIBS})
-target_compile_options(play PRIVATE -O2 -Wall -Wextra)
+target_compile_options(play PRIVATE -O2 -ffp-contract=off -Wall -Wextra)
 add_executable(sim tools/sim_main.cpp)
 target_link_libraries(sim PRIVATE play Threads::Threads)
 add_executable(match tools/match_main.cpp)
