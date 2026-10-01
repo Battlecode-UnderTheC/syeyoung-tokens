@@ -482,3 +482,8 @@ The late lookahead lever (search-7's per-dragon lookahead steering gst's plain m
 - **Late game:** our longest dragon has a pearl in view on about 40 of the last 50 turns but eats about 8.
 - **Routed:** P1 (early food-taking) → giant, P2 (early 2-splits) → search, P3 (late champion harvest) → swarm, all on gst-search-6.
 - P2 (shed-2 opening, strategist y) failed on gst-search-6: Autarky 5-15 against gst-search-6 in every form; adds about 1 dragon at r50, but the 2-long dragons get picked off, and it costs a Dilemma seat vs v9. It's in gst-search-7 (79c70e0), switched off. (search team)
+Round 7 morning (search and swarm):
+- **gst-search-8** = gst-search-6 with the judge's contested-pearl review stopped at gst's feed round. It fixes Slithery (15-5); on hot-bed maps that review had been pulling feeders and the champion off consolidation.
+- **Devil** is decided by seat, not bot: gst-search-8 wins 9/10 as B and loses 9/10 as A vs gst-giant-2.
+- **Default:** our small-team feeding schedule (feed from 320) dumps feeders early. Shifting it to 380/330 for teams under 48 dragons won default 24-16 (gst-search-9), but gave back Slithery.
+- **Consolidation on the gst-search line** (swarm): every mechanism has been noise. Tried: reserved ground, delivery, map-centre gathering, local feeding, the pretender gate, champion harvest and tail shed. The multi-giant endings (2-2.5 dragons of 20+ at r499) come from groups that never hear each other. The real gains came from movement and fight decisions: the trade value, the rollout judge, the late lookahead and the contest-review stop.
