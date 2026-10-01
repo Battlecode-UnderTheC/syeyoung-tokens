@@ -503,3 +503,9 @@ Round 7 morning (search and swarm):
   2. Win order at r500: queen, then longest dragon, then total.
   3. DRAGON lines must alternate teams.
   Observations, sonar and the ABI are unchanged.
+Strategist z1 (about 130 sandbox games, 1.2.3, maps/server):
+- **Queen survival:** gst-search-8's queen is alive at r499 in 2/80 games (arena-search-7: 0/13). Of 78 deaths: 48 resigns after a trap split leaves the queen as the stub (the parent keeps the id, so the queen keeps the trapped head end), 13 self-trades or lunges, 11 enemy hits, 6 own dragons. Both queens die in nearly every game, so round-limit games are still decided by longest dragon.
+- **Sprint, measured:** a move must leave the dragon at least 2 long, and pearls eaten mid-move pay for steps, so enemy strike reach is l - 2 + ceil(l/4). gst and arena-search-7 never use free steps.
+- **Queen id:** a starter's queen is its own id mod 2 (starting dragons alternate teams on every server map); a child needs a sonar bit or a sighting of dragon 0/1.
+- **Simple guards failed:** no trades/feeding/dead ends kept 0/40 queens alive; shed-to-3 plus hiding kept 2/40.
+- **Routed:** P1 survival core → giant (gst-queen-guard-1); P2 queen-only champion → search (gst-queen-2); P3 free-step sprints → swarm (gst-sprint-1).
