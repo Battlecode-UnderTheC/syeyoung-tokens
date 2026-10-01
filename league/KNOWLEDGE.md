@@ -531,3 +531,14 @@ Apple clang on arm64 compiles with -ffp-contract=on by default, so native sim pl
 - Per-source alternative: `#pragma STDC FP_CONTRACT OFF` + `#pragma clang fp contract(off)`.
 - Sim numbers for FP-scoring bots (gst line, search, rollouts) before this fix carried some noise.
 Also found: gst's body_ tracking assumes one step per turn, so any multi-step move (our sprints, or lunges) corrupts it and causes own-body deaths. gst-sprint-1 rebuilds body_ from the observed segments.
+
+## Why gst-search-8 beat the queen line (search team, 2026-10-02; sim 1.2.3 with the FP fix, 10 server maps, seeds 1-5, vs gst-search-8)
+- gst-queen-1 (v12) 36-64, with longest-decided 7-47: no heir champion, so nobody feeds after the queen dies. gst-queen-3 (heir) 46-54, longest-decided 24-32.
+- Ablations on gst-queen-3:
+  - (b) letting the judge and lookahead risk the queen 53-47; only this one leans positive, and it is within noise (vs gst-queen-3 head to head 49-51);
+  - (a) the queen may trade 44-56;
+  - (c) no trading into the enemy queen 47-53;
+  - (d) no queen id over sonar 47-53;
+  - champion by length (gst-queen-5) 47-53.
+- So the queen-safety rules cost little. v12's real loss was the queen-only champion, which the heir fixes.
+- Arena drafts (parent gst-queen-3-1, queued when the teams were stopped): gst-queen-5-1 (length champion) and queen-1 (local gst-queen-6, the (b) ablation). Giant's drafts were gst-queen-guard-2-1 (32-22 vs gst-queen-2-1 when stopped) and queen-guard-1 (early queen growth). Swarm's explore draft was pending.
