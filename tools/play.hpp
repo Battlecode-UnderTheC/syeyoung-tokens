@@ -30,10 +30,18 @@ void Apply(dragons::Game& g, const bot::Action& a);
 inline constexpr int32_t kSnapRounds[6] = {10, 20, 30, 40, 50, 100};
 inline const char* kCauses[5] = {"wall", "self", "body", "head-to-head", "no action"};
 
+// What decided a game (unswbc 1.2.3's order at the round limit: queen, longest, total).
+enum Decided : int8_t { kByElimination = 0, kByQueen, kByLongest, kByTotal, kByNothing };
+inline const char* kDecided[5] = {"elimination", "queen", "longest", "total", "draw"};
+
 struct Outcome {
   int8_t winner = -1;                              // -1 draw, 0 team A, 1 team B
+  int8_t decided = kByNothing;                     // Decided
   int32_t rounds = 0;
   std::array<int32_t, 2> longest{}, total{};       // at the end, by team
+  // queens (dragons 0 and 1), by team: length at the end (0 if dead), length at the start
+  // of round 100 (-1 if the game ended before it), and the round it died (-1: it lived)
+  std::array<int32_t, 2> queen{}, queen_r100{-1, -1}, queen_died{-1, -1};
   std::array<std::array<int32_t, 5>, 2> deaths{};  // by team and cause (kCauses)
   std::array<std::array<int32_t, 5>, 2> own_move{};  // ... of which the dragon died on its own turn (self-inflicted)
   std::array<std::array<int32_t, 2>, 2> lunged{};  // by team: dragons killed head-to-head by an enemy's

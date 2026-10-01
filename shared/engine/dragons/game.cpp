@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <cstdio>
 #include <functional>
+#include <tuple>
 
 #include "dragons/core.hpp"
 
@@ -151,10 +152,14 @@ void Game::PopBack(int32_t d) {
   --g.length;
 }
 
-// engine: Move
+// engine: Move (unswbc 1.2.3). The first ceil(L/4) steps are free, L being the
+// length when the move starts (pearls eaten on the way do not raise it); every
+// later step pays a segment, and a step that cannot be paid for (length 2) is
+// the "no valid action" death, after the steps before it were taken.
 void Game::Move(int32_t d, const uint8_t* steps, int n) {
+  const int free_steps = (dragons_[d].length + 3) >> 2;
   for (int i = 0; i < n; ++i) {
-    const bool must_pay = i > 0;
+    const bool must_pay = i >= free_steps;
     if (must_pay && dragons_[d].length <= kMinDragonLength) {
       Kill(d, kNoValidAction);
       return;
@@ -275,7 +280,8 @@ uint8_t Game::CastSonar(int32_t d, int dir, uint64_t value) {
   return head ? kEchoEnemyHead : kEchoEnemy;
 }
 
-// engine: ResultAfterRound
+// engine: ResultAfterRound (unswbc 1.2.3): at the round limit the longer queen
+// wins, then the longest living dragon, then the greater total length.
 Result Game::ResultAfterRound(bool final_round) const {
   Result r;
   for (const Dragon& g : dragons_) {
@@ -284,6 +290,7 @@ Result Game::ResultAfterRound(bool final_round) const {
     s.dragons += 1;
     s.longest = std::max(s.longest, g.length);
     s.total += g.length;
+    if (g.id <= 1) s.queen = g.length;   // dragons 0 and 1 are the queens
   }
   const bool a_out = r.team[0].dragons == 0, b_out = r.team[1].dragons == 0;
   if (a_out || b_out) {
@@ -295,7 +302,7 @@ Result Game::ResultAfterRound(bool final_round) const {
   if (!(final_round || round_ + 1 >= kMaxRounds)) return r;
   r.terminated = true;
   r.end_reason = 1;
-  const auto rank = [](const Standing& s) { return std::pair{s.longest, s.total}; };
+  const auto rank = [](const Standing& s) { return std::tuple{s.queen, s.longest, s.total}; };
   if (rank(r.team[0]) > rank(r.team[1])) r.winner = 0;
   else if (rank(r.team[1]) > rank(r.team[0])) r.winner = 1;
   return r;

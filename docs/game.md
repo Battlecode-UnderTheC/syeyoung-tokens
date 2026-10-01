@@ -1,11 +1,26 @@
-<!-- Copied from syeyoung-rl dragons-env/game.md at 7a15f42. The engine in shared/engine/ implements exactly this. -->
+<!-- Copied from syeyoung-rl dragons-env/game.md at 7a15f42, updated to unswbc 1.2.3. The engine in shared/engine/ implements exactly this. -->
 
 # The dragons game
 
 The rules as the official engine implements them: `engine/src` of
 [unswcpmsoc/unswbc](https://github.com/unswcpmsoc/unswbc), shipped as
-`unswbc_engine.wasm` in unswbc 1.0.0 (protocol 2.1.0). Function names in
-brackets are the engine's; `cpp/dragons/` ports each of them.
+`unswbc_engine.wasm` in unswbc 1.0.0 (protocol 2.1.0), and as changed up to
+**unswbc 1.2.3** ("Slay Queen", 2026-10-01). Function names in brackets are the
+engine's; `shared/engine/dragons/` ports each of them.
+
+**What 1.2.3 changed** (read from the 1.2.2 and 1.2.3 wasm side by side; only
+`Move`, `ResultAfterRound` and a map check differ, everything else, including
+what a dragon sees and the reply protocol, is unchanged):
+
+* **Queens**: dragons 0 and 1 are their teams' queens. A split keeps the
+  parent's id, so a queen stays the queen however it splits; the role never
+  passes to another dragon.
+* **Round-500 result**: the longer queen wins (a dead queen counts 0), then the
+  longest dragon, then the greater total length; otherwise a draw.
+* **Sprints**: a dragon of length L takes its first ceil(L/4) steps of a move
+  free (L fixed when the move starts); each later step costs a segment.
+* **Maps**: `DRAGON` lines must alternate teams, so dragons 0 and 1 are on
+  different teams. The contest maps were unchanged (they already did).
 
 ## Board
 
@@ -22,7 +37,10 @@ its mirror, and a bed and its mirror share one countdown.
 ## Dragons
 
 A dragon is a chain of segments, head first, on team A or B. Ids are handed out
-in order: first the map's dragons, then each split child. A team may have at most
+in order: first the map's dragons, then each split child (the parent keeps its
+id). The map's dragons alternate teams, so dragons 0 and 1 are on different
+teams: each is its team's **queen** (which team has 0 depends on the map's first
+`DRAGON` line). A team may have at most
 `UNIT_LIMIT` dragons alive (64 by default); the limit is only checked when
 splitting. Dead dragons never come back.
 
@@ -33,32 +51,39 @@ Matches last at most 500 rounds, numbered 0 to 499 (`Game::Run`):
 1. **Pearl tick** (`PearlTick`): every bed's countdown drops by one. A bed at 0 or
    below gets a pearl, unless it already has one or a living dragon lies on it,
    and draws a new gap. Before round 0 every bed draws its first gap
-   (`InitPearlCountdowns`). Gaps come from one `std::mt19937` seeded with
-   `0x5eed5eed`, drawn in row-major bed order, so a map plays out identically
-   for identical actions.
+   (`InitPearlCountdowns`). Gaps come from one `std::mt19937_64` seeded with
+   the match seed (`unswbc run --seed S`; 1.0.0 used a `std::mt19937` at
+   `0x5eed5eed`), drawn in row-major bed order, so a map and seed play out
+   identically for identical actions.
 2. **Turns**: dragons act one at a time in id order, each seeing what the ones
    before it left. A dragon that was killed is skipped. A child born this round
    acts later in the same round.
 3. **Result** (`ResultAfterRound`), only once the round is complete. If a team
    has no dragons left, the game ends: the other team wins, or it is a draw if
-   both are gone. After round 499 the team with the longest single dragon wins;
-   total length breaks a tie, and equal totals make a draw.
+   both are gone. After round 499 the tiebreaks are, in order: the **longer
+   queen** (a dead queen has length 0, so a team whose queen died loses to one
+   whose queen lives), the longest living dragon, the greater total length;
+   if all three are equal it is a draw.
 
 ## A turn (`TakeTurn`)
 
 The dragon receives its round block. Its sonar inbox is emptied, the reply is
 applied, and then, if the dragon is still alive, its `SONAR` is cast.
 
-* **MOVE d1 d2 ...**: one step per letter. Step k ≥ 2 first requires length > 2
-  and otherwise kills the dragon (no valid action). Each step (`Step`) turns the
-  dragon to face the step, then:
+* **MOVE d1 d2 ...**: one step per letter (`Move`). With L the length when
+  the move starts, the first ceil(L/4) steps are **free**; every later step
+  first requires length > 2 and otherwise kills the dragon (no valid action),
+  after the earlier steps were taken. So L = 2..4 gets 1 free step, 5..8 gets
+  2, 9..12 gets 3, and x steps cost max(0, x − ceil(L/4)) segments (fewer if
+  pearls are eaten on the way: they do not raise the free count). Each step
+  (`Step`) turns the dragon to face the step, then:
   * kelp kills it (wall);
   * its own body, tail included, kills it (self);
   * another dragon's head kills **both** dragons (head-to-head);
   * another dragon's body kills the mover (other body);
   * otherwise the head moves in. A pearl there is eaten, which grows the dragon
-    (the tail stays); with no pearl the tail moves up. Steps after the first
-    cost one tail segment each.
+    (the tail stays); with no pearl the tail moves up. A paid step then
+    removes one more tail segment.
 * **SPLIT n**: needs 2 ≤ n ≤ length − 2 and fewer than `UNIT_LIMIT` living
   dragons on the team; otherwise the dragon dies. The last n segments become a
   new dragon, reversed, so the parent's tail is the child's head, facing from

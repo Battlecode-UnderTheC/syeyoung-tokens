@@ -184,6 +184,9 @@ class Reader {
       DRAGONS_ASSERT(fields >> team >> count, "DRAGON needs team and segment count: " << line);
       DRAGONS_ASSERT(team == 0 || team == 1, "DRAGON team must be 0 or 1: " << line);
       DRAGONS_ASSERT(count >= kMinDragonLength, "DRAGON is too short: " << line);
+      // unswbc 1.2.3: each DRAGON line's team differs from the line before it
+      DRAGONS_ASSERT(teams.empty() || teams.back() != team,
+                     "DRAGON teams must alternate, so dragons 0 and 1 are on different teams: " << line);
       std::vector<Point> body;
       for (int i = 0; i < count; ++i) {
         Point s;

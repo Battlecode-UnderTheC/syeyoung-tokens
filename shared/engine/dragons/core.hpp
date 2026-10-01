@@ -1,6 +1,10 @@
 // The dragons game, ported from the official engine (github.com/unswcpmsoc/unswbc,
 // engine/src, as shipped in unswbc==1.0.0, protocol 2.1.0), with the 1.0.0
-// sonar: four directional pings per turn, uint64 words, and the ECHOES line.
+// sonar: four directional pings per turn, uint64 words, and the ECHOES line,
+// brought up to unswbc 1.2.3 ("Slay Queen", 2026-10-01): dragons 0 and 1 are the
+// queens, the round-limit ranking puts the queen's length first, a move's first
+// ceil(L/4) steps are free, and a map's DRAGON lines must alternate teams. The
+// observation and the bot protocol did not change in 1.2.3.
 //
 // The rules are the engine's, function for function; what differs is the data
 // layout, chosen so a turn allocates nothing and touches only what it needs:
@@ -107,8 +111,10 @@ struct Death {
   int32_t by = -1;              // hit another's body: that dragon's id (-1 otherwise)
 };
 
+// A team's living dragons. queen: the length of its queen (dragon 0 or 1),
+// 0 once the queen is dead. The round-limit ranking is (queen, longest, total).
 struct Standing {
-  int32_t dragons = 0, longest = 0, total = 0;
+  int32_t dragons = 0, longest = 0, total = 0, queen = 0;
 };
 
 struct Result {
