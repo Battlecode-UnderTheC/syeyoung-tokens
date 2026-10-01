@@ -32,6 +32,9 @@ python3 scripts/server/bcweb.py <command> [options]      # -h on any command for
 | `wait <battle> [--interval S] [--timeout MIN]` | poll every 60 s or more until every game is done, then `fetch` |
 | `challenge <opponent> [--maps A,B,..] [--ranked] [--dry-run]` | request a battle. Unranked by default |
 | `quota [opponent]` | games left in the site's hourly allowance, plus our local log |
+| `tournaments` | every tournament the site lists: id, status, date, teams, format, rounds, matches and games played |
+| `bracket <t> [--top N] [--team NAME] [--all]` | the bracket round by round: battle id, both teams with seed and score (`>` marks the winner), and each game's map and winning slot. It also lists the maps used and how often. By default it shows the last 4 rounds plus every match of ours (starred) |
+| `tfetch <t> [--all \| --team NAME] [--top N]` | download tournament replays to `replays/tournament-<t>/M<battle>/M<game>.replay`, with a `battle.json` per match. It prints a line per game: which team sat in seat A and B, the winner, end reason and totals, and `us=A/B WIN/LOSS` when it was our bot. By default it fetches the last 4 rounds plus our matches. Maps not already in `maps/official` or `maps/server` are saved to `syeyoung-tokens.league/maps-tournament/<t>/` |
 
 Battle ids can be written `727546` or `M727546`. An opponent can be given as a team name
 (case-insensitive; a unique prefix works), as `#RANK` or `rank:N` (leaderboard rank), or as
@@ -67,6 +70,20 @@ count is the one that applies.
 The site always plays our **active** submission. It has no way to pick another version for
 a single battle, so `challenge --submission` is refused. To test another version you would
 have to activate it, which counts as a submission change and is out of scope here.
+
+### Tournaments
+
+`/tournaments/__data.json` carries every tournament with its whole bracket inline, so
+`tournaments` and `bracket` need one request each. In the bracket, a game's winner is a
+**slot** (`a` or `b`), not a replay seat: teams can swap seats between games. `tfetch` works
+out each game's seating by matching the slot winner to the replay winner.
+
+Tournament maps can't be downloaded with the web login (the `/api/v1/maps` text needs an API
+key). `tfetch` therefore rebuilds each new map from the map text inside a replay. Replays
+record every bed range as `0 0`, so those values are missing from the rebuilt maps.
+
+`tfetch --all` on the Sprint is 590 matches and 4130 games (several GB). It asks for `--yes`
+above 500 games.
 
 ## Example output
 
@@ -104,6 +121,7 @@ can't be found, the line falls back to the site's winner.
 | sign in | `POST /api/auth/sign-in/email` `{email, password}` with `Origin` set → `__Secure-better-auth.session_token` cookie |
 | page data | `GET <page>/__data.json` (SvelteKit, devalue-encoded) for `/team`, `/submissions`, `/leaderboard?page=N`, `/battles?mine=1&page=N`, `/teams/<id>`, `/visualiser?match=<battle>` (the battle's games and maps) |
 | replay | `GET /api/matches/<game>/replay`, gzip-compressed. It is saved decompressed, matching the existing files |
+| tournaments | `GET /tournaments/__data.json` (list plus full brackets) |
 | allowance | `GET /teams/<id>/availability` → `{dev, remaining, freeIn}` |
 | request battle | `POST /teams/<id>?/challenge`, form fields `kind` (ranked or unranked), `ranked` (true or false) and `mapId` (repeated, unranked only), with header `x-sveltekit-action: true` → `{type: "success", data: {battleId}}` |
 
