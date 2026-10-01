@@ -75,7 +75,7 @@ Limits your variant must respect (the competition judge):
 - No exceptions escaping, no avoidable deaths into walls or itself (`check` catches these).
 - No `getenv` or other runtime knobs: every setting is a constant in your sources (the
   league and the judge run your code as committed). Debug output must be compiled out.
-- 500 rounds; the longest single dragon at the end wins, then total length. A team with no
+- 500 rounds; at the end the longer QUEEN (your dragon id 0 or 1) wins, then the longest dragon, then total length (unswbc 1.2.3). A team with no
   dragons left loses immediately.
 
 ## Submit

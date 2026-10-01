@@ -494,3 +494,12 @@ Round 7 morning (search and swarm):
 - **Doomed starts:** on dilemma, autarky and slithery_fight both queens are doomed at spawn (head facing a 1-wide dead end, splits keep the trapped head as the queen), so 7 server maps are queen maps. Detect it from observation: queen room at spawn < its length.
 - **Sandbox prototypes:** a queen guard won 10/10 games decided by the queen vs gst-search-8 (27-29 overall: it costs early economy). Kill and chase rules on the enemy queen barely fired, since its head is in view only about 38 dragon-turns a game. Ordinary gst trades already kill most queens.
 - **Free sprint:** dragons of length 4 or less are unchanged. Long dragons move ceil(L/4) free steps and can now outrun small queens. Enemy trade reach on our queen is ceil(L/4)+L-2.
+
+## Engine on 1.2.3 and a sim caveat (tooling worker, 2026-10-01)
+- **Sim:** the sim and engine match the 1.2.3 judge (60/60 games identical for gst-115 v gst-96). The sim summary now reports queen lengths and what decided each game.
+- **Sim caveat:** some bot pairs diverge from the judge even under the old rules (arena-search-7 v gst131: 44/60; gst-search-9 v arena-search-5: 44/60). The likely cause is mutable static or global state in bots, which a sim plugin shares across games and dragons; the gst line has `static` counters in strategy.cpp. Confirm important results in the sandbox until a team removes that state.
+- **Engine changes in 1.2.3:**
+  1. Sprint: the first ceil(L/4) steps are free (L fixed at move start); each later step costs a segment; a paid step at length 2 or less kills.
+  2. Win order at r500: queen, then longest dragon, then total.
+  3. DRAGON lines must alternate teams.
+  Observations, sonar and the ABI are unchanged.
