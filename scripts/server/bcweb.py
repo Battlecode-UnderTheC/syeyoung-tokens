@@ -774,6 +774,252 @@ def cmd_quota(a):
           f"(teammates and the website are not in this log)")
 
 
+# ----- tournaments ------------------------------------------------------------------
+# /tournaments/__data.json lists every tournament with its full bracket inline:
+# rounds[r][i] = {a, b, winner, bye, battleId, games:[{id, winner, map}]}; a/b carry
+# {teamId, name, elo, seed, score}. losersRounds holds a double-elimination lower bracket.
+# Game winners 'a'/'b' are bracket slots, not replay seats (seats can swap per game).
+
+MAPS_TOURNAMENT = os.path.join(LEAGUE_ROOT, "maps-tournament")
+OUR_TEAM_ID = 328
+
+
+def _tournaments():
+    return page_data("/tournaments").get("tournaments") or []
+
+
+def _tournament(tid):
+    ts = _tournaments()
+    for t in ts:
+        if tid.lower() in (str(t.get("id")).lower(), str(t.get("name")).lower(),
+                           str(t.get("kind")).lower()):
+            return t
+    raise BcError(f"no tournament {tid!r}; known: " + ", ".join(str(t.get("id")) for t in ts))
+
+
+def _round_name(n_matches, idx, lower=False):
+    if lower:
+        return f"L{idx + 1}"
+    return {1: "final", 2: "semifinal", 4: "quarterfinal"}.get(n_matches, f"round of {2 * n_matches}")
+
+
+def _t_matches(t):
+    """Yield (label, round_index, match) for every played (non-bye) match."""
+    for lower, key in ((False, "rounds"), (True, "losersRounds")):
+        for ri, rnd in enumerate(t.get(key) or []):
+            label = _round_name(len(rnd), ri, lower)
+            for m in rnd:
+                if m and not m.get("bye") and (m.get("a") and m.get("b")):
+                    yield label, ri, lower, m
+
+
+def _side_str(x, w, slot):
+    if not x:
+        return "-"
+    sc = x.get("score")
+    return (f"{'>' if w == slot else ' '}{x.get('name')} (#{x.get('seed')})"
+            + (f" {sc}" if sc is not None else ""))
+
+
+def _involves(m, team):
+    team = team.lower()
+    return any(m.get(s) and (str(m[s].get("teamId")) == team or
+                             str(m[s].get("name", "")).lower() == team) for s in "ab")
+
+
+def cmd_tournaments(a):
+    rows = []
+    for t in _tournaments():
+        played = sum(1 for _ in _t_matches(t))
+        games = sum(len(m.get("games") or []) for *_, m in _t_matches(t))
+        rows.append([t.get("id"), t.get("name"), t.get("status"), _short_time(t.get("date")),
+                     t.get("size"), f"bo{t.get('bestOf')}", len(t.get("rounds") or []),
+                     played, games])
+    _table(rows, ["id", "name", "status", "date(UTC)", "teams", "format", "rounds",
+                  "matches", "games"])
+    print("(tabs on the site with no entry here, e.g. Qualifiers or Grand Final, "
+          "have no data yet)")
+
+
+def cmd_bracket(a):
+    t = _tournament(a.tournament)
+    allm = list(_t_matches(t))
+    nrounds = len(t.get("rounds") or [])
+    show_from = 0 if a.all else max(0, nrounds - a.top)
+    print(f"{t.get('name')} ({t.get('id')}): {t.get('status')}, {t.get('size')} teams, "
+          f"best of {t.get('bestOf')}, {nrounds} rounds, {len(allm)} matches played")
+    maps = {}
+    for *_, m in allm:
+        for g in m.get("games") or []:
+            maps[g.get("map")] = maps.get(g.get("map"), 0) + 1
+    print("maps: " + ", ".join(f"{k} ({v})" for k, v in maps.items()))
+    cur = None
+    for label, ri, lower, m in allm:
+        mine = _involves(m, a.team) if a.team else _involves(m, str(OUR_TEAM_ID))
+        if not (mine or ri >= show_from or a.all or lower):
+            continue
+        if (label, lower) != cur:
+            cur = (label, lower)
+            print(f"\n== {label}" + (" (lower bracket)" if lower else ""))
+        w = m.get("winner")
+        gs = " ".join(f"{(g.get('map') or '?')[:10]}:{g.get('winner')}"
+                      for g in m.get("games") or [])
+        star = "*" if mine else " "
+        print(f"{star}M{m.get('battleId')}  {_side_str(m.get('a'), w, 'a'):<38} vs "
+              f"{_side_str(m.get('b'), w, 'b'):<38} {gs}")
+    print("\n> = match winner; game list is map:winner-slot; * = "
+          + (a.team if a.team else "our matches") + f". Showing the last {a.top} rounds "
+          "plus starred matches; --all for every match.")
+
+
+def _seat_of_a(m_games, decoded):
+    """Work out which replay seat (A/B) bracket slot 'a' held in each game."""
+    out = {}
+    for g in m_games:
+        d = decoded.get(g["id"])
+        if not d:
+            continue
+        rw, bw = (d.get("result") or {}).get("winner"), g.get("winner")
+        if rw in ("A", "B") and bw in ("a", "b"):
+            out[g["id"]] = rw if bw == "a" else ("B" if rw == "A" else "A")
+    return out
+
+
+def tfetch(t, matches, root, force=False, maps_out=None):
+    decode = _load_decode()
+    subs = {s["id"]: s.get("name") for s in _submissions()}
+    seen_maps = {}
+    n_games = 0
+    for label, ri, lower, m in matches:
+        bid = m.get("battleId")
+        out_dir = os.path.join(root, f"M{bid}")
+        os.makedirs(out_dir, exist_ok=True)
+        A, B = m.get("a") or {}, m.get("b") or {}
+        print(f"M{bid} [{label}{' lower' if lower else ''}] {A.get('name')} {A.get('score')}"
+              f" - {B.get('score')} {B.get('name')}")
+        decoded, recs = {}, []
+        for g in m.get("games") or []:
+            gid = g["id"]
+            path = os.path.join(out_dir, f"M{gid}.replay")
+            if force or not os.path.exists(path):
+                data = _download_game(gid)
+                if data is None:
+                    print(f"  M{gid} {g.get('map')}: not finished")
+                    continue
+                with open(path, "wb") as f:
+                    f.write(data)
+            n_games += 1
+            if decode is not None:
+                try:
+                    decoded[gid] = decode.load(path)
+                except Exception as e:
+                    print(f"  M{gid} {g.get('map')}: saved, decode failed ({type(e).__name__})")
+        seats = _seat_of_a(m.get("games") or [], decoded)
+        for g in m.get("games") or []:
+            gid = g["id"]
+            d = decoded.get(gid)
+            name_w = (A if g.get("winner") == "a" else B).get("name")
+            if not d:
+                if os.path.exists(os.path.join(out_dir, f"M{gid}.replay")) and decode is None:
+                    print(f"  M{gid} {g.get('map')}: winner {name_w}")
+                continue
+            r = d.get("result") or {}
+            sa = seats.get(gid)
+            seat_names = ({sa: A.get("name"), ("B" if sa == "A" else "A"): B.get("name")}
+                          if sa else {})
+            ours = None
+            for seat, bot in (("A", d.get("botA") or ""), ("B", d.get("botB") or "")):
+                if bot.isdigit() and int(bot) in subs:
+                    ours = seat
+            if ours is None and sa:
+                # Tournament replays carry team names, not submission ids, in botA/botB.
+                if A.get("teamId") == OUR_TEAM_ID:
+                    ours = sa
+                elif B.get("teamId") == OUR_TEAM_ID:
+                    ours = "B" if sa == "A" else "A"
+            ra, rb = r.get("A") or {}, r.get("B") or {}
+            us = (f" us={ours}" + (" WIN" if r.get("winner") == ours else " LOSS")) if ours else ""
+            print(f"  M{gid} {g.get('map')}: A={seat_names.get('A', '?')} "
+                  f"B={seat_names.get('B', '?')} winner={r.get('winner')} ({name_w}) "
+                  f"end={r.get('endReason')} A total {ra.get('total')} / B total "
+                  f"{rb.get('total')}{us}")
+            recs.append({"id": gid, "map": g.get("map"), "siteWinnerSlot": g.get("winner"),
+                         "seatOfA": sa, "winner": r.get("winner"),
+                         "endReason": r.get("endReason"), "A": ra, "B": rb, "ourSide": ours,
+                         "botA": d.get("botA"), "botB": d.get("botB"), "seed": d.get("seed")})
+            mname = g.get("map") or "unknown"
+            if mname not in seen_maps and d.get("map"):
+                seen_maps[mname] = (d["map"], gid)
+        with open(os.path.join(out_dir, "battle.json"), "w") as f:
+            json.dump({"tournament": t.get("id"), "round": label, "lower": lower,
+                       "battle": bid, "a": A, "b": B, "winner": m.get("winner"),
+                       "fetchedAt": _now_iso(), "games": recs}, f, indent=1, default=str)
+    if maps_out and seen_maps:
+        _save_maps(seen_maps, maps_out)
+    return n_games
+
+
+def _known_map_names():
+    names = set()
+    repo = os.path.dirname(os.path.dirname(HERE))
+    for sub in ("maps/official", "maps/server"):
+        d = os.path.join(repo, sub)
+        for fn in os.listdir(d) if os.path.isdir(d) else []:
+            if not fn.endswith(".map"):
+                continue
+            try:
+                with open(os.path.join(d, fn)) as f:
+                    for line in f:
+                        if line.startswith("MAP_NAME"):
+                            names.add(line.split(None, 1)[1].strip().lower())
+                            break
+            except OSError:
+                pass
+            names.add(fn[:-4].lower())
+    return names
+
+
+def _slug(name):
+    return "".join(c if c.isalnum() else "_" for c in name.lower()).strip("_")
+
+
+def _save_maps(seen, out_dir):
+    known = _known_map_names()
+    os.makedirs(out_dir, exist_ok=True)
+    for name, (text, gid) in sorted(seen.items()):
+        if name.lower() in known or _slug(name) in known:
+            print(f"map {name}: already in maps/official or maps/server")
+            continue
+        path = os.path.join(out_dir, _slug(name) + ".map")
+        with open(path, "w") as f:
+            f.write(text if text.endswith("\n") else text + "\n")
+        print(f"map {name}: NEW, rebuilt from replay M{gid} -> {path}")
+
+
+def cmd_tfetch(a):
+    t = _tournament(a.tournament)
+    allm = list(_t_matches(t))
+    nrounds = len(t.get("rounds") or [])
+    if a.all:
+        sel = allm
+    elif a.team:
+        sel = [x for x in allm if _involves(x[3], a.team)]
+    else:
+        sel = [x for x in allm
+               if x[1] >= nrounds - a.top or x[2] or _involves(x[3], str(OUR_TEAM_ID))]
+    if not sel:
+        raise BcError("no matches selected")
+    ng = sum(len(x[3].get("games") or []) for x in sel)
+    print(f"{t.get('name')}: {len(sel)} match(es), {ng} game(s) selected")
+    if a.all and ng > 500 and not a.yes:
+        raise BcError(f"--all is {ng} games (several GB, about {ng // 60 + 1} min at our "
+                      "request rate); pass --yes to confirm")
+    root = a.out or os.path.join(REPLAY_ROOT, f"tournament-{_slug(str(t.get('id')))}")
+    maps_out = os.path.join(MAPS_TOURNAMENT, _slug(str(t.get("id"))))
+    n = tfetch(t, sel, root, a.force, maps_out)
+    print(f"{n} replay(s) in {root}")
+
+
 # --------------------------------------------------------------------------- main
 
 def main(argv=None):
@@ -818,6 +1064,25 @@ def main(argv=None):
     s.add_argument("opponent", nargs="?", help="ask about this opponent's pool (default: "
                                                 "our last opponent)")
     s.set_defaults(f=cmd_quota)
+    sp.add_parser("tournaments", help="list tournaments and status").set_defaults(
+        f=cmd_tournaments)
+    s = sp.add_parser("bracket", help="a tournament's rounds, matches, results and maps")
+    s.add_argument("tournament", help="id or name, e.g. sprint")
+    s.add_argument("--top", type=int, default=4, help="show the last N rounds (default 4)")
+    s.add_argument("--team", help="star this team's matches (name or team id)")
+    s.add_argument("--all", action="store_true", help="every match")
+    s.set_defaults(f=cmd_bracket)
+    s = sp.add_parser("tfetch", help="download a tournament's replays (+ new maps)")
+    s.add_argument("tournament")
+    g = s.add_mutually_exclusive_group()
+    g.add_argument("--all", action="store_true", help="every played match")
+    g.add_argument("--team", help="only this team's matches (name or team id)")
+    s.add_argument("--top", type=int, default=4,
+                   help="default selection: the last N rounds plus our matches (default 4)")
+    s.add_argument("--yes", action="store_true", help="confirm a very large --all")
+    s.add_argument("--force", action="store_true")
+    s.add_argument("--out", help="replay root (default replays/tournament-<id>)")
+    s.set_defaults(f=cmd_tfetch)
     a = p.parse_args(argv)
     try:
         a.f(a)
