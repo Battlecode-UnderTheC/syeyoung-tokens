@@ -487,3 +487,10 @@ Round 7 morning (search and swarm):
 - **Devil** is decided by seat, not bot: gst-search-8 wins 9/10 as B and loses 9/10 as A vs gst-giant-2.
 - **Default:** our small-team feeding schedule (feed from 320) dumps feeders early. Shifting it to 380/330 for teams under 48 dragons won default 24-16 (gst-search-9), but gave back Slithery.
 - **Consolidation on the gst-search line** (swarm): every mechanism has been noise. Tried: reserved ground, delivery, map-centre gathering, local feeding, the pretender gate, champion harvest and tail shed. The multi-giant endings (2-2.5 dragons of 20+ at r499) come from groups that never hear each other. The real gains came from movement and fight decisions: the trade value, the rollout judge, the late lookahead and the contest-review stop.
+
+## Queens under 1.2.3 (strategist z2, 20 new-rules server games plus sandbox)
+- **Recognising queens:** window segments carry id and team, so an enemy segment with id 0/1 is their queen. Each dragon knows its own id at spawn.
+- **Survival:** queens almost always die today. In 20 server games every queen died except one; median death about r50; none grew past 13. Our v11's queen resigned itself to death in 6 of 20. In 4 of our round-limit losses the enemy queen was already dead, so a living queen would have won them.
+- **Doomed starts:** on dilemma, autarky and slithery_fight both queens are doomed at spawn (head facing a 1-wide dead end, splits keep the trapped head as the queen), so 7 server maps are queen maps. Detect it from observation: queen room at spawn < its length.
+- **Sandbox prototypes:** a queen guard won 10/10 games decided by the queen vs gst-search-8 (27-29 overall: it costs early economy). Kill and chase rules on the enemy queen barely fired, since its head is in view only about 38 dragon-turns a game. Ordinary gst trades already kill most queens.
+- **Free sprint:** dragons of length 4 or less are unchanged. Long dragons move ceil(L/4) free steps and can now outrun small queens. Enemy trade reach on our queen is ceil(L/4)+L-2.
