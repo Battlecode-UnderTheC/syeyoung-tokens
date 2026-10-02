@@ -1,0 +1,7 @@
+name = "qg-board-1"
+parents = ["qg9-2", "gst-endgame-9"]
+operator = "crossover"
+archetype = "gather-split-trade"
+author = "claude-opus-5-5"
+created = "2026-10-02"
+task = "arena-r9-board"
