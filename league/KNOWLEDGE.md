@@ -557,3 +557,8 @@ The judge is byte-identical to 1.2.3 (same rules). It ships the 7 Sprint maps wi
   - explore-1: board control 0.56 vs 0.41 at r100 (the best early predictor), but its queen is always dead by r300;
   - queen-3 and gst-search-8: neutral.
 - **Next candidate (not yet built):** queen-guard-2's queen survival plus explore's hunger-scaled exploration.
+
+## Round 9, first verdicts (2026-10-02)
+- **Team board, explore-2 (queen-guard-2 + all three exploration parts):** 35-1-42 vs its parent (noise; not promoted). Board control +0.05 early but behind by r300; queen survival kept (0.52 vs 0.31 at r300). Sim ablations: only the explore multiplier helps (119-105 on an arena-like pool); the bed horizon and the starving patrol hurt. explore-3 (multiplier only) is in the queue. Board control is lost by r100 on stripes, Colosseum, arena and prisoners_dilemma.
+- **The queen guard's cost on small maps (board team):** on weakhold and stripes the guard overrides about a third of the queen's moves before r150 (650 of 790 for the rollout value, with no enemy in reach). The team then has 8.1 vs 13.5 dragons at r100 and loses eliminations 9-33, though it wins queen-decided games 24-0. Keeping gst's move when no enemy can reach it didn't restore the economy, and the queen then died every game.
+- **Team queen, queen-guard-1's economy cost:** it comes from the queen's minimum length of 3 after economy splits, not the pasture. queen-guard-3 (min length 2 before r100) is in the queue.
