@@ -1,0 +1,148 @@
+// gst-queen-guard-2 = gst-queen-2 (b8918f7, task/arena-search) + the giant team's queen guard
+// (queen_guard.hpp) and allies yielding to the queen, as in gst-queen-guard-1.
+// gst-search-6 = gst-search-4 (gst-merge-2 + arena-search-7's lookahead steering plain late moves)
+// with gst-giant-2's rollout judge (rollout_giant2.hpp, tag variant/gst-giant-2; credit: the giant
+// team) in place of gst-merge-2's older one: rollouts where the other side also lunges, a review
+// of trapped actions against split escapes, a veto of steps into our own body, and a review of
+// contested pearls (another head and a pearl in view).
+#include <cstring>
+#include <memory>
+
+#include "plugin.hpp"
+#include "rollout_giant2.hpp"
+#include "strategy.hpp"
+#include "queen_guard.hpp"
+#include "window.hpp"
+
+namespace gstqueen2 {
+bot::Agent* MakeSearch7(const rl::Spawn& s);
+// from this round, gst's plain one-step moves take their direction from arena-search-7's
+// per-dragon lookahead (search7.cpp), unless the judge overrode the move, the dragon is trapped,
+// walks to an ally to feed it, or steps into a dead end it chose to farm
+constexpr int kLateRound = 250;
+constexpr bool kQueenLookahead = false;  // (gst-queen-2) the queen steps by the lookahead all game
+constexpr bool kReviewEscape = true;    // gst's trapped actions are reviewed with split candidates
+constexpr bool kReviewContest = true;   // moves with another head and a pearl in view are reviewed
+// (gst-search-8) ... but not once the team consolidates: feeders and the champion keep gst's moves
+constexpr int kContestStopBefore = 0;   // rounds before gst's feed round the contest review stops
+}  // namespace gstqueen2
+
+namespace {
+
+constexpr bool kYieldToQueen = true;   // non-queen dragons don't step beside our queen's head
+constexpr bool kQueenGuard = true;     // queen_guard.hpp reviews every queen action
+
+class JudgedAgent : public bot::Agent {
+ public:
+  explicit JudgedAgent(const rl::Spawn& s) : gst_(s), judge_(s), search_(gstqueen2::MakeSearch7(s)) {
+    if (kQueenGuard && s.id <= 1) guard_ = std::make_unique<qg::QueenGuard>(s);   // our queen
+  }
+  bot::Action Turn(const rl::Observation& o) override {
+    judge_.Observe(o);
+    if (guard_) guard_->Observe(o);
+    bot::Action a = gst_.Turn(o);
+    why_ = gst_.reason();
+    const bool move = a.kind == bot::Action::kMove && !a.resign && !a.steps.empty();
+    const bool feeding = std::strstr(why_, "feed") != nullptr || std::strstr(why_, "champion") != nullptr;
+    const bool trapped = std::strstr(why_, "trapped") != nullptr;
+    // gm2: a farmer stepping into a dead end it chose (the tip split is the plan) is not reviewed
+    const bool farming = gm2::kJudgeSkipsDeadEnds && std::strstr(why_, "dead end") != nullptr;
+    bool over = false;
+    const bot::Action mine = a;
+    const bool queen = gm2::kQueenMode && gst_.IsQueen();   // (gst-queen-1) unswbc 1.2.3
+    if (gm2::kJudge) {
+      if (judge_.IntoOwnBody(a)) {   // e.g. a portal exit our own body now covers
+        a = judge_.Review(o, a, &over, false, false, true);
+        if (over) why_ = "rollout: own-body veto";
+      } else if (gstqueen2::kReviewEscape && trapped) {
+        a = judge_.Review(o, a, &over, true);
+        if (over) why_ = a.kind == bot::Action::kSplit ? "rollout: escape split" : "rollout: escape move";
+      } else if (move && !feeding && !farming && !queen && judge_.EnemyHeadInView(o)) {
+        a = judge_.Review(o, a, &over);
+        if (over) why_ = a.steps.size() > 1 ? "rollout: lunge" : "rollout: override";
+      } else if (gstqueen2::kReviewContest && move && !feeding && !farming && !queen &&
+                 o.round < gst_.FeedFrom() - gstqueen2::kContestStopBefore && judge_.OtherHeadAndPearlInView(o)) {
+        a = judge_.Review(o, a, &over, false, true);
+        if (over) why_ = "rollout: contest";
+      }
+      // never take a move override whose path our own memory says is not free
+      if (over && a.kind == bot::Action::kMove && !a.resign && !a.steps.empty() &&
+          (!gst_.FreeStep(a.steps[0]) || (a.steps.size() > 1 && !gst_.PathFree(a.steps)))) {
+        a = mine;
+        over = false;
+        why_ = gst_.reason();
+      }
+      // (gst-queen-1) the queen takes no judged lunge, and a judged step only if it is safe
+      if (over && queen && a.kind == bot::Action::kMove && !a.resign &&
+          (a.steps.size() != 1 || !gst_.QueenSafeStep(a.steps[0]))) {
+        a = mine;
+        over = false;
+        why_ = gst_.reason();
+      }
+    }
+    const bot::Action b = search_->Turn(o);   // sees every observation from turn 1
+    if (o.round >= gstqueen2::kLateRound && !over && !feeding && !trapped && !farming && !gst_.WalkingToAlly() &&
+        a.kind == bot::Action::kMove && !a.resign && a.steps.size() == 1 && b.kind == bot::Action::kMove &&
+        !b.resign && b.steps.size() == 1 &&
+        (!queen || (std::strcmp(search_->reason(), "search") == 0 && gst_.QueenSafeStep(b.steps[0])))) {
+      a.steps = b.steps;
+      why_ = "late: lookahead step";
+    }
+    // (gst-queen-2) the queen moves by the lookahead all game: its time-aware room test keeps a
+    // long body out of the corridors where gst's room check lets it get boxed in (and a boxed-in
+    // queen's trapped split leaves a 2-long stub under its id, which dies)
+    if (queen && gstqueen2::kQueenLookahead && b.kind == bot::Action::kMove && !b.resign && b.steps.size() == 1 &&
+        std::strcmp(search_->reason(), "search") == 0 && gst_.QueenSafeStep(b.steps[0]) &&
+        !(a.kind == bot::Action::kSplit && std::strstr(why_, "trapped") == nullptr && std::strstr(why_, "doomed") == nullptr)) {
+      a = b;
+      why_ = "queen: lookahead step";
+    }
+    // (gst-queen-guard-1) allies yield to the queen: a non-queen step that ends beside our queen's
+    // head (it may step there too: a head-to-head with our own queen) takes another free step
+    if (kYieldToQueen && !guard_ && a.kind == bot::Action::kMove && !a.resign && !a.steps.empty()) {
+      int qx = -1, qy = -1;
+      for (const rl::Segment& g : o.segments)
+        if (g.head && g.team == o.spawn.team && g.id <= 1) { qx = g.x; qy = g.y; }
+      if (qx >= 0) {
+        auto beside = [&](int d) {
+          const int n = win::Step(o, win::kCenter, d);
+          if (n < 0) return false;
+          const int dx = std::abs(o.tile_x[n] - qx), dy = std::abs(o.tile_y[n] - qy);
+          return std::min(dx, o.spawn.width - dx) + std::min(dy, o.spawn.height - dy) <= 1;
+        };
+        if (beside(a.steps[0])) {
+          for (int d = 0; d < 4; ++d) {
+            const int n = win::Step(o, win::kCenter, d);
+            if (d == a.steps[0] || n < 0 || win::Occupied(o, n) || !gst_.FreeStep(d) || beside(d)) continue;
+            bot::Action y = bot::Action::Move(d);
+            y.sonar = a.sonar;
+            a = y;
+            why_ = "yield to queen";
+            break;
+          }
+        }
+      }
+    }
+    // (gst-queen-guard-1) the queen's last word: forbidden actions replaced, rollouts against risk
+    if (guard_) {
+      bool changed = false;
+      a = guard_->Guard(o, a, &changed);
+      if (changed) why_ = a.kind == bot::Action::kSplit ? "queen guard: split" : "queen guard: step";
+      guard_->Commit(a);
+    }
+    judge_.Commit(a);
+    return a;
+  }
+  const char* reason() const override { return why_; }
+
+ private:
+  gm2::StrategyAgent gst_;
+  gstg1r::Judge judge_;
+  std::unique_ptr<bot::Agent> search_;
+  std::unique_ptr<qg::QueenGuard> guard_;
+  const char* why_ = "";
+};
+
+}  // namespace
+
+LEAGUE_VARIANT(JudgedAgent)
