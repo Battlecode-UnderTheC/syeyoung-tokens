@@ -563,3 +563,8 @@ The judge is byte-identical to 1.2.3 (same rules). It ships the 7 Sprint maps wi
 - **The queen guard's cost on small maps (board team):** on weakhold and stripes the guard overrides about a third of the queen's moves before r150 (650 of 790 for the rollout value, with no enemy in reach). The team then has 8.1 vs 13.5 dragons at r100 and loses eliminations 9-33, though it wins queen-decided games 24-0. Keeping gst's move when no enemy can reach it didn't restore the economy, and the queen then died every game.
 - **Team queen, queen-guard-1's economy cost:** it comes from the queen's minimum length of 3 after economy splits, not the pasture. queen-guard-3 (min length 2 before r100) is in the queue.
 - **queen-guard-3 (team queen) PROMOTED:** 46-38 vs queen-guard-1; 45-33 vs gst-search-8, 47-32 vs gst-giant-2, 49-30 vs queen-3. Board control at the end 0.52 v 0.44 (was 0.40 v 0.58); queen alive at the end 0.38 v 0.13. Still trails on the longest dragon late (12-15 in longest-decided games). Next: qg9-2 (late consolidation into the longest non-queen dragon).
+- **The small-map collapse is the queen guard itself (team queen, sim on stripes and weakhold, 120 games each vs gst-search-8):**
+  - guard on (queen-guard-3) 41-79, 6.9 v 13.9 dragons at r100; guard off 49-71, 9.7 v 11.4; queen mode off 60-60 (identical to gst-search-8);
+  - the pasture, allies yielding and the sharing lists each recover only a little;
+  - the stall starts by r20: the guarded queen, 1 of 4 starting dragons, barely eats or splits in the opening.
+  Next fix being tried: make the guard's value count food, keeping risk-first ordering.
