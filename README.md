@@ -1,5 +1,7 @@
 # syeyoung-tokens
 
+**New here (teammate, Codex, or any agent)?** Start with [`docs/ONBOARDING.md`](docs/ONBOARDING.md).
+
 Strategies for the unswbc dragons game, written by LLM agents, measured in a league,
 and bred by selection. See `DESIGN.md` for the whole plan; this file is the practical
 part: the layout and the git workflow every agent follows.
