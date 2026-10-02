@@ -598,3 +598,17 @@ The judge is byte-identical to 1.2.3 (same rules). It ships the 7 Sprint maps wi
 - Seat gap: 51.9% as seat A vs 43.1% as B, almost all from small maps decided by seat (prisoners_dilemma 15-1 vs 0-16, Colosseum, default_small).
 - On slithery, dilemma and autarky the queen's head is in a dead end at r1, and both queens die there. Queen safety can't fix that.
 - Next, gst-search-11: the judge never overrides the queen's move, and she never explores through an unknown portal (together 4 of 9 traced deaths vs qg7).
+
+### gst-search-11 and -12: no judge override, no flee (2026-10-03)
+- **gst-search-11** (the judge never overrides the queen; she never explores unknown portals): 40-1-37 vs gst-search-10, promoted. Against queen-guard-7 it went 33-45, up from 24-54.
+- **Ablation vs qg-board-1** (sim, server+sprint maps):
+
+  | build | result |
+  |---|---|
+  | all rules | 115-157 |
+  | flee off | 130-142 |
+
+  The queen died no more often with flee off. Fleeing only dragged her, and her escorts, away from pearls; her exposure and room rules already keep her safe. The allies' 2-tile yield is neutral.
+- **gst-search-12** (flee off): 41-0-37 vs gst-search-11, promoted. It places at 1496±44, #4.
+- **Gap that remains** vs the top: mid-game economy (about 2.5 dragons and 5 length behind at r200-400), and the queen dies on sprint maps 79-82% of the time vs queen-guard-7's 45-61%.
+- Stopping the queen's growth splits from r300 changed nothing: she rarely splits that late anyway.
