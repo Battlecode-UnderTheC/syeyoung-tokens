@@ -1,0 +1,7 @@
+name = "gst-cross-4"
+parents = ["gst-cross-1", "codex-queen-value-1"]
+operator = "crossover"
+archetype = "gather-split-trade"
+author = "claude-opus-5-5"
+created = "2026-10-02"
+task = "arena-r9-crossover"
