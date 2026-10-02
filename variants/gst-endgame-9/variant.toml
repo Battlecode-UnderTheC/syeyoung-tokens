@@ -1,0 +1,7 @@
+name = "gst-endgame-9"
+parents = ["gst-endgame-4"]
+operator = "mutation"
+archetype = "gather-split-trade"
+author = "claude-opus-5-5"
+created = "2026-10-02"
+task = "team9-endgame"
