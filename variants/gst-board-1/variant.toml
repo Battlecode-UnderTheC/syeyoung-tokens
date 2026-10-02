@@ -1,0 +1,7 @@
+name = "gst-board-1"
+parents = ["gst-queen-guard-2", "gst-explore-1"]
+operator = "crossover"
+archetype = "gather-split-trade"
+author = "claude-opus-5-5"
+created = "2026-10-02"
+task = "arena-r9-board"
