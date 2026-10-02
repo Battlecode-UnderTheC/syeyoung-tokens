@@ -545,3 +545,15 @@ Also found: gst's body_ tracking assumes one step per turn, so any multi-step mo
 
 ## unswbc 1.2.7 (2026-10-02)
 The judge is byte-identical to 1.2.3 (same rules). It ships the 7 Sprint maps with real bed ranges and changed 8 official maps (Colosseum, autarky, default, default_small, dilemma, schooltime, slithery_fight, trophy). The repo's maps/official and maps/tournament-sprint now carry the 1.2.7 files. Local results measured on the old copies of those maps are slightly off. The arena (tokenz) records each game's map sha256 and replays games on changed maps.
+
+## Arena metrics (tokenz /api/v1/submissions/<id>/metrics; docs/METRICS.md in tokenz-arena), 2026-10-02
+- **What predicts winning:** from 8,500 arena games plus 258 real ones, and 667 top-team games crawled from the server:
+  - r50-350: board control (share of tiles our heads reach first) and log(dragons alive), AUC 0.75-0.84;
+  - r400+: the longest dragon;
+  - among TOP teams the queen matters: 25% of games are decided by the queen, and only half of round-500 games have both queens dead (ours: 92-94%). Only-my-queen-alive at r200/r300/r400 wins 75/84/92%.
+- **Our lines on those metrics:**
+  - queen-guard-2: queen alive at r300 0.58 vs 0.19 for opponents, board control even, eval 0.63 at r300;
+  - queen-guard-1: queen survives as well but loses board control late (0.40 vs 0.58 at the end);
+  - explore-1: board control 0.56 vs 0.41 at r100 (the best early predictor), but its queen is always dead by r300;
+  - queen-3 and gst-search-8: neutral.
+- **Next candidate (not yet built):** queen-guard-2's queen survival plus explore's hunger-scaled exploration.
