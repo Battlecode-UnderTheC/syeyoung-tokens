@@ -1,0 +1,360 @@
+# gst-board-2 (team board, arena round 9)
+
+## What it is
+gst-board-1 with two of explore-1's three exploration parts turned off: the bed horizon
+(kBedHorizon 0) and the starving patrol (kStarve 0). What is left is the opening explore multiplier:
+before r150 the frontier explore score is scaled by 1 + min(1, rounds since eating / 20) + unseen
+share of the map.
+
+Why: ablations of gst-board-1 against gst-queen-guard-2 (sim, FP fix, both seats) found the patrol
+and the bed horizon cost dragons, and the multiplier alone gains a few.
+
+| build (vs gst-queen-guard-2) | maps/server s1-5 | arena-like pool s1-8 | r100 dragons (pool s4-8), us v them |
+|---|---|---|---|
+| gst-board-1 (all three parts) | 36-64 | 104-120 | 23.0 v 24.7 |
+| bed horizon only | 40-2-58 | | |
+| starving patrol only | 33-67 | | |
+| no patrol (multiplier + horizon) | 44-56 | 108-116 | 25.6 v 23.9 |
+| multiplier only (this build) | 50-50 | 119-105 | 25.0 v 24.6 |
+
+The arena-like pool is the arena's map list: the 7 tournament-sprint maps, server trauma,
+queen_of_spades, portals and devil, and official arena, stronghold and big_empty (14 maps).
+On all 15 official maps (s1-3) this build went 31-59; the official set holds maps the arena does not
+play (Colosseum, autarky, dilemma, ...).
+
+Also found (not in this build): on weakhold and stripes the queen guard costs the team its opening
+economy (sim, seeds 6-25 vs gst-queen-2: r100 dragons 8.1 v 13.5, eliminations 9-33, queen wins
+24-0, 35-45 overall; without the guard 42-38). The guard reroutes about a third of the queen's moves
+before r150. Letting gst's move stand whenever no enemy head can reach it kept the economy no better
+(10.0 v 12.2 dragons) and the queen then died in every game (34-46), so the overrides are real
+protection, not rollout noise.
+
+`check` passes on maps/official and the pool.
+
+(gst-board-1's notes follow.)
+
+# gst-board-1 (team board, arena round 9)
+
+## What it is
+gst-queen-guard-2 (28b4d69) plus gst-explore-1's opening exploration (9f9b72a, strategy.cpp/hpp;
+isolated by diffing against its base gst-queen-2 b8918f7). Only the exploration part was taken:
+queen-guard-2 already rebuilds body_ after multi-step moves, and explore-1's strike-reach lunge was
+neutral (101-99) so it is left out.
+- Before r150 the frontier explore score is scaled by 1 + min(1, rounds since eating / 20) +
+  unseen share of the map.
+- A bed more than 25 rounds from refilling is worth nothing (TileValue).
+- Before r150 a dragon 20 rounds without food also runs the longest-unseen patrol in its goal scan.
+
+Hypothesis: explore-1's board control (0.56 vs 0.41 at r100 in the arena) with queen-guard-2's
+queen survival.
+
+## Measured (sim, FP fix, vs gst-queen-guard-2, both seats)
+| maps | seeds | W-D-L | r100 dragons / total, us v base |
+|---|---|---|---|
+| server (10) | 1-5 | 36-0-64 | 20.1 / 49.6 v 22.1 / 55.7 |
+| official | 1-3 | 40-0-50 | 20.6 / 53.0 v 23.2 / 57.3 |
+| tournament-sprint (7) | 1-3 | 24-0-18 | 24.0 / 58.3 v 26.9 / 65.0 |
+
+`check` passes on maps/official and maps/server.
+
+(gst-queen-guard-2's notes follow.)
+
+# gst-queen-2
+
+## Idea
+gst-queen-1 (v12) with an heir champion. Champion() returns our queen while she is heard of
+(her report is at most kQueenStale = 60 rounds old, and not an obituary). Otherwise it returns
+gst's longest-dragon election, with the queen's id excluded from it. Feeding ignores the length
+test only when the champion is the queen. This is strategist z3's P1, built independently.
+
+Why: queens die early on most maps (sim 1.2.3: about 95% of games, for both sides). gst-queen-1
+then had no champion, so nobody fed, and round-limit games fell to the longest dragon.
+
+The queen-safety knobs (kQueenNoTrap, kQueenReach, kQueenLookahead, kQueenSplitUntil,
+kQueenKeep) are in the code and all off. That is giant's work in gst-queen-guard-1.
+
+## Measured (sim on unswbc 1.2.3, vs gst-queen-1)
+**Tuning, server maps seeds 1-3 (60 games):**
+
+| build | W-D-L |
+|---|---|
+| heir champion (kept) | 37-0-23 |
+| + queen never takes a dead end | 38-0-22 |
+| + queen out of enemy reach | 38-0-22 |
+| + queen keeps 6 and makes no growth splits | 28-0-32 |
+| + queen moved by the lookahead | 39-0-21 |
+| all of these | 23-0-37 |
+| + queen grows all game (no growth splits) | 23-0-37 (official 43-0-47) |
+
+The queen died in 92-100% of games in every build.
+
+**Held out, seeds 21-25:**
+
+| maps | W-D-L | decided by (wins-losses) |
+|---|---|---|
+| official | 88-0-62 | longest 54-11 |
+| 10 server maps | 58-0-42 | longest 39-8 |
+
+**1.2.3 sandbox (seeds 1-2, 8 server maps, both seats; the knobs off):** 16-0-16 vs gst-queen-1.
+The sandbox and sim disagree here (sim: 58-42 on server seeds 21-25), so the sandbox number
+needs a larger sample.
+
+`check` passes on maps/official and maps/server. The release build has no mutable static state:
+the gm2 counters exist only under GM2_DEBUG.
+
+(gst-search-8's notes follow.)
+
+# gst-search-8
+
+## Idea
+gst-search-6 with one rule changed: the rollout judge's contested-pearl review (another head
+and a pearl in view) stops at this game's consolidation round, gst's feed_from_round, which
+gst's team-size schedule sets. From then on, feeders and the champion keep gst's own moves.
+
+The change is two lines in `plugin.cpp` plus a `FeedFrom()` accessor in `strategy.hpp`. There
+is no map-keyed logic: the trigger is gst's own schedule, which follows the observed team size.
+
+## Why
+gst-search-6 trailed gst-search-4 on Slithery (3-7 on server seeds 21-25). The two differ only
+in the rollout judge, and every Slithery game went to the round limit and was lost on longest.
+Of the new judge's reviews, the contest review is the one that fires constantly on a hot-bed
+map like Slithery (31 gap-1 beds), and in the endgame it pulls feeders and the champion off
+gst's consolidation.
+
+**This is a hypothesis tested by ablation, not a replay trace.** The two ablations below, both
+on Slithery server seeds 1-10 vs gst-search-6 (20 games), agree with it:
+- contest review stopped at the feed round: 15-0-5;
+- contest review off: 9-0-11.
+
+## Measured vs gst-search-6 (held out, both seats)
+| maps / seeds | W-D-L |
+|---|---|
+| slithery_fight (server) 21-30 | 15-0-5 |
+| all 10 server maps 21-25 | 55-0-45 |
+| dilemma (server) 21-30 | 10-0-10 |
+| portals + trauma (server) 21-30 | 21-0-19 (portals 12-8, trauma 9-11) |
+| official 21-25 | 78-2-70 |
+| official 26-30 | 73-0-77 |
+
+Against gst-search-4 (v11) on dilemma 21-30, both gst-search-6 and gst-search-8 win 20-0 with
+identical margins. The change never touches dilemma: its games end before the feed round.
+
+`check` passes on maps/official and maps/server.
+
+(gst-search-6's notes follow.)
+
+# gst-search-6
+
+## Idea
+gst-search-4 (v11: gst-merge-2 + arena-search-7's lookahead steering plain late moves) with
+one piece of gst-giant-2 ported: its rollout judge.
+- **The judge.** rollout_giant2.hpp is a verbatim copy from tag variant/gst-giant-2 (credit:
+  the giant team) and replaces gst-merge-2's older judge. Its rollouts let the other side lunge
+  too. It reviews trapped actions against split escapes, vetoes steps into our own body, and
+  reviews contested pearls (another head and a pearl in view).
+- **The review structure is gst-giant-2's plugin.** gst-merge-2's farming skip and gst-search-4's
+  path check on judge lunges are kept, and so is the late lookahead steering.
+- **Self-contained:** only `plugin.cpp` and the added `rollout_giant2.hpp` differ from
+  gst-search-4. No map-keyed logic.
+
+## Which gst-giant-2 piece wins dilemma, default and devil?
+Each piece moved toward gst-giant-2 on its own. Server maps dilemma/default/devil, seeds 1-5,
+both seats, 30 games vs gst-giant-2:
+
+| build | W-D-L | default | devil | dilemma |
+|---|---|---|---|---|
+| gst-search-4 as is | 10-0-20 | 5-5 | 3-7 | 2-8 |
+| v8's schedule (kFinal 380, freeze 330) | 12-0-18 | 6-4 | 4-6 | 2-8 |
+| split crowd gate on (3) | 11-0-19 | 5-5 | 4-6 | 2-8 |
+| hot-bed farming off | 9-0-21 | 5-5 | 2-8 | 2-8 |
+| **gst-giant-2's rollout judge (gst-search-6)** | **15-0-15** | 4-6 | 4-6 | **7-3** |
+
+- **Dilemma is the judge.** gst-giant-2 reviews contested pearls ("rollout: contest" about 39 a
+  match on dilemma), and dilemma's 12 gap-1 beds are always contested. gst-search-6 vs
+  gst-search-4 on those maps: dilemma 9-1, default 3-7, devil 4-6 (16-14 overall).
+- **Default and devil** don't follow any single piece.
+- **Portals and trauma** vs gst-search-4 (seeds 1-5): 10-0-10 (portals 4-6, trauma 6-4). No regression.
+
+## Held out vs gst-search-4 (both seats)
+| maps / seeds | W-D-L |
+|---|---|
+| official 21-25 | 77-3-70 |
+| official 26-30 | 78-0-72 |
+| all 10 server maps 21-25 | 61-0-39 (61%) |
+
+Per map on the server maps:
+
+| map | W-L | map | W-L |
+|---|---|---|---|
+| dilemma | 10-0 | autarky | 7-3 |
+| trauma | 7-3 | queen_of_spades | 7-3 |
+| portals | 6-4 | schooltime | 6-4 |
+| default | 5-5 | devil | 5-5 |
+| trophy | 5-5 | slithery_fight | 3-7 |
+
+- **Sandbox points** (big_empty, seed 1, self-play): p50 10.0M, p99 18.8-19.1M, max 25.3M per turn.
+- **`check`** passes on maps/official and maps/server.
+
+(gst-search-4's notes follow.)
+
+# gst-search-4
+
+## Idea
+gst-merge-2 (the swarm team's gst line + hot-bed farming + the giant team's rollout judge,
+taken verbatim from a1a5672 on task/g26-2) with gst-search-3's surgical lever. From r250,
+gst's plain one-step moves take their direction from arena-search-7's per-dragon lookahead
+(`search7.cpp`, a verbatim copy).
+
+The move stays gst's own when:
+- the rollout judge overrode it;
+- the dragon walks to an ally to feed it (`WalkingToAlly`, the one hook added to gst's code);
+- it steps into a dead end it chose to farm;
+- the reason names feeding or the champion.
+
+Everything else is gst-merge-2's: splits, hot-bed claims and farming, consolidation, trades
+and sonar. There is no map-keyed logic.
+
+## Why
+- gst-search-3 (the same lever on gst-search-1) beat gst-search-1 90-60 held out, but lost
+  autarky 0-10 to arena-search-7.
+- gst-merge-2 wins autarky 7-3 and dilemma 10-0 against arena-search-7.
+
+## Measured vs gst-merge-2 (tuning seeds)
+| switch round | official seeds 1-5 (150 games) | server seeds 1-3 (60 games) |
+|---|---|---|
+| r250 (kept) | 94-0-56 | 37-0-23 |
+| r150 | 81-0-69 | 33-0-27 |
+
+The copy with no steering plays identically to the tagged gst-merge-2 (same results on
+devil/trophy, seeds 3-4).
+
+(gst-merge-2's notes follow.)
+
+# gst-merge-1 (arena round 7, team swarm: the merge)
+
+## What it is
+mass-swarm-8 (gst131 line + value-judged trades) plus, one piece at a time:
+
+1. **gst-hunter-1's hot-bed farming (kept).** Code credit: the hunter team. Strategist w's P1/P2.
+   - A bed seen to reset its countdown to <= 3 is hot, and is worth a full pearl whenever due.
+   - A dead-end pocket gains +1 per hot bed.
+   - A 2-3 long dragon may enter a pocket that grows it to 4, then tip-splits out with gst's
+     trapped split.
+   - A farmer of length <= 5 heading for a hot bed within 8 claims it over sonar (0xA8). Allies
+     skip hot beds within 2 of a claim for 30 rounds.
+   - Ported verbatim. One fix: the claim tile is cleared at the start of every turn, so an early
+     return (feed, split, trade) no longer rebroadcasts last turn's claim.
+2. **gst-free-1's P3a opening hold (in the code, OFF: kEarlyHoldRound = 0).** Before r20 a
+   dragon of length >= 8 doesn't split with an enemy head within 6. Code credit: the free team.
+   It lost vs piece 1 alone, so it is off.
+   - gst-free-1's map-type switch was NOT taken: it keys on a size table, which the RULE forbids.
+
+**No map-keyed logic.** Nothing branches on the map's name, exact dimensions or a per-map table.
+- Hot beds are detected from observed countdowns.
+- The one size-dependent rule is inherited unchanged from v8: gst's opening centre bonus
+  applies when width x height <= 1024. It is a generic area threshold, not a table.
+
+Endgame left alone (search is folding in search-7's). mass-swarm-6's consolidation stays as it
+was.
+
+## Piece by piece (faithful sim, both seats)
+| step | server maps (5), seeds 1-10 | official, seeds 1-10 |
+|---|---|---|
+| hot-bed farming vs mass-swarm-8 | 61-0-39 | 160-0-140 |
+| + opening hold vs hot-bed farming alone | 44-0-56; on all 10 server maps 94-0-106 | 154-0-146 |
+
+For the hot-bed farming step vs mass-swarm-8 on server maps: r50 16.4 v 14.6 dragons, r100 24.7 v
+20.9, total at r100 63.3 v 53.5.
+
+## Final build vs the targets
+**Official maps, held-out seeds 21-30** (300 games per opponent):
+
+| opponent | W-D-L | win % | final margin (longest / total) | r50 dragons | r100 total |
+|---|---|---|---|---|---|
+| gather-split-trade-131 (v8) | 185-0-115 | 62% | +2.8 / +16.9 | 13.3 v 12.1 | 59.1 v 52.5 |
+| gst-hunter-1 | 182-1-117 | 61% | | | 59.1 v 54.9 |
+| gst-search-1 | 150-0-150 | 50% | | | 55.7 v 52.4 |
+| mass-swarm-8 | 159-1-140 | 53% | | | 55.8 v 52.5 |
+| arena-search-7 (v9) | 144-0-156 | 48% | -2.0 / -7.5 | 13.3 v 13.3 | 55.2 v 58.4 |
+
+**All 10 server maps, seeds 1-10** (the first five maps plus default, devil, portals, trauma and
+trophy; 200 games per opponent):
+
+| opponent | W-D-L (first 5 + new 5 = total) | win % |
+|---|---|---|
+| v8 | 67-33 + 64-36 = 131-69 | 66% |
+| gst-hunter-1 | 64-36 + 60-40 = 124-76 | 62% |
+| mass-swarm-8 | 61-39 + 54-46 = 115-85 | 58% |
+| gst-search-1 | 54-46 + 45-55 = 99-101 | 50% |
+| arena-search-7 | 34-66 + 42-1-57 = 76-1-123 | 38% |
+
+Economy on the first five server maps vs v8: r50 17.2 v 13.7 dragons, r100 26.3 v 19.7 (total
+67.9 v 50.4). Against arena-search-7 we lead at r50 (17.5 v 13.5) and r100 (25.9 v 20.6, total
+66.9 v 50.0) and still lose 34-66, ending -6.9 longest and -40 total. Its endgame beats ours.
+
+**The real M665147 seeds on maps/server** (seats A / B):
+
+| map | vs v8 | vs arena-search-7 |
+|---|---|---|
+| slithery | W / L | L / L |
+| schooltime | L / L | L / L |
+| autarky | W / W | L / L |
+| dilemma | W / W | W / W |
+| queen_of_spades | L / W | W / W |
+
+**Hot-bed pearls** (judge sandbox via unswbc, server seeds, vs gst131, strategist w's hot.py):
+
+| map | seat | gst-merge-1 | gst131 | result | mass-swarm-8 (same games) |
+|---|---|---|---|---|---|
+| autarky | A | 220 | 6 | won | 8 v 4 |
+| autarky | B | 192 | 4 | won | 4 v 4 |
+| slithery | A | 1184 | 524 | lost on length | 335 v 433 |
+| slithery | B | 789 | 527 | lost on length | 479 v 296 |
+
+- The hot-bed farming works as intended.
+- The sandbox's Slithery seat-A result (a loss) disagrees with sim's (a win, 40-31). Still to
+  check, e.g. whether the unswbc run seeds the bots' RNG.
+
+**CPU** (judge sandbox): p50 4.4M, p99 5.5M, max 6.1M points per turn. `check`: all checks
+passed.
+
+## Schooltime at the server seed (trace, gst-merge-1 vs v8, seat A; mass-swarm-8 is the same)
+- **Even to r80:** 18 v 17 dragons, total 48 v 48.
+- **From r100 we stall and v8 grows:**
+
+  | round | dragons, us v v8 | total, us v v8 |
+  |---|---|---|
+  | 100 | 22 v 25 | |
+  | 140 | 26 v 47 | 59 v 125 |
+  | 220 | 25 v 64 (the cap) | |
+  | 320 | 25 v 64 | 67 v 162 |
+
+  From r320 v8 eliminates us, by r386.
+- **Whole game:**
+  - v8 splits 438 times to our 188, and enters dead ends "worth it" 561 times to our 208.
+  - v8 lunges 36 of our short dragons (134 length) against our 20 (54 length). Our value rule
+    lets our dragons stand beside heads it rates as fair trades; v8 then trades its 2-3-long
+    dragons into our longer ones.
+- **In r80-320 deaths:** trades are even (about 26 lunges each way). v8 loses 211 dragons
+  "giving up a slot" at the cap: it is so far ahead it can throw them away.
+- **Conclusion:** the loss is an economy stall from r100 on this map and seed: fewer splits and
+  fewer dead-end entries. Hot-bed farming doesn't reach it: the result is identical with and
+  without farming.
+- **Next here:** find why our dragons stop splitting from r100. Likely candidates:
+  - the lunge losses of 4-5-long dragons, which are the ones that would split;
+  - Exposed() under the value rule (making it cautious again for short dragons beside longer
+    enemy heads is worth a test).
+
+## Wrapping it with gst-giant-1's rollout judge (gst-merge-2)
+Easy. gst-giant-1's plugin.cpp wraps any gst StrategyAgent: it calls gst's Turn(), and when an
+enemy head is in view and the action is a non-feeding move, it lets rollout.hpp's Judge review
+it. Wrapping this merge needs only:
+- rollout.hpp copied in (namespace renamed);
+- a plugin.cpp that holds gm1::StrategyAgent instead of gstg1::StrategyAgent.
+
+Its feeding exclusion matches on "feed" / "champion" in the reason, which covers our "feed
+champion" and "feed: chop". Our hot-bed reasons need no exclusion. One caution: the judge might
+override a farmer's dead-end step when an enemy head is in view.
+
+## Fix (check)
+The rollout judge's multi-step lunge override is now taken only if every step is free in gst's memory, with an enemy head allowed only at the end. `check` found one wall death on queen_of_spades from an unchecked lunge; the parent checked only the first step.
