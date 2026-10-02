@@ -568,3 +568,9 @@ The judge is byte-identical to 1.2.3 (same rules). It ships the 7 Sprint maps wi
   - the pasture, allies yielding and the sharing lists each recover only a little;
   - the stall starts by r20: the guarded queen, 1 of 4 starting dragons, barely eats or splits in the opening.
   Next fix being tried: make the guard's value count food, keeping risk-first ordering.
+- **Free-step runs pay (team endgame, line gst-search):**
+  - **Root cause found:** gst-search-8's champions died to enemy lunges late, 19 times for 459 length in 80 sim games. The lookahead under-counted partly visible enemies (reach 2-3 instead of 6-7), and gst only ever takes one step.
+  - **gst-search-5:** an escape run of 2..ceil(L/4) free steps for length-10+ dragons, out of every shorter enemy's reach; a partly visible enemy counts as reach 6 or more. 42-36 vs gst-search-8; champion lunge deaths 19 → 14.
+  - **gst-search-6:** adds harvest runs that end on pearls. 44-36 vs gst-search-5 and 47-32 vs gst-search-8; longest at the end 28.9 v 25.3. Both promoted.
+  - **Neutral:** runs for dragons of length 5+, feeder walks using free steps, longer runs.
+  - **Remaining losses:** the queen-3 matchup (46%) and queen-decided games against guarded queens.
