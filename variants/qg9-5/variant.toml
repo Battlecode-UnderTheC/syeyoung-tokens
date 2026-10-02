@@ -1,0 +1,7 @@
+name = "qg9-5"
+parents = ["qg9-2", "qg9-4"]
+operator = "mutate"
+archetype = "gather-split-trade"
+author = "claude-opus-5-5"
+created = "2026-10-02"
+task = "arena-round-9-queen"
