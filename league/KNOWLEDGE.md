@@ -574,3 +574,4 @@ The judge is byte-identical to 1.2.3 (same rules). It ships the 7 Sprint maps wi
   - **gst-search-6:** adds harvest runs that end on pearls. 44-36 vs gst-search-5 and 47-32 vs gst-search-8; longest at the end 28.9 v 25.3. Both promoted.
   - **Neutral:** runs for dragons of length 5+, feeder walks using free steps, longer runs.
   - **Remaining losses:** the queen-3 matchup (46%) and queen-decided games against guarded queens.
+- **queen-guard-4 PROMOTED (team queen, heir consolidation late):** 42-36 vs queen-guard-3; 53-25 vs gst-search-8, 52-26 vs gst-giant-2, 45-32 vs queen-3. Longest at the end 23.1 v 22.3 (was 20.8 v 22.9); queen alive at r300 0.61 v 0.27.
