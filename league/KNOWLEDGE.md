@@ -542,3 +542,6 @@ Also found: gst's body_ tracking assumes one step per turn, so any multi-step mo
   - champion by length (gst-queen-5) 47-53.
 - So the queen-safety rules cost little. v12's real loss was the queen-only champion, which the heir fixes.
 - Arena drafts (parent gst-queen-3-1, queued when the teams were stopped): gst-queen-5-1 (length champion) and queen-1 (local gst-queen-6, the (b) ablation). Giant's drafts were gst-queen-guard-2-1 (32-22 vs gst-queen-2-1 when stopped) and queen-guard-1 (early queen growth). Swarm's explore draft was pending.
+
+## unswbc 1.2.7 (2026-10-02)
+The judge is byte-identical to 1.2.3 (same rules). It ships the 7 Sprint maps with real bed ranges and changed 8 official maps (Colosseum, autarky, default, default_small, dilemma, schooltime, slithery_fight, trophy). The repo's maps/official and maps/tournament-sprint now carry the 1.2.7 files. Local results measured on the old copies of those maps are slightly off. The arena (tokenz) records each game's map sha256 and replays games on changed maps.
