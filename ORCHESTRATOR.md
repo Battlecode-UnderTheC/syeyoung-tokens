@@ -1,79 +1,180 @@
 # Orchestrator instructions
 
-> **Current process (since 2026-10-02): read "The arena and three teams" first.** The
-> sections after it describe the original local league (`league.py`), which is retired. Keep
-> them for the parts that still apply: the Rules, Real matches, disk, and Collect's checks.
+You run the search for a stronger bot for UNSW Battlecode **dragons** (rules: `docs/game.md`).
+Your context starts clean, so this file is the whole job. Read it all, then read the last
+sections of `league/KNOWLEDGE.md` and the latest `league/generations/g*.md`, before acting.
 
-## The arena and three teams (current)
+> **Current method: "The method" below (since round 10, 2026-10-04).** Everything from
+> "Historical: the local league" on describes the retired `league.py` process. It still
+> applies for: Rules, Real matches, disk, and Collect's checks on worker diffs.
 
-**Role.** You coordinate. Strategy comes from the teams, strategist subagents (Opus only) and
-the user. You don't write or analyse strategies yourself. You route, verify, record, and
-handle submissions and tooling.
+## Your role
 
-**The judge is the team arena.** https://tokenz-arena.lonk-kelvin.ts.net (tailnet; code in
-`../tokenz-arena`; client `~/.local/bin/tokenz`; API `/llms.txt`; metrics at
-`/api/v1/submissions/<id>/metrics`).
-- Drafts play their parent and the top 3 on official, server, tournament, custom,
-  weekly-rotating and hidden maps.
-- **Promote when `beats_parent` is true** (the user's rule). Metrics say what to improve
+**You coordinate. You don't write or analyse strategy.**
+- Strategy comes from strategist subagents (Opus only), analysis subagents and the user.
+- You route work, verify every claimed number yourself, record results, keep slots full,
+  and handle submissions and tooling.
+- The user has corrected this many times ("you're not analyzer", "remember you're coordinator").
+- When you catch yourself reading replays or code to decide what a bot should do, hand that
+  work to a subagent instead.
+
+## What the goal is measured by
+
+**The competition server ladder** (game.battlecode.au, team UnderTheC, id 328) is the
+ground truth.
+- Our in-house arena is a filter, not the goal. In round 9 it became our own bots playing
+  each other: queen-guard-7 was #2 on the arena but went 60-0-73 on the server.
+- Check the ladder and our live submission's record at the start of every round:
+  `python3 scripts/server/bcweb.py leaderboard`, `... submissions`.
+
+**Ladder history:**
+
+| Date | Rank | Rating | What was live |
+|---|---|---|---|
+| v9 | #72 | 1767 | — |
+| v10 | — | 1797 | — |
+| 2026-10-04 | #35 | 1832 | the teammate's queen-ring17-first-then-grow-1, 77-0-75 |
+
+## The method (what climbed the ladder)
+
+These things worked (v8 → v10, and arena rounds 1-7):
+
+| What worked | Why |
+|---|---|
+| Real games as the signal | Real opponents are the one thing we can't simulate |
+| Many short tasks with fresh contexts, one change each, judged externally | Workers stay focused and verdicts come fast |
+| Strategists proposing from evidence, workers implementing | Ideas come from findings, not from whoever is writing code |
+| About a third of tasks on other lineages | Keeps the population diverse |
+
+These didn't work:
+
+| What failed | What happened |
+|---|---|
+| Long-running teams (round 9) | Their contexts grew long and they drifted. About 15 drafts gave verdicts within noise (38-40, 41-37), and a line can climb by three promotions that are all within noise. |
+| From-scratch bots, map-keyed tables, RL, tuning to one opponent | All are banned by the user (see Rules) |
+
+### One round (= one generation, `g<N>`, numbered on from g34)
+
+1. **Look.** For each step, check:
+   - **Server:** the ladder, and our live and recent submissions' W-D-L.
+   - **Arena:** `tokenz leaderboard`, and the metrics of the line heads
+     (`/api/v1/submissions/<id>/metrics`).
+   - **Disk:** `df -h .` must show ≥10 GB free. If not, delete finished worktrees' `build/` dirs.
+   - **Strays:** stop any of your own stray sims or agents.
+2. **Real-match analysis** (a subagent, Opus, read-only).
+   - It fetches recent server replays of our submissions with `bcweb.py battles/fetch`,
+     decodes them (`decode.py` under `../syeyoung-tokens.league/replays/*/analysis/`), and
+     writes `replays/<round>/analysis/REPORT.md`.
+   - The report covers loss causes ranked with numbers, by map type, phase and opponent tier;
+     what the strong opponents visibly do; and our dragons' movement inefficiencies.
+   - It never runs `challenge` or submits.
+   - The round-10 brief for this is in the g35 report.
+3. **Strategy.** 2-3 Opus strategist subagents read REPORT.md, KNOWLEDGE.md and the arena
+   metrics. Each independently proposes ranked single changes, each with:
+   - its evidence;
+   - the base bot;
+   - how to tell whether it worked.
+
+   They write their proposals to `../syeyoung-tokens.league/strategy/strategist-<x>-r<N>.md`.
+   You pick about 6 tasks from them: about 2/3 on the strongest lines, about 1/3 on other
+   lineages or fresh additions.
+4. **Plan.** Write `league/generations/g<N>.md` with a Plan table (task, variant, base,
+   change, the evidence it answers) and commit it before launching.
+5. **Launch.** Run all of the round's ~6 workers at once, 2 threads each, Opus.
+   - Setup: `scripts/new-task.sh g<N>-<k> <variant> --from <base>` gives each worker a
+     worktree under `../syeyoung-tokens.worktrees/`. If the base exists only in the arena,
+     the worker gets it with `tokenz get <id>`.
+   - Brief: fill `league/BRIEF-ARENA.md` and write it to
+     `../syeyoung-tokens.league/briefs/<task>.md`. Tell the worker to read it in full.
+   - Background agents, without the Agent tool's own worktree isolation.
+6. **Collect.** When a worker reports:
+   - Check the arena verdict yourself (`tokenz show <id>`).
+   - Check the diff touches only `variants/<name>/`.
+   - Promote only if `beats_parent` is true.
+   - Tag the variant with `scripts/submit.sh <variant>` from a clean worktree, then merge
+     the branch (`scripts/accept.sh`) and remove the worktree.
+   - Launch the next task into the free slot at once. No barriers.
+7. **Measure and record.**
+   - Close g<N>.md with Results, What we learned and Next.
+   - Add confirmed claims to KNOWLEDGE.md, with numbers, and delete disproved ones.
+   - Commit. Push only when the user asks.
+
+### Verdicts: the arena
+
+https://tokenz-arena.lonk-kelvin.ts.net. Tailnet only; code in `../tokenz-arena`; client
+`~/.local/bin/tokenz`; API `/llms.txt`.
+- **Drafts:** a draft plays its parent and the top 3 on official, server, tournament,
+  custom, weekly-rotating and hidden maps.
+- **Submitting:** always `--parent <line head>` and a real note (Hypothesis, Change, Local
+  numbers).
+- **Promotion:** only on `beats_parent` true (the user's rule). Metrics say what to improve
   next, not whether to promote.
-- Promoting retires the line's previous version. One arena bot name per line; a new line
-  name needs your OK.
-- Local `build/tools/sim` (built with `-ffp-contract=off`) is for quick iteration only.
-- Don't restart `league.py` or local round-robins.
+- **Lines:** one arena bot name per line; promoting retires the previous version. A new
+  line name needs your OK.
+- **The parent must be the ranked line head.** A "beats parent" against an unpromoted draft
+  means nothing.
+- **Noise:** 78 games is about ±9 wins. Treat 38-40 or 41-37 as a tie. Ask for more games
+  rather than reading tea leaves.
+- **Local sim:** `build/tools/sim` (needs `-ffp-contract=off`; it is in CMakeLists) matches
+  the judge game for game. Use it for quick iteration only; the sim understates some arena
+  effects, such as the late collapse.
 
-**Three competing teams.** Each team owns one line, comes up with its own strategy and
-fights the others on the leaderboard. Don't let them merge into one line.
-- **Base each team on the queen line or the gst line**, whichever the metrics favour.
-  Build on the ranked bots and add behaviour; never write a bot from scratch.
-- Teams are long-running Opus subagents with their own worktree (`team9-<name>`). Each
-  reports after every draft verdict.
-- **On a report:** check the verdict yourself (`tokenz show` or the leaderboard), record it
-  in `league/KNOWLEDGE.md` (commit), and send the team its next single change.
-- **Replace a team** with a fresh one, built from the current ranked bots, when its context
-  grows too long. Briefs live in `../syeyoung-tokens.league/arena/round-<N>/`.
-- **Agents never go idle.** That includes teams and any discussion partner the user talks to.
-  They keep a sim, an analysis or a draft running.
+### Deployment
 
-**Teams in round 9:**
-
-| Team | Line | Focus |
-|---|---|---|
-| queen | `queen-guard` | a safe queen that keeps the late economy |
-| crossover | `crossover` | gst's economy plus queen-guard's guard |
-| gst | `gst-search` | gst's economy plus its own minimal queen safety |
-
-**User rules, binding on every brief:**
-- one change per draft, with a real note;
-- no env vars (`submit.sh` enforces it);
-- no map-keyed logic (map names, dimensions or lookup tables);
-- no exploits of one opponent (e.g. spoofing v9's sonar);
-- no RL;
-- the queen plays safe: no mazes, corridors or pockets.
-
-**Competition server** (game.battlecode.au).
-- The arena's auto-submit gate deploys the best bot (≥55% over 60+ games, rating CI,
-  holdout games, at most once every 4h). Check `tokenz server gate` before any manual
+- **Before any upload to the competition server:** the candidate must lead the arena and
+  hold up on the server.
+- **Auto-submit:** the arena's gate auto-submits at ≥55% over 60+ games, with rating CI and
+  holdout games, at most once every 4h. Check `tokenz server gate` before any manual
   submission so the two don't fight.
-- Manual submissions use `scripts/submit.sh` (the user allowed it), tagged from a clean
-  worktree off main.
-- Don't play server games against v9. Server replays: `scripts/server/bcweb.py`.
-- Credentials: never print `~/.unswbc/keys.json` or `~/.unswbc-web/credentials`.
+- **Manual:** `scripts/submit.sh` (the user allowed it), tagged from a clean worktree off
+  main. The user has standing authority for the best bot every 4h.
+- **Teammates share the server slot.** The live bot may be a teammate's. Don't replace a
+  teammate's live bot unless ours is clearly better on the server.
+- **Server games:** ranked games use 5 random maps; unranked games choose up to 10 maps.
+  The quota is 60/hour, shared with teammates. Never play v9.
 
-**Records.** `league/KNOWLEDGE.md` gets every verdict and finding. Each arena round gets a
-generation report `league/generations/g<N>.md` (Plan, Results, Learned, Next), numbered on
-from g25.
+### Pitfalls already paid for (don't repeat)
 
+| Pitfall | What to do |
+|---|---|
+| Arena flooding | Bulk parent links (186) and many drafts at once flood the arena queue. Keep drafts prioritised. |
+| Old notes vs current verdicts | Arena verdicts can change when maps change (1.2.7). Quote current `tokenz` numbers. |
+| Names reused across eras | The arena's gst-search-5..12 are not the round-7 local variants with the same names. |
+| Submitting from a multi-variant branch | `submit.sh` refuses to tag from a branch holding several variants. Tag from a clean worktree off main. |
+| Idle discussion agents | Discussion agents the user talks to must never go idle: keep a background job running. |
+| Strategist models | Strategists run on Opus only; the ocx routes failed with 404s or weekly limits. |
 
-You are the orchestrator of an evolutionary search over strategies for the unswbc
-**dragons** game. You don't write strategies yourself. You run generations: read the
-league's standings, decide what to breed, brief worker subagents who each write one new
-variant, merge their work, wait for the league to rate it, record what was learned, and
-repeat. Your context starts clean, so this file is the whole job. Read it all before acting.
+## Round 9 teams (ended 2026-10-04)
 
-Your job is to raise the **holdout champion's** strength, the best variant as measured on
-maps no agent sees, and to leave behind a record (generation reports, `KNOWLEDGE.md`)
-that a later session can pick up from.
+Three long-running Opus teams each owned a line. Their final state:
+
+| Line | Head | Notes |
+|---|---|---|
+| `queen-guard` | queen-guard-7 | Was live; its four play-safe drafts tied it |
+| `crossover` | crossover-1 | #1 on the arena |
+| `gst-search` | gst-search-12 | |
+
+Their branches `team9/*` are pushed; their findings are in KNOWLEDGE.md and g34.md.
+
+## Rules (from the user; binding on every brief)
+
+- Build on the ranked bots (the gst line and its additions) and add behaviour. No
+  from-scratch bots, no RL.
+- No env-var reads (`submit.sh` enforces it).
+- No map-keyed logic: no map names, exact sizes or lookup tables. Adapt only to what dragons
+  observe.
+- No exploits of one opponent's quirks, and no overfitting to v9.
+- The queen plays safe: no mazes, corridors or pockets.
+- One change per draft, with a real note.
+- Never look in `../syeyoung-tokens.league/maps/holdout/`.
+- Never print `~/.unswbc/keys.json` or `~/.unswbc-web/credentials`.
+- Don't change the ABI headers (`shared/bot/agent.hpp`, `plugin.hpp`,
+  `shared/protocol/observation.hpp`, `shared/engine/dragons/core.hpp`).
+- Push only when the user asks.
+
+---
+
+# Historical: the local league (retired 2026-10-02)
 
 ## The setup (all on this Mac: M1 Pro, 10 cores, 32 GB, disk nearly full)
 
