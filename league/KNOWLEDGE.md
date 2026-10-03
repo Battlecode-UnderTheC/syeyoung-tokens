@@ -629,3 +629,22 @@ The judge is byte-identical to 1.2.3 (same rules). It ships the 7 Sprint maps wi
   - an obituary at any length (no effect).
 - **ring-plus-3 (last-stand queen) beat queen-ring17 41-36 but wasn't promoted:** its code lacks the line head's changes. It is now being stacked onto ring-plus-4.
 - **The late resigns the analysis flagged are mostly trapped 2-3-long stubs,** not feeders that never arrive. Top teams lose the same stubs to kelp and their own bodies.
+
+### The arena overrated ring-plus-4; forage is real, hunger exploration is not (g37, 2026-10-04)
+- **Server, 86 games:** ring-plus-4 went 45-41. That is at Elo expectation, the same as queen-ring17 (143-123, also at expectation). The arena had it 60-23 vs ring17.
+- **Why the arena overrated it:**
+  - its server suite has only 2 fixed seeds per map (34 boards), and g35-g36 picked variants on them. On that suite rp4 beat ring17-1 50-18; on official+rotating it went 26-24, matching the server;
+  - all opponents are our own bots;
+  - real teams grow long dragons earlier (6.8 v 5.1 at r200), so arena elimination and longest-dragon games (55%) become 39% on the server.
+- **Forage (ring-plus-1) is real on 2-starter maps.** Against 1700-2049 teams, ring17 → rp4:
+  - pearl share before r60: 0.34 → 0.56;
+  - eliminated before r200: 17/58 → 2/29;
+  - win rate: 48% → 59%.
+  
+  Its cost is the queen's safety: she is near enemy heads 27% of turns, and in 7 trapped resigns in 86 games she walked a corridor into a dead end (Stripes).
+- **Hunger exploration (ring-plus-4) hurts on 3+-starter maps:**
+  - pearl share before r60: 0.55 → 0.47;
+  - dragon share at r100: 0.55 → 0.49;
+  - win rate: 71% → 54%.
+- **The longest-dragon tiebreak is weak:** rp4 is 6-13 on games decided by longest dragon, and our longest is 4.8 v 8.9 at r300. Schooltime is 0-5, where both queens stay sealed at length 3.
+- **How to test from now on:** fresh seeds, the official and rotating suites, and stats split by 2 v 3+ starters. Details: `../syeyoung-tokens.league/replays/server-r11/analysis/REPORT.md`.

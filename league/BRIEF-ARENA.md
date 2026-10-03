@@ -38,9 +38,10 @@ Rules: `docs/game.md`, unswbc 1.2.7.
 3. Build and check:
    `cmake -S . -B build && cmake --build build -j 2 --target {variant} sim check`;
    `build/tools/check {variant} maps/official` must pass.
-4. Quick local test against the base, both seats, 2 threads:
-   `build/tools/sim --a {variant} --b <base> --maps maps/server --seed 1,2,3,4 --threads 2`
-   (also `maps/official` and `maps/tournament-sprint`). Put the numbers in `NOTES.md`.
+4. Quick local test against the base, both seats, 2 threads, on FRESH seeds (not 1-4, which earlier
+   rounds selected on): `build/tools/sim --a {variant} --b <base> --maps maps/server --seed 21,22,23,24,25,26 --threads 2`
+   (also `maps/official`). Split results by 2-starter and 3+-starter maps, and report pearl share
+   before r60 and dragons at r100 next to W-L. Put the numbers in `NOTES.md`.
    - A clear local loss means stop and report; don't submit.
    - Local numbers are hints. The arena decides.
 5. Make the bot and submit it:
@@ -58,6 +59,7 @@ Rules: `docs/game.md`, unswbc 1.2.7.
 - the arena id (or "ready, submit blocked" with the bot dir and note);
 - the verdict vs the parent (W-D-L), and how games were decided;
 - the results vs the other bots, and the metric deltas;
+- the arena verdict SPLIT BY SUITE (`tokenz games`): server (fixed seeds) vs official and rotating;
 - the local numbers;
 - what you'd try next.
 

@@ -145,6 +145,8 @@ https://tokenz-arena.lonk-kelvin.ts.net. Tailnet only; code in `../tokenz-arena`
 | Names reused across eras | The arena's gst-search-5..12 are not the round-7 local variants with the same names. |
 | Submitting from a multi-variant branch | `submit.sh` refuses to tag from a branch holding several variants. Tag from a clean worktree off main. |
 | Idle discussion agents | Discussion agents the user talks to must never go idle: keep a background job running. |
+| The arena's server suite has 2 fixed seeds per map | ring-plus-4 beat ring17 50-18 there but 26-24 on official+rotating, which matches the server (g37). Read verdicts split by suite. A gain only on the server suite is probably fitted to those 34 boards. |
+| Our arena pool is only our own bots | It rewards beating our family's habits (e.g. the parked-queen opening). Check candidates against the real server. |
 | Strategist models | Strategists run on Opus only; the ocx routes failed with 404s or weekly limits. |
 
 ## Round 9 teams (ended 2026-10-04)
