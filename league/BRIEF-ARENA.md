@@ -77,3 +77,4 @@ A turn over the judge's 100M CPU-point cap kills that dragon. Keep the worst tur
 - **Never** start server games or upload to the competition server.
 - **Never** look in `../syeyoung-tokens.league/maps/holdout/`.
 - **Use at most 2 threads;** the machine is shared.
+- **Never kill processes by pattern** (`pkill -f`, `killall`): other workers' sims run on the same machine. Kill only PIDs you started.
