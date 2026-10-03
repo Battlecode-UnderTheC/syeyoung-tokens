@@ -54,6 +54,9 @@ Rules: `docs/game.md`, unswbc 1.2.7.
 7. Commit `variants/{variant}/`: the code, `variant.toml` and `NOTES.md` (idea, change,
    local numbers, arena verdict).
 
+## CPU
+A turn over the judge's 100M CPU-point cap kills that dragon. Keep the worst turn under 80M: check `tokenz report <your id>` (the `cpu:` line, max) after the verdict, and don't add per-turn work without a cap.
+
 ## Report back (at most 12 lines)
 
 - the arena id (or "ready, submit blocked" with the bot dir and note);
@@ -61,6 +64,7 @@ Rules: `docs/game.md`, unswbc 1.2.7.
 - the results vs the other bots, and the metric deltas;
 - the arena verdict SPLIT BY SUITE (`tokenz games`): server (fixed seeds) vs official and rotating;
 - the local numbers;
+- the CPU line from `tokenz report <id>` (p99 and max);
 - what you'd try next.
 
 ## Rules (non-negotiable)

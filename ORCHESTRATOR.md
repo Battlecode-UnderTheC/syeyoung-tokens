@@ -147,6 +147,7 @@ https://tokenz-arena.lonk-kelvin.ts.net. Tailnet only; code in `../tokenz-arena`
 | Idle discussion agents | Discussion agents the user talks to must never go idle: keep a background job running. |
 | The arena's server suite has 2 fixed seeds per map | ring-plus-4 beat ring17 50-18 there but 26-24 on official+rotating, which matches the server (g37). Read verdicts split by suite. A gain only on the server suite is probably fitted to those 34 boards. |
 | Our arena pool is only our own bots | It rewards beating our family's habits (e.g. the parked-queen opening). Check candidates against the real server. |
+| CPU near the cap | A turn over 100M CPU points kills that dragon. ring-plus-4 (live) peaked at 98.3M and queen-guard-15 at 99.8M; 2 dragons died this way. Before promoting or deploying, check the `cpu:` max in `tokenz report <id>` is under 80M (user, 2026-10-04). |
 | Strategist models | Strategists run on Opus only; the ocx routes failed with 404s or weekly limits. |
 
 ## Round 9 teams (ended 2026-10-04)
