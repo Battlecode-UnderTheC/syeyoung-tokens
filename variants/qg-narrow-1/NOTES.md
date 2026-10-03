@@ -28,5 +28,11 @@ fires, but "trapped: no move L2-3" fatal turns did not fall (server 134 vs 123).
 are unchanged: most short-queen traps are not entered via a 1-wide tile the guard could refuse
 (pockets wider than 1, or traps closed by other bodies later). Neutral locally.
 
-## Arena
-(pending)
+## Arena (queen-guard-15, parent queen-guard-7)
+- vs parent: 40-0-38 (51.3%, CI 40.4-62.1), "BEATS parent (within noise)"; server maps only 34-34.
+  Decided by: longer queen 15-14, elimination 11-14, longest dragon 13-10, total 1-0.
+- vs ring-plus-4 23-55, queen-ring17-first-then-grow-5 24-54, queen-ring14-portal-safe-1 24-53
+  (the ring line is far ahead; same picture as the parent's).
+- Economy r50 12.5 v 13.0, r100 22.4 v 22.7. Worst maps autarky 1-15, portals/maze 2-14.
+- Verdict: noise. The 1-wide filter fires but doesn't change how the queen dies; the L2 traps
+  come from pockets/rooms closing around her, not from stepping onto 1-wide tiles.
