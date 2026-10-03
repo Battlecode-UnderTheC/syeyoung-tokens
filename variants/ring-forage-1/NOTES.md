@@ -26,5 +26,13 @@ Queens that start 4 long (maze/trauma/weakhold) or teams with 3+ starters are un
   queen_of_spades 8-0.
 - check maps/official: all passed.
 
-## Arena verdict
-(see below)
+## Arena verdict (ring-plus-1)
+- vs parent queen-ring17-first-then-grow-1: 40-0-38 (51.3%, CI 40-62), beats_parent=True but
+  within noise; server maps 35-33. Decided by longer queen 19-19, elimination 16-14, longest 5-5.
+- vs queen-ring14-portal-safe-1 41-37, queen-guard-7 53-25, codex-queen-value-1 46-32.
+- Head-to-head vs parent on the gated maps: stripes 3-1, queen_of_spades 3-1, trophy 2-2,
+  tower_defense 1-3, default_small 1-1, arena 1-1; ungated maze 2-2, trauma 2-2, weakhold 2-2.
+- All opponents, per map (parent's own all-time record in brackets): stripes 7-9 (36.5%),
+  queen_of_spades 11-5 (50.9%), trophy 8-8 (51.9%), tower_defense 6-10 (62.5%),
+  default_small 2-6 (68.5%), maze 10-6 (72.1%). Small samples; no clear opening gain.
+- Metrics: dragons at r100 22.6 v 22.5 (whole pool); queen alive at end 0.64 v 0.44.
