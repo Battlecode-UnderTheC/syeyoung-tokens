@@ -1,8 +1,21 @@
 # Server maps
 
-Rebuilt from the map text inside real server replays (battle M665147, 2026-09-30) by strategist w. They carry the server's dragon placement: e.g. Prisoners Dilemma has 10 dragons here against 6 in `maps/official/dilemma.map`, and on 4 of 5 maps the server's team 0 is the local file's team 1. Bed ranges follow the local files.
+These are the 17 maps the competition server plays, as bundled with **unswbc 1.2.9**:
+`unswbc maps <dir>` writes all 22 bundled maps. They replace the copies rebuilt from Sep 30
+replays, which went stale when 1.2.7 changed 8 maps.
 
-Use them with several seeds and both seats. Report economy numbers (hot-bed and corridor pearls, dragon count at r50/r100, total length) next to W-D-L: a local win on longest dragon alone has hidden server losses. The real server seed of each game is in its replay (`decode.load(p)['seed']`).
+**Checked against 292 server replays from 2026-10-03:**
+- The walls (EDGE lines) are identical on 16 of the 17 maps. Schooltime differs by 8 edges,
+  probably a change after Oct 3.
+- The dragon lines differ on some maps only by which team holds which seat, so run both seats.
 
-## Added 2026-09-30 (territory team)
-default, devil, portals, trauma and trophy come from battle M588431's replays (M588432/33/34/39/40): the local official file with its DRAGON_COUNT and DRAGON lines replaced by the replay's. Across all 72 server replays, TILE and EDGE text never changes between battles. Only the dragon placement varies, and on most maps only by the two teams swapping seats (sim's both-seats covers that). Prisoners Dilemma is the exception: 6 dragons in early battles, and 10 (4 extra length-2 dragons) since M561834. Replays show bed ranges as "0 0", so ranges come from the local files. The server has never played Colosseum, arena, big_empty, default_small or stronghold in our battles; for those, use maps/official.
+**Relation to the other map sets:**
+- These files are byte-identical to the same names in `maps/official` (1.2.7 = 1.2.9) and
+  `maps/tournament-sprint`, where `around_unsw.map` = `unsw.map`. This folder just selects
+  the maps the server plays.
+- Not played on the server in our battles: Colosseum, arena, big_empty, default_small,
+  stronghold. Those are in `maps/official`.
+
+**To refresh after a toolkit update:** `uv tool install unswbc==<ver> --force`, then
+`unswbc maps <tmpdir>`, and copy the server-played maps here. Spot-check them against a
+recent replay's map text with `decode.load(p)['map']`.
