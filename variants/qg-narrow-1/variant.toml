@@ -1,0 +1,7 @@
+name = "qg-narrow-1"
+parents = ["qg-board-1"]
+operator = "mutate"
+archetype = "gst-queen-guard"
+author = "claude-opus-5-5"
+created = "2026-10-04"
+task = "g36-8"
