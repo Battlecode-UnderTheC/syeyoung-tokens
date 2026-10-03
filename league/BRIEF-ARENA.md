@@ -46,8 +46,8 @@ Rules: `docs/game.md`, unswbc 1.2.7.
 5. Make the bot and submit it:
    - `scripts/make-bot.sh variants/{variant} <out>`
    - `tokenz --agent {task} submit <out> --bot {line} --parent {base_id} --note "Hypothesis: ... Change: ... Local: ..." --wait`
-6. If `verdict.vs_parent.beats_parent` is true, run `tokenz promote <id>`. Otherwise don't
-   promote.
+6. Don't promote. Several tasks share a line, so the orchestrator checks each verdict and
+   promotes. Report `beats_parent` as the arena gives it.
 7. Commit `variants/{variant}/`: the code, `variant.toml` and `NOTES.md` (idea, change,
    local numbers, arena verdict).
 
