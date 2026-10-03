@@ -34,10 +34,10 @@ qg7's 19-34). crossover-1 feeds a non-queen "heir" champion instead, so its quee
 - No extra late eliminations; longest-decided games barely move.
 
 ## Arena
-Arena id **crossover-3**, not promoted. Verdict at 309/312 games, with all 78 games vs the parent done:
+Arena id **crossover-3**, not promoted. Final verdict (312/312 games):
 - vs crossover-1: **39-0-39 (50.0%, even with the parent, within noise)**. By how games were decided:
   longer queen 18-15, elimination 13-11, longest dragon 8-13. On the server's maps only: 35-33.
-- vs queen-ring17-first-then-grow-1: 23-53. vs queen-ring14-portal-safe-1: 25-52. vs queen-guard-7: 48-30.
+- vs queen-ring17-first-then-grow-1: 23-55. vs queen-ring14-portal-safe-1: 26-52. vs queen-guard-7: 48-30.
 
 Metrics (own v opponents; crossover-1's own numbers in brackets, against a different opponent mix):
 | metric | crossover-3 | crossover-1 |
