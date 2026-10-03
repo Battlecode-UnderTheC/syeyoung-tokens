@@ -612,3 +612,20 @@ The judge is byte-identical to 1.2.3 (same rules). It ships the 7 Sprint maps wi
 - **gst-search-12** (flee off): 41-0-37 vs gst-search-11, promoted. It places at 1496±44, #4.
 - **Gap that remains** vs the top: mid-game economy (about 2.5 dragons and 5 length behind at r200-400), and the queen dies on sprint maps 79-82% of the time vs queen-guard-7's 45-61%.
 - Stopping the queen's growth splits from r300 changed nothing: she rarely splits that late anyway.
+
+### Round 10-11 (g35-g36): the ring line, and hungry workers exploring (2026-10-04)
+- **The server, not our arena, is ground truth.** In 292 server games queen-guard-7 went 61-79 although it was #2 on the arena. The losses are analysed in `../syeyoung-tokens.league/replays/server-r10/analysis/REPORT.md`.
+- **The teammate's queen-ring17 parks its queen in a 6-cell ring and grows her late.** That made it 54-19 on queen-decided server games. We imported it as `variants/queen-ring17` and built a `ring-plus` line on it.
+- **ring-plus-1 (ring-forage-1):** a short queen with 2 or fewer starters forages and splits before parking. 40-38 vs queen-ring17, promoted.
+- **ring-plus-4 (ring-explore-1):**
+  - The change: before r150 a worker's explore score is multiplied by 1+min(1, rounds since it ate/20).
+  - Arena: 52-26 vs ring-plus-1 (outside noise), 60-23 vs queen-ring17, 71-22 vs queen-guard-7. Most of the gain came from longer-queen wins (34-9). Locally it was only 134-122.
+  - It is #1 on the arena and was auto-deployed to the server (version 16128).
+- **Our queens' resigns are not optional.** In sim, every queen resign on the queen-guard line that wasn't already doomed had no legal non-fatal action left, usually because our own allies boxed her in. A last-moment veto (queen-guard-13) and keeping allies out of the corridor ahead of her (queen-guard-14) both lost within noise.
+- **Late queen growth on the crossover line didn't help.** crossover-3 tied its parent and crossover-4 lost within noise. Against the ring bots the gap is queen survival between r100 and r400, not her length.
+- **Didn't work on ring17:**
+  - remembered enemy heads (ring-plus-2: 35-43);
+  - a faster heir switch (lost 108-148 locally);
+  - an obituary at any length (no effect).
+- **ring-plus-3 (last-stand queen) beat queen-ring17 41-36 but wasn't promoted:** its code lacks the line head's changes. It is now being stacked onto ring-plus-4.
+- **The late resigns the analysis flagged are mostly trapped 2-3-long stubs,** not feeders that never arrive. Top teams lose the same stubs to kelp and their own bodies.
