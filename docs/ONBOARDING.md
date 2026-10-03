@@ -4,7 +4,7 @@ For teammates, Codex, and any LLM agent joining the work. Read this first; it is
 
 ## The game in one paragraph
 
-UNSW Battlecode "dragons" (toolkit **unswbc 1.2.7**; full rules in [`docs/game.md`](game.md)). Two teams of
+UNSW Battlecode "dragons" (toolkit **unswbc 1.2.9**; full rules in [`docs/game.md`](game.md)). Two teams of
 snake-like dragons play 500 rounds. Dragons eat pearls to grow, split to make more dragons (max 64 per team), and
 die by moving into walls (kelp), bodies, or head-to-head trades. Your **queen** is your dragon with id 0 or 1. At
 round 500 the winner is the team with the **longer queen** (a dead queen counts as 0), then the longest dragon, then
