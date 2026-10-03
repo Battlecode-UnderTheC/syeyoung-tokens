@@ -43,21 +43,18 @@ Rules: `docs/game.md`, unswbc 1.2.7.
    (also `maps/official` and `maps/tournament-sprint`). Put the numbers in `NOTES.md`.
    - A clear local loss means stop and report; don't submit.
    - Local numbers are hints. The arena decides.
-5. Make the bot and submit it:
-   - `scripts/make-bot.sh variants/{variant} <out>`
-   - `tokenz --agent {task} submit <out> --bot {line} --parent {base_id} --note "Hypothesis: ... Change: ... Local: ..." --wait`
-6. Don't promote. Several tasks share a line, so the orchestrator checks each verdict and
-   promotes. Report `beats_parent` as the arena gives it.
+5. Make the bot: `scripts/make-bot.sh variants/{variant} <out>`. **Don't submit it.** The
+   orchestrator submits every draft (the user's rule). Write the draft note into `NOTES.md`
+   under "Arena note": Hypothesis, Change, Local numbers.
+6. Don't promote either. Report "ready" with the bot dir and the note; the orchestrator
+   submits, checks the verdict and promotes.
 7. Commit `variants/{variant}/`: the code, `variant.toml` and `NOTES.md` (idea, change,
    local numbers, arena verdict).
 
 ## Report back (at most 12 lines)
 
-- the arena id;
-- the verdict vs the parent (W-D-L), and how games were decided;
-- the results vs the other bots;
-- the metric deltas (`curl -fsSL https://tokenz-arena.lonk-kelvin.ts.net/api/v1/submissions/<id>/metrics`);
-- promoted or not;
+- ready or not (a clear local loss means not ready), the bot dir, and the arena note;
+- the local numbers, and how games were decided;
 - what you'd try next.
 
 ## Rules (non-negotiable)

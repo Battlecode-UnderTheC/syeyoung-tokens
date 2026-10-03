@@ -87,7 +87,10 @@ These didn't work:
    - Brief: fill `league/BRIEF-ARENA.md` and write it to
      `../syeyoung-tokens.league/briefs/<task>.md`. Tell the worker to read it in full.
    - Background agents, without the Agent tool's own worktree isolation.
-6. **Collect.** When a worker reports:
+6. **Collect.** Workers don't submit (user, 2026-10-04: "submit drafts yourself"). When a
+   worker reports a draft ready, submit it: `tokenz --agent <task> submit <bot dir> --bot <line>
+   --parent <the bot its code was built on> --note "..."`. The parent must be the code parent,
+   or the verdict mixes two changes. Then:
    - Check the arena verdict yourself (`tokenz show <id>`).
    - Check the diff touches only `variants/<name>/`.
    - Promote only if `beats_parent` is true.
