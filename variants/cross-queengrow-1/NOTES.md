@@ -34,3 +34,21 @@ qg7's 19-34). crossover-1 feeds a non-queen "heir" champion instead, so its quee
 - No extra late eliminations; longest-decided games barely move.
 
 ## Arena
+Arena id **crossover-3**, not promoted. Verdict at 309/312 games, with all 78 games vs the parent done:
+- vs crossover-1: **39-0-39 (50.0%, even with the parent, within noise)**. By how games were decided:
+  longer queen 18-15, elimination 13-11, longest dragon 8-13. On the server's maps only: 35-33.
+- vs queen-ring17-first-then-grow-1: 23-53. vs queen-ring14-portal-safe-1: 25-52. vs queen-guard-7: 48-30.
+
+Metrics (own v opponents; crossover-1's own numbers in brackets, against a different opponent mix):
+| metric | crossover-3 | crossover-1 |
+|---|---|---|
+| queen length at the end | 3.4 v 6.8 | 1.1 v 9.7 |
+| queen alive at the end | 0.33 v 0.55 | 0.28 v 0.56 |
+| longest at the end | 24.8 v 23.6 | 29.8 v 24.2 |
+| longest at r400 | 14.7 v 15.5 | 18.0 v 15.7 |
+
+Reading: the queen grows when she survives, and queen-decided games tip our way. But giving up the heir
+costs about the same in longest-dragon games (8-13). Against the ring bots, queen survival is still the
+gap (0.33 v 0.55 alive at the end); her length is not.
+Next: keep heir feeding for dragons far from the queen (feed only within reach of her, after r450),
+or work on queen survival r100-r400 first.
