@@ -1,0 +1,7 @@
+name = "ring-forage-1"
+parents = ["queen-ring17"]
+operator = "mutate"
+archetype = "queen-ring"
+author = "claude-opus-5-5"
+created = "2026-10-04"
+task = "g35-1"
