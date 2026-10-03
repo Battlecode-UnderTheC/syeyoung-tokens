@@ -34,3 +34,11 @@ More dragons and pearls early on maps where workers are stuck at home.
   Sprint dragons at r100 29.6 v 24.4; server/official -0.5 dragons at r100.
 
 ## Arena verdict
+Arena id ring-plus-4 (draft, parent ring-plus-1), not promoted (orchestrator decides).
+- vs parent ring-plus-1: 57-0-26 (68.7%, CI 58.1-77.6) -> BEATS parent, outside noise;
+  server maps only 53-20 (72.6%). Decided by longer queen 34-9, elimination 13-17,
+  longest dragon 10-0.
+- vs queen-ring17-first-then-grow-1 60-23, queen-ring14-portal-safe-1 62-21,
+  queen-guard-7 71-22.
+- The arena gain is far larger than the local tie (server 40-40); the gain is in
+  queen-decided games, so check arena metrics (queen alive/length, board control r100).
