@@ -1,0 +1,7 @@
+name = "queen-ring17"
+parents = []
+operator = "import"
+archetype = "queen-ring"
+author = "bu-gye-jeong (teammate); imported by the orchestrator"
+created = "2026-10-04"
+task = "g35-import"
