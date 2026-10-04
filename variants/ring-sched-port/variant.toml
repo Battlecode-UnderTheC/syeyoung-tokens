@@ -1,0 +1,7 @@
+name = "ring-sched-port"
+parents = ["ring-sched-1", "ring-capgrow-1", "ring-qlunge-2"]
+operator = "port"
+archetype = "queen-ring"
+author = "orchestrator (mechanical patch of ring-plus-19 and ring-plus-21 diffs)"
+created = "2026-10-05"
+task = "g39-port"
