@@ -1,0 +1,7 @@
+name = "ring-sched-fg"
+parents = ["ring-sched-m1", "ring-clean-1"]
+operator = "mutate"
+archetype = "queen-ring"
+author = "claude-opus-5-5 (g39-audit control build), committed by the orchestrator"
+created = "2026-10-05"
+task = "g39-audit"
