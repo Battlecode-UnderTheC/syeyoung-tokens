@@ -43,6 +43,13 @@ static constexpr int kFeedMaxLen = 8, kNoBurnFrom = 250, kParallelGrowLen = 16, 
 // for 30 rounds stopped relaying her and stopped reserving her pearls). A dead queen is reported
 // dead (length 0) by the dragons that saw her die.
 static constexpr int32_t kLateConcFrom = 430, kQueenAliveFresh = 80;
+// Iteration 2, ported from gst-giant-2 (ends games with one dragon of 37-90; its giant grows by
+// its own dragons dying next to its HEAD from r380): in late concentration a feeder of ANY length
+// (still held while it is 80% or more of the champion) resigns within kLateFeedDistance path steps
+// of the champion's head, gst-giant-2's feed_distance. Iteration 1 let feeders die beside any
+// segment: total fell 19% in queen-dead games and the longest gained 0.2, because the champion
+// rarely came back along its body for the pearls.
+static constexpr int32_t kLateFeedDistance = 3;
 #ifdef GM2_DEBUG
 static long g_escape = 0, g_turnout = 0, g_calls = 0;
 #define GM2_COUNT(x) ++(x)
@@ -1773,7 +1780,7 @@ bot::Action StrategyAgent::Decide(const rl::Observation& o) {
   const bool queen_target = champ.id >= 0 && champ.id <= 1;
   const bool feeding = champ.id >= 0 && champ.id != spawn_.id &&
                        (!queen_target) &&
-                       (queen_target || champ.length >= length_) && length_ >= kFeedMin && length_ < kFeedMaxLen &&
+                       (queen_target || champ.length >= length_) && length_ >= kFeedMin && (length_ < kFeedMaxLen || late_conc_) &&
                        (leader_ ? round_ >= p_.leader_feed_from && round_ - champ.round <= p_.leader_feed_fresh
                                 : round_ >= FeedStart(champ));
   int32_t ally_head = -1;
@@ -1820,8 +1827,8 @@ bot::Action StrategyAgent::Decide(const rl::Observation& o) {
   // that keeps moving is much easier to meet along its body; it comes back for the pearls, which
   // the reserved ground keeps for it)
   bool at_body = false;
-  // g40-3: in late concentration a feeder resigns beside any segment of the champion it sees, even
-  // when the champion's head is out of view (the hold test then uses the champion's reported length)
+  // g40-3: a feeder in late concentration (not held: shorter than 80% of the champion, by its
+  // length known this turn, or else by its reported length)
   const bool late_feed = late_conc_ && feeding && !held &&
                          (in_view || length_ * 10 < champ.length * p_.feed_clear_tenths);
   // g40-3: the champion's reported tile is often walled off in memory (its own and others'
@@ -1837,7 +1844,7 @@ bot::Action StrategyAgent::Decide(const rl::Observation& o) {
       }
     if (best >= 0) ally_head = best;
   }
-  if ((in_view || late_feed) && kBodyReach > 0) {
+  if (in_view && kBodyReach > 0) {
     const int32_t hx = board_.X(head_), hy = board_.Y(head_);
     for (int dy = -kBodyReach; dy <= kBodyReach && !at_body; ++dy)
       for (int dx = -kBodyReach + std::abs(dy); dx <= kBodyReach - std::abs(dy) && !at_body; ++dx) {
@@ -1847,7 +1854,8 @@ bot::Action StrategyAgent::Decide(const rl::Observation& o) {
   }
   if (queen_target ? (false && in_view && FeedAhead(champ)) :
       ((in_view && paths.dist[ally_head] == 1) ||   // g39-5: directly next to its head only ...
-       (late_feed && at_body)))                     // g40-3: ... until late concentration: any segment within kBodyReach
+       // g40-3 (from gst-giant-2): ... until late concentration: within kLateFeedDistance steps of its head
+       (late_feed && in_view && paths.dist[ally_head] > 0 && paths.dist[ally_head] <= kLateFeedDistance)))
   {
     // ms5 "chop feed": a death leaves a pearl on every second segment (head first), so a body of
     // length L feeds ceil(L/2). Cut a long feeder into 3-long pieces first (each dies for 2
