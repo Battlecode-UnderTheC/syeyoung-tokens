@@ -1,0 +1,7 @@
+name = "ring-sched-m2"
+parents = ["ring-sched-m1", "ring-rush-1"]
+operator = "merge"
+archetype = "queen-ring"
+author = "claude-opus-5-5"
+created = "2026-10-05"
+task = "g39-merge2"
