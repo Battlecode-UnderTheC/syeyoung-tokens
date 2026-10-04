@@ -677,3 +677,13 @@ Source: 2,382 arena eval games and 214 replays. Details: `../syeyoung-tokens.lea
 - **Short mid-game dragons:** at r300 we have 0.7 dragons of length 6+ (top teams 3.4), our longest is 5.1 v 12.7, and we sprint on about 0% of moves (they sprint on 4-9%).
 - **The best teams (Vibing++, Sponge) grow the queen inside their own swarm:** 14-15 long at r300, the longest dragon 56% of the time, with no worse survival. They win 94% / 78% when she is 8+ at r200. queen_length AUC .76 at r400.
 - **They trade heads about 50% more,** mostly while ahead in count. They win 73% of elimination games, we win 52%.
+
+### Where we lose on the server, by turning point (server-r13, 2026-10-05)
+Source: 156 losses of rp9/rp16 with arena eval P(win) curves. Details: `../syeyoung-tokens.league/replays/server-r13/analysis/REPORT.md`.
+1. **The middle race (44 losses).** The opponent holds the central bed cluster by about r16 and we arrive at r26-31. Arriving first we go 28-16, otherwise 16-36.
+2. **The 2-starter starve against fast swarms (40 losses).**
+3. **The cap treadmill plus the r360 mass resign (44 of 91 cap games lost).** We burn a third of our material at once.
+4. **The late queen race (24 losses).** Our queen grows only from r430.
+5. **The longest tiebreak (22 losses; Schooltime 1-16).**
+
+**Queen head-on deaths are a SYMPTOM.** P(win) was already below 0.35 before her death in 69 of 75 such losses, so more queen safety is worth at most about 5 games.
