@@ -703,3 +703,14 @@ Source: shared/engine/dragons/game.cpp (Reset, DrawGap, SetCountdown, BeginRound
 - **Mirror beds share one countdown** (pearl_base is set on both tiles).
 - **What a bot can use:** an observed countdown gives the exact next spawn round for that bed and its mirror. The gap after that is a fresh random draw in the hidden [min, max].
 - **Gating the late queen's sprints trades length for survival (g40-1, four iterations, 2026-10-05).** Her late growth runs on multi-step sprints to pearls. Every gate tried left survival flat or slightly up, cut her end length (about 6 v 7.6), and lost longer-queen games. Don't retry sprint gating.
+
+### ring-sched-8 on the server (server-r15, 2026-10-05)
+Details: `../syeyoung-tokens.league/replays/server-r15/analysis/REPORT.md`.
+- **Performance:** 2091 (rp9 1966), against a mean opponent of 2061. Against common opponents: 58% v 48%. A real gain of about +70-100 Elo.
+- **The centre rush gained on centre maps:** 24-23 v 32-49.
+- **The weak spots:** 60 of 83 losses are on maps without a rich middle; 3+-starter maps go 38-59; boards of 1500+ tiles go 15-32.
+- **Loss clusters:** early collapse 41 (middle race 20, non-centre 21), longest tiebreak 20 (17 led after r100), queen race 11, queen first 8.
+- **Not supported by the data:**
+  - sonar stub sightings: late killers are already visible (51 of 58);
+  - a late portal escape: trapped queens are in 1-exit pockets.
+- **Real queen loss while ahead:** 6 trap deaths, P .77-.97, often after a chain of split-2s.
