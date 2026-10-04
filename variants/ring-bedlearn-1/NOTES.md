@@ -42,3 +42,15 @@ round now + k - 1, so `dist` steps get the new pearl only when dist >= due + 1 (
   only cross beds and from judge overrides. 5322 bed-wait steps.
 - maps/server seed 1 vs ring-sched-m1: 17-0-17 (mirror is 17-17). At r100 the total length was
   60.9 vs 58.1 and the dragon count 24.4 vs 23.2.
+- Fresh mapgen (seed 4066, 44 maps, seeds 1-2) vs ring-sched-m1: 101-12-63. At r50 the total length
+  was 57.0 vs 46.7, at r100 94.8 vs 72.3. Per family: open 10-6, rich-near-home 10-6, maze 1-12-3,
+  rooms 9-7, sealed-spawn 12-4, ring 10-6, off-axis 10-6, sparse 11-5, crowded 6-10, anti-centre
+  11-5, mixed 11-5.
+
+## Arena
+- Duels vs ring-sched-6 (eph-a4811ba0): server random:2 44-0-24 (3+ starters 24-15, ≤2 19-9; queen
+  alive at the end 69% vs 49%); official random:2 8-0-12 (noise).
+- Draft ring-sched-12: vs parent ring-sched-6 31-0-32 ("loses to parent, within noise"). By suite:
+  server 19-17, custom 11-10, official 1-5. vs ring-sched-8 36-29, ring-rush-1 44-26, ring-plus-21
+  30-25. Eval P(win) vs parent: 0.50 at r100, 0.58 at r200, 0.53 at r300. Pearls eaten vs parent:
+  33.4 vs 29.8 by r60, 64.5 vs 64.2 by r100, 185.7 vs 153.5 by r200. CPU p99 23M, max 32.8M.
