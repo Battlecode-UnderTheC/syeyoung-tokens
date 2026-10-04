@@ -1,0 +1,7 @@
+name = "ring-capgrow-1"
+parents = ["ring-bud-cpu"]
+operator = "mutate"
+archetype = "queen-ring"
+author = "claude-opus-5-5"
+created = "2026-10-04"
+task = "g38-4"
