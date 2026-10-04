@@ -1,0 +1,7 @@
+name = "ring-sched-m3"
+parents = ["ring-sched-m1", "ring-bedlearn-2", "ring-sched-fg", "ring-qrace-1", "ring-frontier-1", "ring-lateconc-1"]
+operator = "merge"
+archetype = "queen-ring"
+author = "claude-opus-5-5 (g40 merge step)"
+created = "2026-10-05"
+task = "g40-merge"
