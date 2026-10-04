@@ -36,4 +36,4 @@ Parent: ring-sched-m1 (arena ring-sched-6). There is one change, `QRACE_MODE` (s
   - queen_length@end is 8.72 v 9.03.
   - CPU max 32.4M.
 - The targeted metric did not improve.
-- **Draft verdict:** see `tokenz show ring-sched-11`.
+- **Draft verdict (complete):** 54-0-47 vs ring-sched-6 (53.5%, beats parent within noise); longer queen 24-18; ring-sched-8 54-51, ring-rush-1 52-53, ring-plus-21 51-51. CPU max 34.9M.
