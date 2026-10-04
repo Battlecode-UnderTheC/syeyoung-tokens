@@ -175,6 +175,12 @@ Their branches `team9/*` are pushed; their findings are in KNOWLEDGE.md and g34.
 
 ## Rules (from the user; binding on every brief)
 
+- **Anti-overfitting safeguards** (user, 2026-10-05: "really worried about bots hardcoding feature of maps and overfitting"):
+  1. Review every diff for hidden map knowledge: board-size gates, fixed-position targets, constants tuned to known maps. Reject them.
+  2. Promote on the WEAKEST map class, not the average. A clear loss in any class blocks promotion.
+  3. Judge on maps nobody tuned for: freshly generated, varied-shape maps (`tools/mapgen`) and the arena's holdout aggregate.
+  4. Periodically audit the line we build on for inherited tuned gates, and strip the map-shape assumptions.
+
 - Build on the ranked bots (the gst line and its additions) and add behaviour. No
   from-scratch bots, no RL.
 - No env-var reads (`submit.sh` enforces it).

@@ -70,6 +70,13 @@ A turn over the judge's 100M CPU-point cap kills that dragon. Keep the worst tur
 
 ## Rules (non-negotiable)
 
+- **No hidden map knowledge** (user, 2026-10-05).
+  - Every new threshold or trigger must name the OBSERVED cause it responds to and why that value. 'It fixed Stripes' is not a reason.
+  - No board-size gates, no aiming at fixed board positions (e.g. the geometric centre), and no constants picked to fit particular maps.
+  - Prefer general mechanisms (valuing food, room, danger and numbers from what dragons see) over new 'if X starters and queen ≤ N' rules.
+  - The orchestrator reviews your diff for this and rejects violations.
+- **Report per map class**, not only the total: 1 / 2 / 3+ starters; cramped / corridor / open; sealed queen; central cluster or not. A clear loss in any class means not ready. Also run one light check on freshly generated maps (`tools/mapgen` once it exists, otherwise the sim's worldgen).
+
 - **Write only** `variants/{variant}/` in your own worktree. Don't push, don't tag, and
   don't run `scripts/submit.sh`.
 - **No environment-variable reads**, no map-keyed logic (map names, exact sizes, lookup
