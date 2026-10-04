@@ -34,5 +34,12 @@ Parent ring-sched-1. One change (BIGQ_MODE, strategy.cpp `GrazeOk`, `AlliesNear`
   0.50 v 0.59 and no more growth, so it was not used.
 - CPU max 31.7M.
 
-## Arena verdict
-(pending)
+## Arena verdict (ring-bigq-1, draft)
+- vs parent ring-sched-1: 41-0-37 (52.6%, CI 41.6-63.3), beats_parent (within noise).
+  Server suite 34-34; official 7-3. Decided by: longer queen 19-19, elimination 14-13,
+  longest dragon 8-5.
+- vs ring-plus-21 41-37, vs cs-queen-split-tail-risk-v1-7 43-35, vs queen-ring17-first-then-grow-5 44-34.
+- Eval P(win) vs parent at r100/r200/r300/r400: 0.500 / 0.503 / 0.484 / 0.471.
+- Queen length vs parent at r200/r300/r400: 3.9/4.4/4.0 v 2.6/2.6/2.7 (only grazes where the
+  >25% density gate passes, which is rare on server maps; big growth on official maps).
+- CPU: worst p99 20.5M, max 30.4M.
