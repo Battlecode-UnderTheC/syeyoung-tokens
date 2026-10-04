@@ -112,8 +112,12 @@ https://tokenz-arena.lonk-kelvin.ts.net. Tailnet only; code in `../tokenz-arena`
   numbers).
 - **Promotion:** only on `beats_parent` true (the user's rule). Metrics say what to improve
   next, not whether to promote.
-- **Lines:** one arena bot name per line; promoting retires the previous version. A new
-  line name needs your OK.
+- **Lines:** one arena bot name per line; promoting retires the previous version.
+  **A substantial change gets a NEW line name** (user, 2026-10-04): a new subsystem or a change of
+  strategy (team task scheduling, a new opening, a new queen controller, a new fighting style).
+  It keeps the old head as arena parent, so the lineage stays, and stays on the leaderboard beside
+  the old line instead of retiring it. Tuning, guards on existing behaviour and CPU fixes stay in the
+  line. You decide when planning, and the g<N>.md plan names each task's line.
 - **The parent must be the ranked line head.** A "beats parent" against an unpromoted draft
   means nothing.
 - **Noise:** 78 games is about ±9 wins. Treat 38-40 or 41-37 as a tie. Ask for more games
