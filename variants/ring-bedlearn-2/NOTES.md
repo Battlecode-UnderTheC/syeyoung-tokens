@@ -29,3 +29,9 @@ redrawn) happen on the way to OTHER goals ("toward goal" 1050, "no goal: roomies
 ## Arena
 - Duels vs ring-sched-12 (eph-a81d95d1; many games lost to "sandbox failed to start"): server
   9-12 + 23-19 = 32-31, official 3-5. Pearl rate at r100 1.47 vs 1.49, at r200 2.19 vs 2.09.
+- Draft ring-sched-16 vs parent ring-sched-12: 61-0-51, which the arena calls "BEATS parent", but
+  within noise. By suite: server 32-36, custom 23-11, official 6-4. Games were decided by
+  elimination 27-20, longer queen 21-19, longest dragon 13-11. vs ring-sched-8 62-50, ring-rush-1
+  75-37, cs-queen-split-tail-risk-v1-7 64-48. Eval P(win) vs parent: 0.53 at r100, 0.51 at r200,
+  0.52 at r300. Pearls eaten vs parent: 62.2 vs 60.3 by r60, 138.2 vs 131.7 by r100, 376.0 vs 364.5
+  by r200. CPU p99 23.9M, max 37.8M.
