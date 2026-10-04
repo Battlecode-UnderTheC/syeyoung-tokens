@@ -42,5 +42,15 @@ feeds only while our queen is behind theirs, or within 3 of it.
   - queen_length@end 14.1 v 10.6. v1 was 3-3 and 10.8 v 10.1.
 - **CPU max:** 30.6M.
 
-## Verdict
-See `tokenz show ring-sched-14`.
+## Verdict (ring-sched-14; 117 games vs the parent at the time of writing, still finishing)
+- **Vs the parent ring-sched-6:** 55-0-62 (47.0%, loses to the parent within noise).
+  - Longer queen 25-27, elimination 22-28, longest dragon 8-7.
+- **By suite:** server 38-38, custom 14-18, official 3-6.
+- **Vs the other bots:** ring-sched-8 54-50, ring-rush-1 45-56, ring-plus-21 45-51.
+- **Both queens alive at r490 (39 games):** 22.2 v 21.6, i.e. +0.6. v1 was +1.3.
+- **Eval P(win) at r100/200/300:** 0.49/0.48/0.48. That is map-mix noise: the code is identical
+  before r430.
+- **CPU:** p99 21.3M, max 34.8M.
+- **Conclusion:** v2 does NOT improve on v1 (longer-queen 25-27 vs 24-18; +0.6 vs +1.3 queen
+  length). Stopped here, as instructed. The lead gate seems to cost more queen growth than it
+  saves in workers.
