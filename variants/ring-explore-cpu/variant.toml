@@ -1,0 +1,7 @@
+name = "ring-explore-cpu"
+parents = ["ring-explore-1", "ring-cpu-1"]
+operator = "port"
+archetype = "queen-ring"
+author = "orchestrator (mechanical patch of ring-cpu-1's diff)"
+created = "2026-10-04"
+task = "g37-cpu-ports"
