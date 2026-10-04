@@ -97,6 +97,11 @@ These didn't work:
    - Tag the variant with `scripts/submit.sh <variant>` from a clean worktree, then merge
      the branch (`scripts/accept.sh`) and remove the worktree.
    - Launch the next task into the free slot at once. No barriers.
+6b. **Give ideas a fair chance** (user, 2026-10-05: "give some trust in ideas ... if those weak spots improve, maybe give it bit more tries").
+   - Judge a change first by the TARGET metric of the weak spot it addresses.
+   - If that metric clearly improves, iterate 2-3 more times, even when W-L is within noise.
+   - Drop an idea only when its target metric doesn't move.
+   - Keep a sustained effort on the biggest weak spot (late consolidation as of g40), instead of single shots spread thin.
 7. **Merge step (every round; user, 2026-10-05: "we're only keeping 1 winner. mix and match those").**
    - When a round's drafts are in, stack every change that didn't lose onto one draft: winners, plus changes within noise whose mechanism measurably worked.
    - Build the stack by applying each change's exact diff against its code parent with `patch`. Check that it builds, passes `check` and survives a light duel, then submit it as the line's next draft.
