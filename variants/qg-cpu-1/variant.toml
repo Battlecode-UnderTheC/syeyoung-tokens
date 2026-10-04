@@ -1,0 +1,7 @@
+name = "qg-cpu-1"
+parents = ["qg-narrow-1"]
+operator = "mutate"
+archetype = "gst-queen-guard"
+author = "claude-opus-5-5"
+created = "2026-10-04"
+task = "g37-cpu-qg"
