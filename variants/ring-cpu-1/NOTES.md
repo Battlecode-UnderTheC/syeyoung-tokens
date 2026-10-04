@@ -79,6 +79,30 @@ official maps: new max 14.3M-31.4M (highest: big_empty 31.4M, unsw 27.6M), new p
 68-0-68 over 136 games. Every reported statistic is identical (decided by, r50/r100 economy,
 queens, deaths, action counts), so these are mirror games.
 
-## Porting to ring-explore-1 (ring-plus-4, live)
-The same four edits apply as they are. EscapeLevel, QueenMove's beam, QueenContinuation and
-Ring4Exit match between the two lines, and the explore change is in ChooseGoal only.
+## Arena verdict
+Arena id ring-plus-14 (draft, parent ring-plus-7), not promoted. vs parent ring-plus-7:
+39-0-39, every split even (longer queen 19-19, elimination 14-14, longest 6-6), so these are
+mirror games. Overall 157-155 over 312 games. CPU: max 30.9M (parent 95.2M), p99 22.3M
+(parent 28.7M), 0 overruns.
+
+## Porting to ring-explore-1 (ring-plus-4, live) and ring-bud-1 (ring-plus-9)
+`diff -u variants/ring-explore-2 variants/ring-cpu-1` (ring.cpp, strategy.cpp, strategy.hpp)
+applies cleanly with `patch -p1` to both. Sandbox, arena worst games, base vs patched; each
+pair was the same game (same winner, same turn counts):
+
+| bot, game (seed) | base max | patched max |
+|---|---|---|
+| ring-plus-4, wg39019 vs crossover-1 (1592614637) | 92.6M | 27.5M |
+| ring-plus-4, wg39019 vs queen-ring17-first-then-grow-5 (1592614637) | 94.8M | 31.8M |
+| ring-plus-9, big_empty vs queen-guard-17 (1592614637) | 83.8M | 28.5M |
+| ring-plus-9, maze vs crossover-1 (5281284940419892006) | 79.1M | 26.2M |
+| ring-plus-9, wg39002 vs queen-ring17-first-then-grow-5 (1592614637) | 81.1M | 25.9M |
+
+The base numbers match the arena's points_max exactly. The rotating maps were taken from the
+arena's map pages.
+
+## Not included: qg-cpu-1's rollout_giant2.hpp
+The ring line shares this file with qg-narrow-1 byte for byte, so qg-cpu-1's version drops in.
+Tested: it built, and native games stayed identical. It is left out because worker turns
+(rollout reviews) peak near 25M here and never set the max, and leaving it out keeps this
+variant the same as the arena's ring-plus-14.
