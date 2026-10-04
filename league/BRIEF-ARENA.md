@@ -41,7 +41,7 @@ Rules: `docs/game.md`, unswbc 1.2.7.
 4. **Test with arena duels, not heavy local sims.** The Mac is shared; the arena has hundreds of judge slots.
    - Local sim: a quick smoke run only, e.g. one seed on maps/server.
    - Then `scripts/make-bot.sh variants/{variant} <out>` and `tokenz ephemeral <out>`, which gives an `eph-...` id. It isn't on the ladder and expires in 24h.
-   - `tokenz duel <eph-id> {base_id} --suite official,rotating,server --seeds random:4 --wait`, and the same against `cs-queen-split-tail-risk-v1-7` and the current #1. Duels are unrated, run on fresh seeds and use the real judge.
+   - Keep duels LIGHTWEIGHT, about the size of the old local check: `tokenz duel <eph-id> {base_id} --suite server --seeds random:2 --wait` (17 maps × 2 seeds × 2 seats = 68 games). Optionally add one more light duel on `--suite official --seeds random:2`, or against `cs-queen-split-tail-risk-v1-7`. Never run full-suite duels: the draft's own arena games are the thorough test.
    - Report each duel's W-L by suite, the 2 v 3+ starter split, and the per-side metrics it returns.
    - A clear duel loss against the base means stop and report; don't submit.
 5. Make the bot and submit it:
