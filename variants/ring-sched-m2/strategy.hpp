@@ -1,3 +1,4 @@
+// Kept for adversarial-map testing of the geometric-centre rush (comment only; play identical to arena ring-sched-7).
 // Arena line: ring-sched (team task scheduling). Comment only; behaviour identical to arena ring-plus-22.
 // g39-sym (variant ring-sym-1, arena line ring-sched): the map's symmetry inferred from observation and mirrored into board memory (sym.hpp)
 // g36-5 (ring-explore-1): hunger-scaled exploration for workers before kHungerUntil
