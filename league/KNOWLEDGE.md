@@ -687,3 +687,4 @@ Source: 156 losses of rp9/rp16 with arena eval P(win) curves. Details: `../syeyo
 5. **The longest tiebreak (22 losses; Schooltime 1-16).**
 
 **Queen head-on deaths are a SYMPTOM.** P(win) was already below 0.35 before her death in 69 of 75 such losses, so more queen safety is worth at most about 5 games.
+- **Cutting splits to cut churn loses (g39, 2026-10-05).** ring-churn-1 (refuse growth splits in crowds or pockets) went 38-41, and ring-longmid-1 (split only at longer lengths) went 25-42 in duels. Both shrank the army. Short-lived split children still pay for themselves: they take pearls and space first. Grow length WITHOUT reducing the dragon count, i.e. only late or near the cap (capgrow).
