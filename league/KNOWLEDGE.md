@@ -668,3 +668,12 @@ The judge is byte-identical to 1.2.3 (same rules). It ships the 7 Sprint maps wi
 - **Server CPU:** no overruns in 648 games; the worst turn was 79.5M.
 - Details: `../syeyoung-tokens.league/replays/server-r12/analysis/REPORT.md`.
 - **Feeding a non-queen champion loses on the ring line (g38-7, 2026-10-04).** A sticky late champion with nearby workers feeding it went 70-88 / 56-70 locally on 3+-starter maps. It grew the longest dragon by 3-5 at r400 but cut total length by 25-30% and starved the queen's late growth. Without the feeding it was neutral (39-39). This agrees with earlier lines: consolidation into a heir never paid.
+
+### How the top 10 teams win (evals-r13, 2026-10-05)
+Source: 2,382 arena eval games and 214 replays. Details: `../syeyoung-tokens.league/replays/evals-r13/REPORT.md`.
+- **Their edge is a bigger mid-game army, not a safer queen.** Their queen dies MORE than ours (66% v 36% of games), yet they win 53% after losing her (we win 23%).
+  - Total length at r300: 120 v 81. Board control: .60 v .51.
+- **Stub churn:** before r300 we lose 171 dragons and 391 length to our own resigns (top teams: 113 and about 250). Most are 2-long children boxed in by our own bodies. We eat more pearls but grow less.
+- **Short mid-game dragons:** at r300 we have 0.7 dragons of length 6+ (top teams 3.4), our longest is 5.1 v 12.7, and we sprint on about 0% of moves (they sprint on 4-9%).
+- **The best teams (Vibing++, Sponge) grow the queen inside their own swarm:** 14-15 long at r300, the longest dragon 56% of the time, with no worse survival. They win 94% / 78% when she is 8+ at r200. queen_length AUC .76 at r400.
+- **They trade heads about 50% more,** mostly while ahead in count. They win 73% of elimination games, we win 52%.
