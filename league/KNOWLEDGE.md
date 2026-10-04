@@ -648,3 +648,22 @@ The judge is byte-identical to 1.2.3 (same rules). It ships the 7 Sprint maps wi
   - win rate: 71% → 54%.
 - **The longest-dragon tiebreak is weak:** rp4 is 6-13 on games decided by longest dragon, and our longest is 4.8 v 8.9 at r300. Schooltime is 0-5, where both queens stay sealed at length 3.
 - **How to test from now on:** fresh seeds, the official and rotating suites, and stats split by 2 v 3+ starters. Details: `../syeyoung-tokens.league/replays/server-r11/analysis/REPORT.md`.
+
+### ring-plus-9 on the server; no rock-paper-scissors (g38, 2026-10-04)
+- **Performance ratings on real teams, using opponents' ratings at battle time:**
+
+  | bot | performance |
+  |---|---|
+  | rp9 | 1966 |
+  | rp4 | 1946 |
+  | ring17 | 1872 |
+
+  - The ring-plus line is a real +80-90 Elo. rp9 and rp4 are equal within noise.
+  - UnderTheC rose 1831 → 1977 in rp4's window.
+- **No non-transitivity.** Per-team gaps among our bots fit chance (1 of 24 at p<0.05), and the arena's head-to-head among our bots is near-transitive.
+- **Legend-bud is nearly inert:** it needs length 6, and our growth splits fire at 4-5 (0.7 dragons of 6+ at r300 v their 2.3). Our longest stays 5 v 9 at r300.
+- **Queen head-on deaths are the #1 loss cause** (59 of 90 losses). The killer was visible and in reach in 96% of cases, 2 or fewer tiles away in 73%.
+- **No champion at the unit cap:** longest-decided games 8-17, Schooltime 0-8.
+- **The 2-starter collapse against fast swarms:** 15 of 108 games, record 1-14.
+- **Server CPU:** no overruns in 648 games; the worst turn was 79.5M.
+- Details: `../syeyoung-tokens.league/replays/server-r12/analysis/REPORT.md`.
