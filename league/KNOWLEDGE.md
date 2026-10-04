@@ -667,3 +667,4 @@ The judge is byte-identical to 1.2.3 (same rules). It ships the 7 Sprint maps wi
 - **The 2-starter collapse against fast swarms:** 15 of 108 games, record 1-14.
 - **Server CPU:** no overruns in 648 games; the worst turn was 79.5M.
 - Details: `../syeyoung-tokens.league/replays/server-r12/analysis/REPORT.md`.
+- **Feeding a non-queen champion loses on the ring line (g38-7, 2026-10-04).** A sticky late champion with nearby workers feeding it went 70-88 / 56-70 locally on 3+-starter maps. It grew the longest dragon by 3-5 at r400 but cut total length by 25-30% and starved the queen's late growth. Without the feeding it was neutral (39-39). This agrees with earlier lines: consolidation into a heir never paid.
