@@ -688,3 +688,9 @@ Source: 156 losses of rp9/rp16 with arena eval P(win) curves. Details: `../syeyo
 
 **Queen head-on deaths are a SYMPTOM.** P(win) was already below 0.35 before her death in 69 of 75 such losses, so more queen safety is worth at most about 5 games.
 - **Cutting splits to cut churn loses (g39, 2026-10-05).** ring-churn-1 (refuse growth splits in crowds or pockets) went 38-41, and ring-longmid-1 (split only at longer lengths) went 25-42 in duels. Both shrank the army. Short-lived split children still pay for themselves: they take pearls and space first. Grow length WITHOUT reducing the dragon count, i.e. only late or near the cap (capgrow).
+
+### The geometric-centre rush is overfit (g39, 2026-10-05)
+- **On known maps it wins.** ring-rush-1 and ring-sched-8 (ring-sched-6 + rush) beat their parents (45-33, 43-35).
+- **On 40 freshly generated anti-centre maps it loses.** ring-sched-8's code lost 64-96 to the same code without the rush (eliminations 39-71).
+- **The observation-only version doesn't help either.** ring-rush-2 contests only seen or inferred clusters and lost 35-43: the enemy-spawn estimate arrives at r15-17, too late.
+- **Rule:** test every opening or positional idea on `tools/mapgen` families, including anti-centre, before trusting arena gains.
