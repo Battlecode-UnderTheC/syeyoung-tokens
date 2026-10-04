@@ -38,12 +38,12 @@ Rules: `docs/game.md`, unswbc 1.2.7.
 3. Build and check:
    `cmake -S . -B build && cmake --build build -j 2 --target {variant} sim check`;
    `build/tools/check {variant} maps/official` must pass.
-4. Quick local test against the base, both seats, 2 threads, on FRESH seeds (not 1-4, which earlier
-   rounds selected on): `build/tools/sim --a {variant} --b <base> --maps maps/server --seed 21,22,23,24,25,26 --threads 2`
-   (also `maps/official`). Split results by 2-starter and 3+-starter maps, and report pearl share
-   before r60 and dragons at r100 next to W-L. Put the numbers in `NOTES.md`.
-   - A clear local loss means stop and report; don't submit.
-   - Local numbers are hints. The arena decides.
+4. **Test with arena duels, not heavy local sims.** The Mac is shared; the arena has hundreds of judge slots.
+   - Local sim: a quick smoke run only, e.g. one seed on maps/server.
+   - Then `scripts/make-bot.sh variants/{variant} <out>` and `tokenz ephemeral <out>`, which gives an `eph-...` id. It isn't on the ladder and expires in 24h.
+   - `tokenz duel <eph-id> {base_id} --suite official,rotating,server --seeds random:4 --wait`, and the same against `cs-queen-split-tail-risk-v1-7` and the current #1. Duels are unrated, run on fresh seeds and use the real judge.
+   - Report each duel's W-L by suite, the 2 v 3+ starter split, and the per-side metrics it returns.
+   - A clear duel loss against the base means stop and report; don't submit.
 5. Make the bot and submit it:
    - `scripts/make-bot.sh variants/{variant} <out>`
    - `tokenz --agent {task} submit <out> --bot {line} --parent {base_id} --note "Hypothesis: ... Change: ... Local: ..." --wait`
