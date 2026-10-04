@@ -97,7 +97,12 @@ These didn't work:
    - Tag the variant with `scripts/submit.sh <variant>` from a clean worktree, then merge
      the branch (`scripts/accept.sh`) and remove the worktree.
    - Launch the next task into the free slot at once. No barriers.
-7. **Measure and record.**
+7. **Merge step (every round; user, 2026-10-05: "we're only keeping 1 winner. mix and match those").**
+   - When a round's drafts are in, stack every change that didn't lose onto one draft: winners, plus changes within noise whose mechanism measurably worked.
+   - Build the stack by applying each change's exact diff against its code parent with `patch`. Check that it builds, passes `check` and survives a light duel, then submit it as the line's next draft.
+   - It becomes the next round's base, so gains accumulate instead of one winner retiring the others.
+   - Also port useful changes across lines (e.g. ring-sched-2 = ring-sched-1 + ring-plus-19 + ring-plus-21).
+8. **Measure and record.**
    - Close g<N>.md with Results, What we learned and Next.
    - Add confirmed claims to KNOWLEDGE.md, with numbers, and delete disproved ones.
    - Commit. Push only when the user asks.
