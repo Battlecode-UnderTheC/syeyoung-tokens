@@ -67,4 +67,21 @@ Iteration 2 v ring-sched-m1 (plain sim, same maps, seeds 1,2): 92-8-76.
 - iteration 1 with a 30-round queen window (not kept): server 30-38. Queen alive at the end
   54% v 65%. The early window stopped relaying and reserving for a live queen.
 - iteration 1 (kept gate): server 33-35 (longest-decided 8-5), official 7-13.
-- iteration 2: see the final report.
+- iteration 2: server 23-22 (19 arena errors), official 7-10.
+
+## Arena verdict (iteration 2, submitted as ring-sched-15)
+- **v parent ring-sched-6: 59-0-53 (52.7%), BEATS parent, within noise.**
+  - By suite: server 37-31, custom 18-16, official 4-6.
+  - Decided by: elimination 22-23, longer queen 26-18, longest dragon 11-11, total length 0-1.
+- **v the others:** ring-sched-8 61-51, ring-rush-1 61-51, ring-plus-21 54-58.
+  - All games: 235-213; longest-decided 31-43 (parent 109-159 over its own games).
+- **Late metrics v parent** (us/them):
+
+  | round | longest | L/T | queen |
+  |---|---|---|---|
+  | r400 | 12.0/12.0 | | |
+  | r450 | 17.8/17.1 | .240/.228 | |
+  | r480 | 24.2/22.2 | .295/.285 | 11.1/11.1 (not starved) |
+
+- **Eval P(win) v parent:** 0.500 at r100/r200/r300/r400 (identical play before r430), 0.518 at r480.
+- **CPU:** p99 21.4M, max 38.2M.
