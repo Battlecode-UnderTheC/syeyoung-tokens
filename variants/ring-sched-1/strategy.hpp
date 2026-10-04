@@ -1,3 +1,4 @@
+// Arena line: ring-sched (team task scheduling). Comment only; behaviour identical to arena ring-plus-22.
 // g36-5 (ring-explore-1): hunger-scaled exploration for workers before kHungerUntil
 // g36-7 (ring-explore-2): plus the team's unseen share of the board, workers only
 #ifndef EXPLORE_UNSEEN
