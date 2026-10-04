@@ -101,6 +101,7 @@ These didn't work:
    - Judge a change first by the TARGET metric of the weak spot it addresses.
    - If that metric clearly improves, iterate 2-3 more times, even when W-L is within noise.
    - Drop an idea only when its target metric doesn't move.
+   - Borrow from opponent bots (user, 2026-10-05): we have the full source of every arena bot (`tokenz get <id>`, `git show variant/<name>:...`). When an opponent clearly does something better, e.g. gst-giant-2's late giant-feeding, port that MECHANISM into our line as one change.
    - Keep a sustained effort on the biggest weak spot (late consolidation as of g40), instead of single shots spread thin.
 7. **Merge step (every round; user, 2026-10-05: "we're only keeping 1 winner. mix and match those").**
    - When a round's drafts are in, stack every change that didn't lose onto one draft: winners, plus changes within noise whose mechanism measurably worked.
