@@ -37,6 +37,6 @@ The r300/r400 figures come from a temporary sim build with extra snapshot rounds
 - vs parent ring-plus-7: 41-0-37 (52.6%, CI 41.6-63.3), "beats parent" but within noise.
   Decided by: longer queen 19-17, elimination 15-14, longest dragon 7-6.
 - vs queen-ring17-first-then-grow-5 37-41, ring-plus-9 42-36, queen-unified-1 43-35.
-- By suite: server (fixed seeds) 142-130; official 31-0-29 (40 games, 21-19 vs the four bots);
+- By suite: server (fixed seeds) 142-130; official 21-0-19 (40 games; vs ring-plus-7 6-4);
   the rotating suite had no games. Official, by end: elimination 12-12, longest 3-5, queen 6-2.
 - Over all games: longest-dragon games 29-22 (56.9%), elimination 65-52, queen 69-75.
