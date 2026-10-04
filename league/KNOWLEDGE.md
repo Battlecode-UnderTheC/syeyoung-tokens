@@ -702,3 +702,4 @@ Source: shared/engine/dragons/game.cpp (Reset, DrawGap, SetCountdown, BeginRound
 - **Play only decides whether a pearl appears.** At due time each tile of the pair spawns only if it has no pearl and no living dragon on it.
 - **Mirror beds share one countdown** (pearl_base is set on both tiles).
 - **What a bot can use:** an observed countdown gives the exact next spawn round for that bed and its mirror. The gap after that is a fresh random draw in the hidden [min, max].
+- **Gating the late queen's sprints trades length for survival (g40-1, four iterations, 2026-10-05).** Her late growth runs on multi-step sprints to pearls. Every gate tried left survival flat or slightly up, cut her end length (about 6 v 7.6), and lost longer-queen games. Don't retry sprint gating.
