@@ -1,0 +1,7 @@
+name = "ring-sched-m1"
+parents = ["ring-noburn-1", "ring-sym-1"]
+operator = "merge"
+archetype = "queen-ring"
+author = "orchestrator (merge step: ring-sym-1's diff applied to ring-noburn-1)"
+created = "2026-10-05"
+task = "g39-merge"
