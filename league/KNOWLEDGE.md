@@ -694,3 +694,11 @@ Source: 156 losses of rp9/rp16 with arena eval P(win) curves. Details: `../syeyo
 - **On 40 freshly generated anti-centre maps it loses.** ring-sched-8's code lost 64-96 to the same code without the rush (eliminations 39-71).
 - **The observation-only version doesn't help either.** ring-rush-2 contests only seen or inferred clusters and lost 35-43: the enemy-spawn estimate arrives at r15-17, too late.
 - **Rule:** test every opening or positional idea on `tools/mapgen` families, including anti-centre, before trusting arena gains.
+
+### Pearl timing is independent of play (engine, verified 2026-10-05)
+Source: shared/engine/dragons/game.cpp (Reset, DrawGap, SetCountdown, BeginRound).
+- **One RNG, only for gaps.** It is seeded once per match and used only for pearl gaps. Each bed pair draws a gap before r0, then a new one every time it comes due. The draws happen in due order, row-major within a round.
+- **Due rounds don't depend on play.** A pair comes due when its countdown expires, regardless of eating, occupation or uneaten pearls. Its next gap is always drawn then. So for a fixed map and seed, every pair's due rounds are identical whatever the dragons do.
+- **Play only decides whether a pearl appears.** At due time each tile of the pair spawns only if it has no pearl and no living dragon on it.
+- **Mirror beds share one countdown** (pearl_base is set on both tiles).
+- **What a bot can use:** an observed countdown gives the exact next spawn round for that bed and its mirror. The gap after that is a fresh random draw in the hidden [min, max].
