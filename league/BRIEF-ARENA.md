@@ -65,6 +65,7 @@ A turn over the judge's 100M CPU-point cap kills that dragon. Keep the worst tur
 - the arena verdict SPLIT BY SUITE (`tokenz games`): server (fixed seeds) vs official and rotating;
 - the local numbers;
 - the CPU line from `tokenz report <id>` (p99 and max);
+- the eval P(win) vs the parent: average `game.eval` at r100/r200/r300 over your games against the parent, from `GET /api/v1/games/{id}/metrics`. It is calibrated on about 8k real games a day, and has less variance than W-L;
 - what you'd try next.
 
 ## Rules (non-negotiable)
