@@ -430,6 +430,46 @@ def maze(b, rng, region=None, cell=1, braid=0.2):
     for e in sorted(walls):
         if rng.random() >= braid:
             b.set_kelp(e)
+    connect(b, rng, tiles)
+
+
+def connect(b, rng, tiles):
+    """Open kelp inside `tiles` (with its mirror) until they are one component through
+    paths inside `tiles`. A maze's walls are mirrored too, and a spanning tree plus its
+    mirror image seals pockets off. Kruskal over the walls in random order: a wall is
+    opened only when it joins two separate pockets."""
+    tiles = set(tiles)
+    parent = {t: t for t in tiles}
+
+    def find(t):
+        while parent[t] != t:
+            parent[t] = parent[parent[t]]
+            t = parent[t]
+        return t
+
+    def union(a, c):
+        parent[find(a)] = find(c)
+    walls = []
+    for t in sorted(tiles):
+        for d in (1, 2):
+            u = b.nb(t, d)
+            if u not in tiles:
+                continue
+            e = b.edge(t, d)
+            if e in b.kelp:
+                walls.append(e)
+            elif e not in b.portal:
+                union(t, u)
+    rng.shuffle(walls)
+    for e in walls:
+        a, c = b.edge_tiles(e)
+        if e in b.protected or find(a) == find(c):
+            continue
+        b.set_kelp(e, False)
+        for f in (e, b.medge(e)):
+            x, y = b.edge_tiles(f)
+            if f not in b.kelp and x in tiles and y in tiles:
+                union(x, y)
 
 
 def box(b, x0, y0, bw, bh, gaps=(), protect=False):
@@ -500,10 +540,16 @@ def beds_even(b, rng, density, gaps, avoid=()):
     """Jittered-grid beds: one bed per cell, cells sized for the density, so there is no
     cluster anywhere (the centre included)."""
     avoid = set(avoid)
-    cellsz = max(2, int(round(math.sqrt(1.0 / max(density, 1e-3)))))
+    # every bed also places its mirror, so each cell needs only half the density; a whole
+    # cell size can't hit every density, so cells are skipped at random to make up the rest
+    half = max(density, 1e-3) / 2
+    cellsz = max(2, int(math.sqrt(1.0 / half)))
+    keep = min(1.0, half * cellsz * cellsz)
     placed = 0
     for cy in range(0, b.h, cellsz):
         for cx in range(0, b.w, cellsz):
+            if rng.random() >= keep:
+                continue
             for _ in range(6):
                 t = (min(b.w - 1, cx + rng.randrange(cellsz)), min(b.h - 1, cy + rng.randrange(cellsz)))
                 if t in avoid or t in b.beds:
@@ -1011,7 +1057,120 @@ def fam_mixed(rng):
     return b, f"{terrain}+{beds}" + ("+pen" if pen else "") + ("+crowd" if crowd else "")
 
 
+def fam_trick(rng):
+    """Maps that break assumptions a bot may have picked up from the contest maps. Not in the
+    default rotation (FAMILIES): asked for by name.
+      seam      kelp frames the inside of the board; the food sits on the wrap seam, so the
+                way there is across the edge
+      split     a full kelp line cuts the board in two halves (one per side); the only way
+                across is portals
+      honeypot  a dense, slow cluster at the bottom of a 1-wide maze in the middle
+      contested no food within 6 steps of either queen; beds only where both queens are about
+                equally far (|d0 - d1| <= 1), so feeding means meeting the enemy
+      giant     58-64 a side (the contest maximum), few beds, far apart: CPU and search
+                depth (bigger boards are legal, 7-256, but the contest maps stop at 64)
+      tiny      7-9 a side
+    """
+    kind = rng.choice(["seam", "split", "honeypot", "contested", "giant", "tiny"])
+    if kind == "giant":
+        w = h = rng.randint(58, 64)
+    elif kind == "tiny":
+        w = h = rng.randint(7, 9)
+    else:
+        w, h = sample_size(rng, 24, 56)
+    sym = "xy" if kind in ("tiny", "seam") else sample_sym(rng, w, h)
+    if kind == "split":
+        sym = rng.choice(["x", "y"])
+    b = Board(w, h, sym)
+    if kind == "seam":
+        # a kelp frame one tile in from every border, with one door per side far from the
+        # spawns; the 2-wide band across the wrap (x or y in {0, last}) holds the food
+        for x in range(w):
+            for y in (1, h - 1):
+                b.set_kelp(("H", x, y))
+        for y in range(h):
+            for x in (1, w - 1):
+                b.set_kelp(("V", x, y))
+        for e in (("H", w // 2, 1), ("V", 1, h // 2)):
+            b.set_kelp(e, False)
+        band = lambda t: t[0] in (0, w - 1) or t[1] in (0, h - 1)
+        n, ql, ls = starters(rng, 1, 5)
+        place_team(b, rng, n, ql, ls, queen_ok=lambda t: not band(t), other_ok=lambda t: not band(t))
+        b.repair(rng)
+        _, gaps = gap_sampler(rng, "fast")
+        beds_where(b, rng, max(8, (w + h)), band, gaps)
+    elif kind == "split":
+        # the line runs along the mirrored axis's middle, so each team's half is its own;
+        # both seams (the middle and the wrap) are walled
+        if sym == "x":      # (x, y) -> (x, H-1-y): halves are top and bottom
+            for x in range(w):
+                b.set_kelp(("H", x, h // 2)); b.set_kelp(("H", x, 0))
+            half0 = lambda t: t[1] < h // 2
+        else:
+            for y in range(h):
+                b.set_kelp(("V", w // 2, y)); b.set_kelp(("V", 0, y))
+            half0 = lambda t: t[0] < w // 2
+        random_walls(b, rng, rng.uniform(0.0, 0.04) + len(b.kelp) / (2 * w * h), maxlen=3)
+        n, ql, ls = starters(rng, 1, 5)
+        place_team(b, rng, n, ql, ls, queen_ok=half0, other_ok=half0)
+        mine = [t for t in b.tiles() if half0(t)]
+        theirs = [t for t in b.tiles() if not half0(t)]
+        if not sum(portal_between(b, rng, mine, theirs) for _ in range(rng.randint(1, 3))):
+            raise Retry("split portals")
+        _, gaps = gap_sampler(rng)
+        beds_even(b, rng, rng.uniform(0.03, 0.15), gaps)
+    elif kind == "honeypot":
+        hw, hh = max(3, w // 6), max(3, h // 6)
+        cx, cy = (w - 1) // 2, (h - 1) // 2
+        x0, y0 = cx - hw, cy - hh
+        bw, bh = 2 * hw + 1 + (w + 1) % 2, 2 * hh + 1 + (h + 1) % 2
+        region = rect_tiles(b, x0, y0, bw, bh)
+        maze(b, rng, region=region, braid=0.0)
+        per = box(b, x0, y0, bw, bh)
+        door = rng.choice(per)
+        b.set_kelp(door, False)
+        for t in region:
+            b.reserved.add(t)
+        n, ql, ls = starters(rng, 1, 6)
+        place_team(b, rng, n, ql, ls)
+        b.repair(rng)
+        far = b.bfs(list(b.edge_tiles(door)))
+        deep = sorted((t for t in region if t in far), key=lambda t: -far[t])
+        for t in deep[:max(4, len(deep) // 4)]:
+            b.add_bed(t, (rng.randint(60, 150), rng.randint(200, 500)))
+        _, gaps = gap_sampler(rng, "medium")
+        beds_where(b, rng, bed_count(b, 0.02), lambda t: t not in set(region), gaps)
+    elif kind == "contested":
+        random_walls(b, rng, rng.uniform(0.0, 0.06))
+        n, ql, ls = starters(rng)
+        place_team(b, rng, n, ql, ls, qsep=max(8, min(w, h) // 3))
+        b.repair(rng)
+        q0 = b.dragons[0][1][0]
+        d0, d1 = b.bfs([q0]), b.bfs([b.mirror(q0)])
+        _, gaps = gap_sampler(rng, rng.choice(["fast", "medium"]))
+        placed = beds_where(b, rng, bed_count(b, rng.uniform(0.04, 0.12)),
+                            lambda t: t in d0 and t in d1 and min(d0[t], d1[t]) > 6
+                            and abs(d0[t] - d1[t]) <= 1, gaps)
+        if placed < 4:
+            raise Retry("contested beds")
+    elif kind == "giant":
+        random_walls(b, rng, rng.uniform(0.0, 0.05))
+        random_portals(b, rng, rng.choice([0, 2, 6]))
+        n, ql, ls = starters(rng, 1, 6)
+        place_team(b, rng, n, ql, ls, qsep=w // 3)
+        b.repair(rng)
+        _, gaps = gap_sampler(rng)
+        beds_where(b, rng, rng.randint(12, 60), lambda t: True, gaps)
+    else:   # tiny
+        n, ql, ls = starters(rng, 1, 3, short=True)
+        place_team(b, rng, n, ql, ls, qsep=3, sep=2)
+        _, gaps = gap_sampler(rng, "fast")
+        beds_where(b, rng, rng.randint(2, 8), lambda t: True, gaps)
+    return b, kind
+
+
 GENERATORS = {
+    "trick": fam_trick,
     "open": fam_open, "rich-near-home": fam_rich_near_home, "maze": fam_maze, "rooms": fam_rooms,
     "sealed-spawn": fam_sealed_spawn, "ring": fam_ring, "off-axis": fam_off_axis, "sparse": fam_sparse,
     "crowded": fam_crowded, "anti-centre": fam_anti_centre, "mixed": fam_mixed,
@@ -1066,6 +1225,9 @@ def validate(b):
                 errs.append("queens can't reach each other")
             if not any(t in reach for t in b.beds):
                 errs.append("queen reaches no bed")
+            lost = [t for t in b.beds if t not in reach and t not in b.sealed_ok]
+            if lost:
+                errs.append(f"{len(lost)} beds out of reach")
         for i, (team, body) in enumerate(b.dragons):
             if body[0] in b.sealed_ok:
                 continue
@@ -1082,6 +1244,7 @@ def build(family, seed, index, max_attempts=60):
             b, variant = GENERATORS[family](rng)
             if not b.beds:
                 raise Retry("no beds")
+            b.repair(rng)           # beds went in after the families' repair: join them too
             errs = validate(b)
             if errs:
                 raise Retry("; ".join(errs[:3]))
@@ -1244,7 +1407,7 @@ def features(b, name):
         if q1 is not None:
             near = 0.15 * min(W, H)
             axis = sum(1 for t in b.beds if axis_distance(b, q0, q1, t) <= near) / max(1, nb_)
-        qd = d0.get(q1, -1)
+        qd = b.bfs([q0]).get(q1, -1)
     else:
         qd = -1
     gaps = [lo + hi for lo, hi in b.beds.values()]

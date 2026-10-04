@@ -33,6 +33,21 @@ tools/mapgen/fresh.sh 44 $(date +%s) /tmp/fresh       # a fresh set across all f
 | `anti-centre` | punishes rushing the geometric board centre: no beds in the central half-box in any variant | see below |
 | `mixed` | random terrain x random bed layout, sometimes a pen, a crowd, a UNIT_LIMIT, or a central cluster | `<terrain>+<beds>[+pen][+crowd]` |
 
+`trick` is not in the rotation (`--family all`, or the seed picking the family): ask for it
+by name. Its maps break habits a bot may have learnt on the contest maps:
+- `seam`: kelp frames the inside of the board, with a door per side; all the food is in the
+  band across the wrap, so the way to it is over the edge.
+- `split`: a full kelp line (and the wrap seam) cuts the board into one half per side; the
+  only way across is 1-3 portals.
+- `honeypot`: a dense, slow-respawning cluster at the bottom of a 1-wide maze in the middle,
+  with one door.
+- `contested`: no food within 6 steps of either queen; beds only where the two queens are
+  equally far (within 1), so feeding means meeting the enemy.
+- `giant`: 58-64 a side (the contest maximum) with 12-60 beds. Boards up to 256 are legal,
+  but our bots refuse anything over 64 (`kMaxSide`), so bigger ones only kill every dragon on
+  round 0.
+- `tiny`: 7-9 a side.
+
 `anti-centre` variants:
 - `walled`: 2-3 concentric kelp boxes round the centre, with doors on alternating sides, so getting in takes a long detour. Nothing is inside.
 - `trap`: the centre is a perfect 1-wide maze (a dead-end pocket) with one door (mirrored). Half the time there is one slow bait bed at its deepest point.
@@ -69,7 +84,8 @@ These follow `shared/engine/dragons/board.cpp`, the port of the engine's MapRead
 - Every body is a chain of distinct, orthogonally adjacent tiles joined by plain edges (no kelp, no portal). Bodies don't overlap, and no body sits on a self-mirror tile.
 - Every head has a free first step.
 - The queens can reach each other, and every starter can reach a bed or a queen. The exception is the deliberately sealed pens (`exit0`): the generator keeps a list of those tiles and leaves them closed.
-- Every component that holds a bed or a starter is joined to the main one. `repair()` opens kelp (with its mirror) until it is; protected pen walls are never opened.
+- Every component that holds a bed or a starter is joined to the main one. `repair()` opens kelp (with its mirror) until it is; protected pen walls are never opened. It runs again after the beds are placed, and every bed must be reachable from the queens (sealed pens aside).
+- Mazes are one piece: every wall is mirrored, and a spanning tree plus its mirror image seals pockets off, so `connect()` reopens walls (with their mirrors) until the maze area is connected through its own tiles.
 - Beds never go under a starter or inside a pen.
 
 Beyond the Python checks, generated maps were loaded by the repo's engine port
