@@ -26,3 +26,11 @@ Fewer queen deaths against our own bodies. Little at stake: it is rare.
 ## Arena duels vs ring-sched-17 (eph-4bd87b7c)
 - server random:2: 34-0-34; queen alive at end 57.4% vs 55.9%, queen length 10.03 vs 9.75. 3+ 20-20, <=2 14-14.
 - official random:2: 10-0-10, all metrics identical (the check never fired).
+
+## Arena verdict (ring-sched-18, draft)
+- vs ring-sched-17: 63-0-55 (53.4%, CI 44.4-62.1), beats_parent True (within noise).
+  By suite: server 35-33, custom 23-17, official 5-5. Decided by: queen 29-23, elimination 23-23, longest 10-9.
+- vs ring-rush-1 75-43, cs-queen-split-tail-risk-v1-7 67-45, ring-plus-21 62-50.
+- eval P(win) vs parent: r100 0.500, r200 0.506, r300 0.504.
+- Queen deaths vs parent: ours 49 head-on + 5 no valid move; parent's 55 + 6. None recorded as body collisions.
+- CPU: worst p99 27.3M, max 38.4M.
