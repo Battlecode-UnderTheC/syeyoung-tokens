@@ -420,4 +420,4 @@ findings accordingly.
 - Before promoting or merging, look at replays of the draft (have a subagent render and describe them): check the change does what it claims and has no ugly side effects.
 
 - Analysts and workers must LOOK at the filmstrip PNGs (with the Read tool) and say which conclusions came from the images. Put this in every analysis prompt. User: "i want analyzers to look at pictures too. they do tell you smth".
-- Watch games round by round with `../syeyoung-tokens.league/replays/tools/watch.py` (a text replay: events and ASCII boards). The orchestrator does this too, on at least one key loss per round. User: "i want you to SEE AND FEEL how dragons moved over time".
+- Watch games as IMAGE filmstrips (render.py --film, several strips over the stretch that matters) and look at them. The orchestrator does this too, on at least one key loss per round. User: "yeah then do image strips then".
