@@ -110,7 +110,7 @@ These didn't work:
 7. **Advance the head: one change per step, no merges.** This is how the early lines climbed. gather-split-trade went 15 → 23 → 27 → 31 → 33 → 34 → 39 → 45 → 49 → 51 → 63 → 74 → 84 → 90 → 131 → gst-search-1 → 4 → 8, and ring-plus went 1 → 4 → 7 → 9 → 16 → 19 → 21. Each step was one change on the latest winning draft. It was continuous: as soon as a draft beat its parent, new workers built on it, with no round-end merge.
    - Every worker builds ONE change on the line's current head and submits with --parent = that head.
    - The newest draft that beats its parent becomes the base for the next workers right away (continuous, not per round).
-   - Other good changes are NOT combined into it. If still promising, they are redone on the new head in a later round, each as its own single change, so a degradation is always traceable.
+   - Other changes that won against their own parent ARE combined, but only by porting them onto the newest head ONE AT A TIME. Each port is its own submission (--parent = the current head) with its own verdict, so a degradation is always traceable. Never bundle a round's changes into one submission.
    - Keep the deployed or previous head on the leaderboard: promoting in the same line retires the parent. Put a new head in its own line, or resubmit the old one, before promoting.
    - Merges and diversity come later, not every round.
    - Also port useful changes across lines (e.g. ring-sched-2 = ring-sched-1 + ring-plus-19 + ring-plus-21).
