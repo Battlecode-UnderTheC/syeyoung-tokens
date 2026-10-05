@@ -49,5 +49,11 @@ Local: fresh mapgen (seed 4242, 44 maps x 2 seeds) vs ring-sched-m3: try 1 88-88
   won 4-0. duel-26c6e951 g56 (autarky v cs, try 3): ours stayed at 3 while cs's queen grew 3→19
   from r450; base on the same seed exited and grew to 32 and won. The cost case.
 
-## Arena verdict
-(see below)
+## Arena verdict (ring-sched-30, 448 games, 252-0-196)
+- vs parent ring-sched-17: 57-0-55 (50.9%, BEATS parent within noise); server 34-34, custom 18-16,
+  official 5-5. Decided by: elimination 23-23, longer queen 23-22, longest 11-10. Eval P vs parent
+  0.50 at r100/r200/r300 (play is identical before r430).
+- vs ring-rush-1 68-44, cs-queen-split-tail-risk-v1-7 66-46, ring-plus-21 61-51.
+- Target metric vs those three opponents: enemy queen dead before r430 and ours alive at r430 →
+  ours then died at r430+: 3 of 109 (2.8%), vs ring-sched-17's own games 17 of 171 (9.9%).
+- CPU: worst p99 27.3M, max 38.4M.
