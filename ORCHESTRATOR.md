@@ -61,7 +61,7 @@ These didn't work:
      (`/api/v1/submissions/<id>/metrics`).
    - **Disk:** `df -h .` must show ≥10 GB free. If not, delete finished worktrees' `build/` dirs.
    - **Strays:** stop any of your own stray sims or agents.
-2. **Real-match analysis.** Also analyse the ARENA losses of the line head by replay (user, 2026-10-05: arena losses are plentiful and reveal weak spots well; e.g. replays/arena-r14). Run it alongside the server analysis.
+2. **Real-match analysis.** Also analyse the ARENA losses of the line head by replay (arena losses are plentiful and reveal weak spots well; e.g. replays/arena-r14). Run it alongside the server analysis.
    **Server analysis** (a subagent, Opus, read-only).
    - It fetches recent server replays of our submissions with `bcweb.py battles/fetch`,
      decodes them (`decode.py` under `../syeyoung-tokens.league/replays/*/analysis/`), and
@@ -98,13 +98,13 @@ These didn't work:
    - Tag the variant with `scripts/submit.sh <variant>` from a clean worktree, then merge
      the branch (`scripts/accept.sh`) and remove the worktree.
    - Launch the next task into the free slot at once. No barriers.
-6b. **Give ideas a fair chance** (user, 2026-10-05: "give some trust in ideas ... if those weak spots improve, maybe give it bit more tries").
+6b. **Give ideas a fair chance**.
    - Judge a change first by the TARGET metric of the weak spot it addresses.
    - If that metric clearly improves, iterate 2-3 more times, even when W-L is within noise.
    - Drop an idea only when its target metric doesn't move.
-   - Borrow from opponent bots (user, 2026-10-05): we have the full source of every arena bot (`tokenz get <id>`, `git show variant/<name>:...`). When an opponent clearly does something better, e.g. gst-giant-2's late giant-feeding, port that MECHANISM into our line as one change.
+   - Borrow from opponent bots: we have the full source of every arena bot (`tokenz get <id>`, `git show variant/<name>:...`). When an opponent clearly does something better, e.g. gst-giant-2's late giant-feeding, port that MECHANISM into our line as one change.
    - Keep a sustained effort on the biggest weak spot (late consolidation as of g40), instead of single shots spread thin.
-7. **Merge step (every round; user, 2026-10-05: "we're only keeping 1 winner. mix and match those").**
+7. **Merge step (every round).**
    - When a round's drafts are in, stack every change that didn't lose onto one draft: winners, plus changes within noise whose mechanism measurably worked.
    - Build the stack by applying each change's exact diff against its code parent with `patch`. Check that it builds, passes `check` and survives a light duel, then submit it as the line's next draft.
    - It becomes the next round's base, so gains accumulate instead of one winner retiring the others.
@@ -125,7 +125,7 @@ https://tokenz-arena.lonk-kelvin.ts.net. Tailnet only; code in `../tokenz-arena`
 - **Promotion:** only on `beats_parent` true (the user's rule). Metrics say what to improve
   next, not whether to promote.
 - **Lines:** one arena bot name per line; promoting retires the previous version.
-  **A substantial change gets a NEW line name** (user, 2026-10-04): a new subsystem or a change of
+  **A substantial change gets a NEW line name**: a new subsystem or a change of
   strategy (team task scheduling, a new opening, a new queen controller, a new fighting style).
   It keeps the old head as arena parent, so the lineage stays, and stays on the leaderboard beside
   the old line instead of retiring it. Tuning, guards on existing behaviour and CPU fixes stay in the
@@ -163,8 +163,8 @@ https://tokenz-arena.lonk-kelvin.ts.net. Tailnet only; code in `../tokenz-arena`
 | Idle discussion agents | Discussion agents the user talks to must never go idle: keep a background job running. |
 | The arena's server suite has 2 fixed seeds per map | ring-plus-4 beat ring17 50-18 there but 26-24 on official+rotating, which matches the server (g37). Read verdicts split by suite. A gain only on the server suite is probably fitted to those 34 boards. |
 | Our arena pool is only our own bots | It rewards beating our family's habits (e.g. the parked-queen opening). Check candidates against the real server. |
-| CPU near the cap | A turn over 100M CPU points kills that dragon. ring-plus-4 (live) peaked at 98.3M and queen-guard-15 at 99.8M; 2 dragons died this way. Before promoting or deploying, check the `cpu:` max in `tokenz report <id>` is under 80M (user, 2026-10-04). |
-| Testing load | Use arena duels (`tokenz ephemeral <botdir>`, then `tokenz duel A B --suite official,rotating,server --seeds random:4 --wait`; deployed 2026-10-04). They are unrated, run on fresh seeds with the real judge, and never touch ratings or the gate. Duels are for testing BEFORE submitting (ephemeral bots), and they stay light: e.g. `--suite server --seeds random:2` (68 games) (user, 2026-10-04). Don't duel submitted drafts: a draft already plays its parent and the top 3 (user, 2026-10-04). |
+| CPU near the cap | A turn over 100M CPU points kills that dragon. ring-plus-4 (live) peaked at 98.3M and queen-guard-15 at 99.8M; 2 dragons died this way. Before promoting or deploying, check the `cpu:` max in `tokenz report <id>` is under 80M. |
+| Testing load | Use arena duels (`tokenz ephemeral <botdir>`, then `tokenz duel A B --suite official,rotating,server --seeds random:4 --wait`; deployed 2026-10-04). They are unrated, run on fresh seeds with the real judge, and never touch ratings or the gate. Duels are for testing BEFORE submitting (ephemeral bots), and they stay light: e.g. `--suite server --seeds random:2` (68 games). Don't duel submitted drafts: a draft already plays its parent and the top 3. |
 | W-L verdicts are noisy (78 games is about ±9 wins) | Use the arena's eval P(win) as a lower-variance signal. `GET /api/v1/games/{id}/metrics` has `game.eval` (P(A wins)) every 10 rounds plus about 20 metrics per side. `/api/v1/evals` shows it is calibrated, with accuracy about 0.71-0.76 at r100-r300 on real games between other teams. Compare a draft and its parent by mean P(win) at r100/r200/r300; analysis agents can use the curves to find where games turn. |
 | Strategist models | Strategists run on Opus only; the ocx routes failed with 404s or weekly limits. |
 
@@ -182,7 +182,7 @@ Their branches `team9/*` are pushed; their findings are in KNOWLEDGE.md and g34.
 
 ## Rules (from the user; binding on every brief)
 
-- **Anti-overfitting safeguards** (user, 2026-10-05: "really worried about bots hardcoding feature of maps and overfitting"):
+- **Anti-overfitting safeguards**:
   1. Review every diff for hidden map knowledge: board-size gates, fixed-position targets, constants tuned to known maps. Reject them.
   2. Promote on the WEAKEST map class, not the average. A clear loss in any class blocks promotion.
   3. Judge on maps nobody tuned for: freshly generated, varied-shape maps (`tools/mapgen`) and the arena's holdout aggregate.
@@ -413,10 +413,9 @@ findings accordingly.
   it is stuck. Don't start a replacement for the same task while one is still running.
 
 
-## Metrics are not goals (user, 2026-10-05)
-"At some point metrics will be overfitted and you'll have to analyze actual replays. Don't make metrics the goal: the good ol' Goodhart's law."
+## Metrics are not goals
 - Briefs name the target behaviour, and workers confirm it in replays.
 - A follow-up try is earned when replays show the mechanism working, not when a number moves.
 - Before promoting or merging, look at replays of the draft (have a subagent render and describe them): check the change does what it claims and has no ugly side effects.
 
-- Only ANALYST agents look at images: filmstrip PNGs via Read, several render.py --film strips over the stretch that matters, saying which conclusions came from the images. Workers and the orchestrator don't view images; they use decoded data and the analysts' reports. User: "i kinda only want analyzers to look at images".
+- Only ANALYST agents look at images: filmstrip PNGs via Read, several render.py --film strips over the stretch that matters, saying which conclusions came from the images. Workers and the orchestrator don't view images; they use decoded data and the analysts' reports.
