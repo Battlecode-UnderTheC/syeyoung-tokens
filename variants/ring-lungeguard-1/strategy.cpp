@@ -49,6 +49,8 @@ static constexpr int32_t kLateConcFrom = 430, kQueenAliveFresh = 80;
 // segment: total fell 19% in queen-dead games and the longest gained 0.2, because the champion
 // rarely came back along its body for the pearls.
 static constexpr int32_t kLateFeedDistance = 3;
+// g43-7 v2: end tiles a lunge escape run may evaluate (room flood + escape level) in one turn
+static constexpr int kLungeRunEvals = 16;
 #ifdef LUNGE_DBG
 std::atomic<long> g_lunge_goal_veto{0}, g_lf_enemy{0}, g_lf_worth{0}, g_lf_partial{0}, g_lf_middle{0};
 #endif
@@ -339,6 +341,56 @@ void StrategyAgent::BuildLungeField() const {
       }
     }
   }
+}
+
+// g43-7 v2 (the escape run of gst-search-5): ring-contest-5's arena games against its parent showed
+// 123 of 383 deaths of our 6+ workers to enemy heads (server suite) came after a step with no clear
+// single step left while a free run (2..ceil(L/4) steps, no segment paid) reached a clear tile. A
+// run moves the head several tiles before any enemy acts, so only its last tile must be clear;
+// the tiles on the way must be free. Shortest run first (it leaves the most body behind
+// unchanged), then the most room.
+std::vector<int> StrategyAgent::LungeEscapeRun(const std::function<bool(int32_t)>& open, int32_t need) const {
+  std::vector<int> best;
+  if (IsQueen() || length_ < 6) return best;
+  const int free_steps = (length_ + 3) / 4;
+  if (free_steps < 2) return best;
+  const int32_t cap = EscapeCap(length_);
+  int32_t best_room = -1;
+  int evals = 0;
+  std::vector<int> path;
+  std::vector<int32_t> tiles;
+  std::function<void(int32_t)> dfs = [&](int32_t at) {
+    const int k = static_cast<int>(path.size());
+    if (k >= free_steps || evals >= kLungeRunEvals) return;
+    for (int d = 0; d < 4; ++d) {
+      const int32_t n = board_.Step(at, d);
+      if (n < 0 || !board_.Current(n) || Classify(n) != Cell::kFree || (avoid_tile_ >= 0 && n == avoid_tile_)) continue;
+      if (std::find(tiles.begin(), tiles.end(), n) != tiles.end()) continue;
+      path.push_back(d);
+      tiles.push_back(n);
+      if (k + 1 >= 2 && !Exposed(n) && !LungeExposed(n) && (best.empty() || static_cast<int>(path.size()) <= static_cast<int>(best.size()))) {
+        ++evals;
+        const int32_t room = RoomAround(board_, n, open, need);
+        if (room >= need && (best.empty() || path.size() < best.size() || room > best_room)) {
+          // the body after the run: the run's tiles (newest first), then the old body less as many tail tiles
+          std::vector<int32_t> body(tiles.rbegin(), tiles.rend());
+          for (int32_t t : body_) {
+            if (static_cast<int32_t>(body.size()) >= length_) break;
+            body.push_back(t);
+          }
+          if (EscapeLevel(body, cap) >= 1) {
+            best = path;
+            best_room = room;
+          }
+        }
+      }
+      if (best.empty() || static_cast<int>(path.size()) < static_cast<int>(best.size())) dfs(n);
+      path.pop_back();
+      tiles.pop_back();
+    }
+  };
+  dfs(head_);
+  return best;
 }
 
 bool StrategyAgent::LungeAvoid(int d) const {
@@ -1302,6 +1354,24 @@ bot::Action StrategyAgent::SafeStep(int preferred, bool trap_ok, bool trap_grow)
     for (int d = 0; d < 4; ++d) if (LungeExposed(board_.Step(head_, d))) lunge_guard = true;
   }
 #endif
+  // g43-7 v2: no single step is clear of the lunge reach, but some step is in it: run out with free steps
+  if (!lunge_guard) {
+    bool threatened = false, clear = false;
+    for (int d = 0; d < 4; ++d) {
+      const int32_t to = board_.Step(head_, d);
+      if (Classify(to) != Cell::kFree) continue;
+      if (LungeExposed(to)) threatened = true;
+      else if (!Exposed(to)) clear = true;
+    }
+    if (threatened && !clear) {
+      const std::vector<int> run = LungeEscapeRun(open, need);
+      if (!run.empty()) {
+        bot::Action a = bot::Action::Move(run[0]);
+        a.steps = run;
+        return Because("lungeguard: escape run", a);
+      }
+    }
+  }
   for (int k = 0; k < 4; ++k) {
     const int d = ((preferred < 0 ? 0 : preferred) + k) % 4;   // the preferred direction first
     const int32_t to = board_.Step(head_, d);
