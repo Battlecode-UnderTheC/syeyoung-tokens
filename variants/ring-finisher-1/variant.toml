@@ -1,0 +1,7 @@
+name = "ring-finisher-1"
+parents = ["ring-contest-m1"]
+operator = "mutate"
+archetype = "queen-ring"
+author = "claude-opus-5-5 (g43-8 worker)"
+created = "2026-10-06"
+task = "g43-8"
