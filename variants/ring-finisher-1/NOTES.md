@@ -52,8 +52,17 @@ on longest. Strategists A #3 and B #4.
 - Local repro of duel-9dc9adf2 g5 default_small: the stubs see the enemy queen across the map's
   kelp border (torus-near, unreachable), so correctly no trade.
 
-## Arena verdict
-(see below; filled in after the draft's games)
+## Arena verdict: ring-contest-3 (parent repointed ring-contest-1 -> ring-contest-4, same code)
+- vs parent: **58-0-54** (51.8%, CI 42.6-60.8), beats_parent True, within noise. By suite: server
+  36-32, custom 17-17, official 5-5. Decided by: elim 28-28, queen 21-18, longest 9-8.
+- vs ring-sched-17 66-46, ring-rush-1 70-1-41, cs-queen-split-tail-risk-v1-7 73-39 (parent: 66-46,
+  71-1-40, 73-39).
+- eval P(win) v parent: 0.500 at r100/r200/r300/r400 (identical play before r420), 0.488 at r460.
+- CPU (tokenz report): p99 26.3M, max 48.0M.
+- Target metric (team dragons at r460 from game metrics), v ring-sched-17/rush-1/cs-queen: games
+  with us >= 6 v them <= 3: draft 25-3 (207 games), parent 36-4 (332 games). No measurable change:
+  the finish fires rarely (most such enemies are out of reach behind walls/kelp or out of view), and
+  the parent already wins ~90% of these. In games v the parent: 12-0 for us, 0-12 the other way.
 
 ---
 
