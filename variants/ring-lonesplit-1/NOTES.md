@@ -37,4 +37,13 @@ While our team has at most kLoneUnits=2 dragons and round < kLoneUntil=60:
 - Ephemeral eph-dbc10c50 duels vs ring-sched-17:
   - server random:2: 34-0-34 (3+ starters 20-20, <=2 starters 14-14), with nearly identical metrics;
   - official random:2: 11-0-9 (<=2 starters 9-7), dragons@100 34.7 v 30.9.
-- Draft verdict: see below.
+- **Draft ring-sched-28** vs ring-sched-17: 56-0-56, even (within noise); beats_parent not set.
+  - By suite: server 34-34, official 5-5, custom 17-17.
+  - Decided by: elimination 23-23, longer queen 23-23, longest dragon 10-10.
+  - vs other bots: ring-rush-1 67-45, cs-queen-split-tail-risk-v1-7 65-47, ring-plus-21 63-49.
+  - Eval P(win) vs the parent: r100 .506, r200 .500, r300 .504.
+  - dragons@60 18.6 v 18.6; pearls@60 60.8 v 60.9.
+  - CPU: p99 27.3M, max 38.4M.
+- **Conclusion:** the trigger almost never fires. A lone queen is length 2 for most of r0-59 after the
+  bootstrap split, and pearls are rarely in sight. The draft is inert except on Colosseum-like
+  starts. Not worth promoting.
