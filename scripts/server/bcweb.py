@@ -361,11 +361,11 @@ def cmd_submissions(a):
             bm = s.get("byMap") or {}
             if not bm:
                 continue
-            print(f"\n{s['id']} {s.get('name')} per map:")
-            for m, r in sorted(bm.items()):
+            print(f"\n{s['id']} {s.get('name')} rating {s.get('rating')} per map:")
+            for m, r in sorted(bm.items(), key=lambda kv: -(kv[1].get("rating") or 0)):
                 n = r["wins"] + r["draws"] + r["losses"]
                 pct = 100.0 * r["wins"] / n if n else 0
-                print(f"  {m:<20} {r['wins']:>3}-{r['draws']}-{r['losses']:<3} {pct:5.1f}%")
+                print(f"  {m:<20} rating {r.get('rating')!s:>5}  {r['wins']:>3}-{r['draws']}-{r['losses']:<3} {pct:5.1f}%")
 
 
 def cmd_leaderboard(a):
