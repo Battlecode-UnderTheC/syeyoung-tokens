@@ -83,5 +83,38 @@ far eats, the same spread.
   on our side. The task board doesn't touch this; their economy is far bigger (61 v 31 dragons at r100).
 - **167425** (mg39509): still lost (r54 elimination). Mid eats 24 → 32, and heads reach the far zone by r40.
 
-## Arena
-(filled in after the verdict)
+## Arena: ring-dispatch-1 (parent ring-contest-4), draft; beats_parent False
+- **vs ring-contest-4: 47-0-65** (42.0%, CI 33.2-51.2, within noise). Decided by elimination 23-26, queen 18-18,
+  longest dragon 6-20.
+  - By suite: server 31-37, official 4-6, custom 12-22.
+- **Other opponents:** ring-sprint-1 53-59, ring-sched-17 61-51, ring-rush-1 65-47. Overall 226-222.
+- **Seat gap:** seat A 132-92, seat B 94-130.
+- **CPU:** p99 24.2M, max 41.1M.
+- **Eval P(win) v the parent** (game.eval): r50 0.503, r100 0.497, r200 0.515, r300 0.510.
+- **Board control and eats v the parent:**
+  - board control r60 0.466 v 0.482, r100 0.466 v 0.486;
+  - pearls eaten r60 61.1 v 59.7, r100 134.5 v 134.3.
+
+**Weak-spot check on the draft's own games v the parent** (111 replays decoded, r0-59 eats by zone, us v them):
+
+| games | mid | far | spread@50 |
+|---|---|---|---|
+| all | 10.46 v 10.05 | 7.01 v 6.86 | 9.89 v 10.55 |
+| server | 4.27 v 4.97 | 3.42 v 4.01 | 10.6 v 11.25 |
+| our losses | 12.0 v 14.2 | 5.2 v 7.5 | |
+
+**Not fixed: the bunching remains.**
+- **184319, devil, seat B (L).** We ate 0 middle or far pearls in r0-59 against their 30 middle and 14 far. Our
+  heads stay in our zone through r60, while the parent has 4-5 heads mid/far from r40.
+  - Reproduced locally with DISPATCH_DBG: r20-50 workers are mostly HARVEST, because home food matches them all.
+  - The few explorers do take distinct sectors (6, 2, 7) but don't reach the middle.
+- **183968 and 183974, fixed-crowded (L, r89/r93 eliminations).** Middle eats 22 v 33 and 22 v 34.
+- **The pattern** is the same as 167601. A board that dispatches only the workers the food can't use doesn't move
+  harvesters off a rich home.
+
+## Next
+- An explicit explorer quota from the board: for example one EXPLORE task per k harvesters, or per unclaimed
+  sector with no ally in it, even when home food matches everyone.
+- The quota should be set by the frontier's value (unseen share x distance), not by a fixed count.
+- v1's in-matching hysteresis gave the clearest fan-out but broke matching determinism. A version that carries each
+  dragon's prior target in its TASK word, and applies it only for dragons whose word we heard, would keep both.
