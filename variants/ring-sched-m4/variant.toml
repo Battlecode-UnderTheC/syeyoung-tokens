@@ -1,0 +1,7 @@
+name = "ring-sched-m4"
+parents = ["ring-sched-m3", "ring-rescuefix-1", "ring-qpocket-1"]
+operator = "merge"
+archetype = "queen-ring"
+author = "orchestrator (g41 merge step: patches applied)"
+created = "2026-10-05"
+task = "g41-merge"
