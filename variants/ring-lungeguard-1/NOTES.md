@@ -45,5 +45,33 @@ Heads near enemy heads and trades started are unchanged.
 
 `check ring-lungeguard-1 maps/official`: passed. Local slowest turns are the same as the base (noise).
 
-## Arena
-Not run: the permission system blocked `tokenz ephemeral` and submit, so the orchestrator submits it.
+## Arena v3 = ring-contest-5 (parent ring-contest-4, same code as ring-contest-1)
+- Verdict: 59-0-53, 52.7%, within noise. Server maps 35-33. By longest dragon 11-4.
+- Its own 112 games against the parent, decoded (`/tmp/g43-7/arena`), per game, new v parent:
+  - 6+ deaths to enemy heads: 9.13 v 10.61 overall, but 5.63 v 5.51 on the server suite;
+  - eats per 6+ turn: .1222 v .1257;
+  - Voronoi r100-300: .500 v .500;
+  - heads near enemy heads: .107 v .107;
+  - trades started: 38.0 v 36.1.
+- Eval P(win): r100 .496, r200 .491, r300 .503.
+- The guard rule replayed on the server games:
+  - avoidable steps into reach: 158 v 264;
+  - but deaths after a move with no clear single step rose (reach, no clear: 172 v 131);
+  - 123 of 383 of our 6+ deaths came where a free-step run reached a clear tile.
+
+## v4 = ring-contest-10 (the escape run)
+- The change: with no clear single step but one in reach, a 6+ worker takes the shortest run of
+  2..ceil(L/4) free steps over free tiles in view, ending clear of reach and adjacent heads, with
+  room and escape level. Up to 16 end tiles are evaluated per turn.
+- The judge and the lookahead can't swap the run for a single step that stays in reach.
+- Local, server s1-2: 35-33; 6+ head deaths 4.38 v 6.29; eats per 6+ turn .1142 v .1191; Voronoi .500.
+- Fresh mapgen: 84-92 (noise). Eats are lower on off-axis, open and ring.
+- Arena: 60-0-61, 49.6%, within noise (server maps 38-39). The arena's game list repeated some ids.
+- Deduped, 112 games: 57-55.
+  - Server suite: 6+ head deaths 4.43 v 5.78 (-23%); eats per 6+ turn .1253 v .1250; Voronoi .502 v .498;
+    near enemy heads .112 v .113; trades started 29.6 v 28.3.
+  - All suites: 6+ head deaths 8.61 v 10.64.
+- Eval P(win): r100 .498, r200 .500, r300 .508, r400 .508.
+- CPU: p99 24.2M, max 59.6M (ring-contest-5's max was 44.8M).
+- Replays: runs taken in 82 of 285 run-available threatened states (the parent: 4 of 224).
+  Examples: 184015 r318 (12-long, SES); 183988 r299 (7-long, SW; lived to r464) and r393.
