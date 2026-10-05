@@ -476,6 +476,7 @@ class StrategyAgent : public bot::Agent {
   bool LungeAvoid(int d) const;
   bool LungeClear(int d) const { return d >= 0 && d < 4 && !Exposed(board_.Step(head_, d)) && !LungeExposed(board_.Step(head_, d)); }
   int32_t Length() const { return length_; }
+  bool LungeFlagged(int d) const { if (d < 0 || d > 3) return false; if (lunge_round_ != round_) BuildLungeField(); const int32_t t = board_.Step(head_, d); return LungeExposed(t) || Exposed(t); }
 #ifdef LUNGE_DBG
   bool DbgExposedStep(int d) const { return d >= 0 && d < 4 && Exposed(board_.Step(head_, d)); }
   bool DbgSafeAlt() const { for (int e = 0; e < 4; ++e) { const int32_t to = board_.Step(head_, e); if (Classify(to) == Cell::kFree && !Exposed(to)) return true; } return false; }
@@ -514,6 +515,9 @@ class StrategyAgent : public bot::Agent {
   // turn that we won't trade with can reach in one lunge (ceil(Le/4)+Le-2 steps over free tiles in
   // view). Built once per turn by BuildLungeField(); LungeExposed() reads it.
   void BuildLungeField() const;
+  // g43-7 v2: with no clear single step, a run of 2..ceil(L/4) free steps over free tiles in view that
+  // ends clear of every lunge reach and adjacent head, with room; empty if none
+  std::vector<int> LungeEscapeRun(const std::function<bool(int32_t)>& open, int32_t need) const;
   bool LungeExposed(int32_t tile) const { return lunge_round_ == round_ && tile >= 0 && lunge_mark_.Has(tile); }
   int FleeDirection() const;                            // the step furthest from the enemy heads seen (-1: none seen)
   int32_t EnemiesSeen() const;

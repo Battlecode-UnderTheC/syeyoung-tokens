@@ -76,6 +76,7 @@ class JudgedAgent : public bot::Agent {
     const bool farming = gm2::kJudgeSkipsDeadEnds && std::strstr(why_, "dead end") != nullptr;
     bool over = false;
     const bot::Action mine = a;
+    const char* mine_why = why_;
     if (gm2::kJudge) {
       if (judge_.IntoOwnBody(a)) {   // e.g. a portal exit our own body now covers
         a = judge_.Review(o, a, &over, false, false, true);
@@ -116,12 +117,22 @@ class JudgedAgent : public bot::Agent {
       a.steps = keep.steps;
       why_ = "lungeguard: keep gst step";
     }
+    // g43-7 v2: likewise gst's escape run is kept against a single step that stays in reach
+    if (mine.kind == bot::Action::kMove && !mine.resign && mine.steps.size() > 1 && std::strcmp(mine_why, "lungeguard: escape run") == 0 &&
+        a.kind == bot::Action::kMove && !a.resign && a.steps.size() == 1 && gst_.LungeFlagged(a.steps[0]) && gst_.PathFree(mine.steps)) {
+      a.steps = mine.steps;
+      why_ = "lungeguard: keep escape run";
+    }
 #ifdef LUNGE_DBG
     const char* pre = why_;
 #endif
     a = gst_.ProtectQueenAction(a, mine);
     why_ = gst_.reason();
 #ifdef LUNGE_DBG
+    if (std::strcmp(mine_why, "lungeguard: escape run") == 0) {
+      std::lock_guard<std::mutex> l(g_ld_mu);
+      ++g_ld_final[a.steps == mine.steps ? "RUN taken" : "RUN replaced"];
+    }
     if (gst_.Length() >= 6) {
       ++g_ld_turns;
       if (a.kind == bot::Action::kMove && !a.resign && !a.steps.empty() && gst_.LungeAvoid(a.steps[0])) {
