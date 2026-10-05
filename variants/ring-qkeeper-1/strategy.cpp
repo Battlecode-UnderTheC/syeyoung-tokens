@@ -156,6 +156,31 @@ void StrategyAgent::Remember(const rl::Observation& o) {
             it->second.head >= 0 && near(it->second.head, head_, 1) && !segments.count(q))
           enemy_queen_dead_ = round_;
   }
+  // g43-4: more widely. Her killer dies with her in a head-on trade, so the beside-us witness above
+  // is rare (ring-contest-7: PARK almost never fired). If she was in view last turn at an exact
+  // length L, she could move at most ceil(L/4) free steps plus L-2 paid ones this turn. When every
+  // tile that reach covers is in our window now, no portal is there, and none of her is in view,
+  // she is dead (the whole body of a living dragon stays within that reach of her old head).
+  for (int32_t q = 0; q < 2; ++q) {
+    const auto it = seen_.find(q);
+    if (it == seen_.end() || it->second.team == spawn_.team || it->second.round != round_ - 1 || it->second.head < 0 ||
+        segments.count(q) || eq_len_at_ != round_ - 1 || eq_len_ < 2)
+      continue;
+    const int32_t reach = (eq_len_ + 3) / 4 + std::max(0, eq_len_ - 2);
+    const int32_t hx = board_.X(it->second.head), hy = board_.Y(it->second.head);
+    bool covered = true;
+    for (int32_t dx = -reach; dx <= reach && covered; ++dx)
+      for (int32_t dy = -(reach - std::abs(dx)); dy <= reach - std::abs(dx) && covered; ++dy) {
+        const int32_t t = board_.Tile(hx + dx, hy + dy);
+        int32_t ex = std::abs(board_.X(t) - o.head_x()), ey = std::abs(board_.Y(t) - o.head_y());
+        ex = std::min(ex, board_.width() - ex), ey = std::min(ey, board_.height() - ey);
+        if (ex > dragons::kVisionRadius || ey > dragons::kVisionRadius || portal_[t]) covered = false;
+      }
+    if (covered) enemy_queen_dead_ = round_;
+#ifdef KEEPER_DBG
+    std::fprintf(stderr, "EQGONE r%d team%d me%d len%d reach%d covered%d\n", round_, spawn_.team, spawn_.id, eq_len_, reach, int(covered));
+#endif
+  }
 #ifdef GM2_TRACE
   if (born_ == round_ && round_ > 0) std::fprintf(stderr, "CHILDDBG r%d heard%d\n", round_, int(reports_.size()));
 #endif
@@ -1414,6 +1439,25 @@ int StrategyAgent::OpenRoom(int32_t t, const std::vector<int32_t>& body, int cap
   return reached;
 }
 
+// g43-4: the ground around t, up to cap tiles, walled only by kelp and other dragons (her own body
+// moves away as she goes, so it is not a wall); an unseen edge counts as open ground
+int StrategyAgent::PocketRoom(int32_t t, int cap) const {
+  pocket_.Begin(board_.size());
+  pocket_queue_.assign(1, t);
+  pocket_.Set(t);
+  for (size_t qi = 0; qi < pocket_queue_.size(); ++qi)
+    for (int d = 0; d < 4; ++d) {
+      const int32_t to = board_.Step(pocket_queue_[qi], d);
+      if (to == kUnknown) return cap;
+      if (to < 0 || pocket_.Has(to)) continue;
+      pocket_.Set(to);
+      if (board_.Current(to) && board_.at(to).occupant >= 0 && board_.at(to).occupant != spawn_.id) continue;
+      pocket_queue_.push_back(to);
+      if (static_cast<int>(pocket_queue_.size()) >= cap) return cap;
+    }
+  return static_cast<int>(pocket_queue_.size());
+}
+
 bot::Action StrategyAgent::QueenMove() {
   if (queen_home_ < 0) queen_home_ = head_;
   queen_id_ = spawn_.id;
@@ -1666,6 +1710,17 @@ bot::Action StrategyAgent::QueenMove() {
         const int ex = std::max(0, distance(t, park_anchor_) - r);
         candidate.value -= 4.0 * ex * ex;
       }
+      // g43-4: no eating into pockets during the race (the queen plays safe: never into pockets). From
+      // kRaceFrom a route whose end lies in ground walled by kelp and other dragons (her own body moves
+      // away, so it is no wall) smaller than her body plus kPocketSlack is a pocket; each tile short
+      // costs more than a pearl is worth, so a pearl trail no longer leads her in. (Arena 179191 was
+      // not this: open ground, but her own coil at a dead-end corridor's mouth boxed her.)
+      if (round_ >= kRaceFrom && round_ < 499) {
+        const int need = static_cast<int>(candidate.body.size()) + kPocketSlack;
+        const int open = PocketRoom(t, need);
+        work_ += open;
+        if (open < need) candidate.value -= 300.0 + 20.0 * (need - open);
+      }
       if (keeper_limit && depth == 0 && escape > 0 && liberties > 0 && !threat[t] && QueenRisk(t) == 0) keeper_safe = true;
       if(queen_forage_ && early_roaming) {
         // The queen plays safe while foraging: no corridor tiles on the way, no low-room endpoints.
@@ -1741,8 +1796,10 @@ bot::Action StrategyAgent::QueenMove() {
     // g43-4: the wait sheds 2 a turn, which only pays while a blocker may clear (server-r17: Portals
     // 1150391 waited 8 turns in a row, 19 -> 3, then entered anyway and died). So she waits at most
     // kQueenWaitMax turns in a row, and never when the dead end is deep enough to last to r499
-    // (inside it she keeps her length for the queen tiebreak).
-    queen_waits_ = queen_wait_round_ == round_ - 1 ? queen_waits_ : 0;
+    // (inside it she keeps her length for the queen tiebreak). Counting only waits in a row was not
+    // enough (arena 179191: 3 waits, a step on into the dead end, 3 waits, ... 20 -> 2): so the
+    // count resets only after kQueenWaitReset rounds without a wait.
+    if (round_ - queen_wait_round_ > kQueenWaitReset) queen_waits_ = 0;
     if(RING11_BRANCH_MODE>=2 && closed_branch[best.steps.front()] && length_>=4 && FreeSlots()>0 &&
        queen_waits_ < kQueenWaitMax && branch_depth[best.steps.front()] < 499 - round_) {
       ++queen_waits_; queen_wait_round_ = round_;
@@ -1819,7 +1876,7 @@ bot::Action StrategyAgent::Turn(const rl::Observation& o) {
   }
   if(!IsQueen()) a=Supply14Yield(a);
 #ifdef KEEPER_DBG
-  if (IsQueen() && round_ >= 430) std::fprintf(stderr, "QA r%d team%d len%d kind%d split%d steps%d why=%s\n", round_, spawn_.team, length_, int(a.kind), a.split, int(a.steps.size()), reason_);
+  if (IsQueen() && round_ >= 430) std::fprintf(stderr, "QA r%d team%d len%d kind%d split%d steps%d open%d why=%s\n", round_, spawn_.team, length_, int(a.kind), a.split, int(a.steps.size()), PocketRoom(head_, length_ + kPocketSlack), reason_);
 #endif
 #ifdef QRACE_DBG
   if (IsQueen() && round_ >= 480) std::fprintf(stderr, "QQ r%d team%d len%d kind%d split%d resign%d steps%d why=%s\n", round_, spawn_.team, length_, int(a.kind), a.split, int(a.resign), int(a.steps.size()), reason_);
@@ -2477,9 +2534,7 @@ bot::Action StrategyAgent::QueenRace(const Report& champ) {
 #ifdef QRACE_DBG
   if (round_ >= kRaceFrom && (round_ % 10) == 0) std::fprintf(stderr, "QR r%d team%d id%d eq%d champ%d clen%d cage%d\n", round_, spawn_.team, spawn_.id, round_ - enemy_queen_seen_, champ.id, champ.length, round_ - champ.round);
 #endif
-  // g43-4: in the keeper's TOPUP the queen eats only within 2 of home, so feeding her needs no fresh sighting
-  const bool topup = KeeperMode() == kKeepTopup;
-  if (round_ < kRaceFrom || round_ >= 499 || (!topup && round_ - enemy_queen_seen_ > kRaceFresh) || length_ < kFeedMin) return {};
+  if (round_ < kRaceFrom || round_ >= 499 || round_ - enemy_queen_seen_ > kRaceFresh || length_ < kFeedMin) return {};
   if (champ.id < 0 || champ.id > 1 || champ.id == spawn_.id || champ.length <= 0) return {};
   int32_t target = -1;
   bool in_view = false;

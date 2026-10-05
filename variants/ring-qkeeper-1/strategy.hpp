@@ -19,18 +19,22 @@
 inline constexpr int kRaceFrom = 430, kRaceFresh = 30, kRaceReach = 2;
 inline constexpr int kQGateFrom = 300;   // g42-4: see EnemyQueenRace()
 // g43-4 (ring-qkeeper-1), see KeeperLocal():
-// - kTopupFrom: kRaceFrom, when every race starts. server-r17: with both queens alive at r430 and
-//   the race gate shut (sightings from r84, r296), ours stayed at a median 3 to r499 while theirs
-//   grew 17 -> 25 (7-14); the brief's ~r460 left her 30 of those rounds idle.
+// - kTopupFrom: the brief's ~r460; feed14 resigns start at 450, so by 460 the pearls they and the
+//   regrowing beds leave beside a parked queen are there to take. (r430 with worker walk-ins was
+//   tried in ring-contest-7: with the enemy queen dead but unseen it grew ours into danger, 179801
+//   4 -> 16 then lunged, where the parent stayed parked and won.)
 // - kParkMargin: a head-on trade or one feed wave changes a queen's length by about 2-3, so we park
 //   only when ahead by more than that PLUS what her queen can still gain: from the round her length
 //   was seen to r499 at kParkGrowth a round. An enemy queen fed by a resign wave grows about 1 a
 //   round (g43-4 duels v ring-contest-1: 11 -> 42 in r460-490, 9 -> 49 in r450-490); try 1 allowed
 //   only (round - seen)/4 and our parked queen was overtaken (18 v 42).
-inline constexpr int kTopupFrom = kRaceFrom, kParkMargin = 3, kParkGrowth = 1;
+inline constexpr int kTopupFrom = 460, kParkMargin = 3, kParkGrowth = 1;
 // - kRelayFrom: the bare keeper word (strategy.cpp, Turn) starts 30 rounds before kRaceFrom, enough
 //   for a sighting to cross a team (a relay hop per two rounds) before the r430 gate reads it.
 inline constexpr int kRelayFrom = kRaceFrom - 30;
+// - kPocketSlack: a pocket is open ground (beyond her body) for fewer than her length + this many
+//   tiles: room to turn round once (a 2x2 loop) and pass one blocker, as the queen11 wait assumes.
+inline constexpr int kPocketSlack = 4;
 inline constexpr int kHungerUntil = 150, kHungerRounds = 20;
 // g38-sched (ring-sched-1): deterministic arrival-time assignment of nearby food among the
 // workers in view (see ChooseGoal). 0: off (ring-bud-cpu's per-dragon greedy choice).
@@ -529,6 +533,7 @@ class StrategyAgent : public bot::Agent {
   bot::Action QueenMove();
   bool Corridor(int32_t t) const;
   int OpenRoom(int32_t t, const std::vector<int32_t>& body, int cap) const;
+  int PocketRoom(int32_t t, int cap) const;   // g43-4
   bot::Action RingQueen();
   bot::Action RingWorker(bot::Action normal, const rl::Observation& o);
   std::vector<int32_t> ring_;
@@ -566,8 +571,7 @@ class StrategyAgent : public bot::Agent {
   //   kKeepPark:  enemy queen known dead, or ours longer than her last exact length by more than
   //               she can still grow by r499. 1-step moves, adjacent eats, stay near home.
   //   kKeepTopup: from kTopupFrom, enemy queen not known dead and no race: eat safe pearls within
-  //               1-2 steps, never a ring split (the old park sat at length 2 next to pearls);
-  //               workers may walk in and resign beside her (QueenRace) without a fresh sighting.
+  //               1-2 steps, never a ring split (the old park sat at length 2 next to pearls).
   //   kKeepRace:  today's behaviour (EnemyQueenRace()).
   // The state (exact enemy-queen length and its age, dead flag, the queen's mode) rides in the
   // ring word's late-game call bits (see KeeperBits), and dragons that don't know the ring relay
@@ -576,9 +580,9 @@ class StrategyAgent : public bot::Agent {
   int32_t eq_len_ = -1, eq_len_at_ = -1000;          // the enemy queen's last exact length, and when
   int32_t heard_mode_ = 0, heard_mode_at_ = -1000;    // the queen's mode as relayed, and its stamp
   int32_t park_anchor_ = -1;                          // where the queen settled for PARK/TOPUP
-  // g43-4: consecutive queen11 waits (a blocker that moves on clears in a turn or two; three
-  // waits shed 6 of her length, more is bleeding)
-  static constexpr int kQueenWaitMax = 3;
+  // g43-4: queen11 waits (a blocker that moves on clears in a turn or two; three waits shed 6 of
+  // her length, more is bleeding); the count resets after kQueenWaitReset rounds without one
+  static constexpr int kQueenWaitMax = 3, kQueenWaitReset = 20;
   int queen_waits_ = 0, queen_wait_round_ = -1000;
   bool keeper_nosplit_ = false;                       // no ring pearl split (PARK/TOPUP from kRaceFrom)
   int KeeperLocal() const;                            // the mode from this dragon's own knowledge
@@ -612,6 +616,8 @@ class StrategyAgent : public bot::Agent {
   };
   mutable Scratch esc_index_, esc_when_, q_body_, q_dist_, q_mine_, cont_index_, sched_seen_;
   mutable std::vector<int32_t> esc_queue_, q_queue_, sched_queue_;
+  mutable Scratch pocket_;   // g43-4 PocketRoom
+  mutable std::vector<int32_t> pocket_queue_;
   // QueenContinuation's states: the base body plus up to four new head tiles (ring.cpp)
   struct ContState { int added[4]; int k = 0; int size = 0; int ate[4]; int ne = 0; int first = -1; };
   mutable std::vector<ContState> cont_beam_, cont_next_;
