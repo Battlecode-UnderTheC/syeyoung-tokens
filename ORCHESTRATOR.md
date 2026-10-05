@@ -107,10 +107,11 @@ These didn't work:
    - Drop an idea only when its target metric doesn't move.
    - Borrow from opponent bots: we have the full source of every arena bot (`tokenz get <id>`, `git show variant/<name>:...`). When an opponent clearly does something better, e.g. gst-giant-2's late giant-feeding, port that MECHANISM into our line as one change.
    - Keep a sustained effort on the biggest weak spot (late consolidation as of g40), instead of single shots spread thin.
-7. **Merge step (every round).**
-   - When a round's drafts are in, stack every change that didn't lose onto one draft: winners, plus changes within noise whose mechanism measurably worked.
-   - Build the stack by applying each change's exact diff against its code parent with `patch`. Check that it builds, passes `check` and survives a light duel, then submit it as the line's next draft.
-   - It becomes the next round's base, so gains accumulate instead of one winner retiring the others.
+7. **Stacking step (incremental, not one big merge).**
+   - Pick the single strongest draft of the round, promote it, and deploy it if it's the best.
+   - Then add the other non-losing changes ONE AT A TIME on top of it. Each addition is its own submission, with --parent set to the previous stack, so any degradation shows up against a known parent and can be dropped.
+   - Order the additions by evidence strength. Each one needs its own verdict (and a replay-backed behaviour check) before the next goes on.
+   - Never mix all the changes together and submit them as one bot: that hides which change hurt.
    - Also port useful changes across lines (e.g. ring-sched-2 = ring-sched-1 + ring-plus-19 + ring-plus-21).
 8. **Measure and record.**
    - Close g<N>.md with Results, What we learned and Next.
