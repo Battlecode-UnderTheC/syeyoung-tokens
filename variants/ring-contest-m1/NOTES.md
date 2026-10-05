@@ -69,4 +69,9 @@ Patches 1-3 applied with no conflicts (they touch disjoint hunks). Build + check
   pearls, and lost on longest 39-40.
 
 ## Arena
-Submitted as ring-contest, parent ring-sched-17 (the report has the arena id and verdict).
+Submitted as **ring-contest-1** (line ring-contest, parent ring-sched-17); not promoted.
+- vs ring-sched-17: **66-0-46** (58.9%, CI 49.7-67.6): BEATS parent, within noise.
+  By suite: server 43-25, custom 19-15, official 4-6. Decided by: elim 33-18, queen 22-17, longest 11-11.
+- vs ring-plus-21 68-44, ring-rush-1 71-1-40, cs-queen-split-tail-risk-v1-7 73-39.
+- Worst maps over all opponents: server/trophy 3-13, official/Colosseum 2-6.
+- CPU: max 48.0M, p99 26.3M.
