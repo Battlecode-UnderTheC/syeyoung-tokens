@@ -1414,6 +1414,30 @@ int StrategyAgent::OpenRoom(int32_t t, const std::vector<int32_t>& body, int cap
   return reached;
 }
 
+// g43-6: whether a worker whose head is at `from` reaches fewer than kBoxRoom tiles once this
+// dragon's body is `body` (our current tiles not in it are free; other dragons and kelp block;
+// an unseen edge counts as open ground)
+bool StrategyAgent::BoxedBy(int32_t from, const std::vector<int32_t>& body) const {
+  q_body_.Begin(board_.size());
+  for (const int32_t b : body) if (b >= 0) q_body_.Set(b);
+  q_dist_.Begin(board_.size());
+  q_queue_.assign(1, from);
+  q_dist_.Set(from);
+  for (size_t qi = 0; qi < q_queue_.size(); ++qi) {
+    ++work_;
+    for (int d = 0; d < 4; ++d) {
+      const int32_t n = board_.Step(q_queue_[qi], d);
+      if (n == kUnknown) return false;
+      if (n < 0 || q_dist_.Has(n) || q_body_.Has(n)) continue;
+      q_dist_.Set(n);
+      if (board_.Current(n) && board_.at(n).occupant >= 0 && board_.at(n).occupant != spawn_.id) continue;
+      q_queue_.push_back(n);
+      if (static_cast<int32_t>(q_queue_.size()) >= kBoxRoom) return false;
+    }
+  }
+  return true;
+}
+
 bot::Action StrategyAgent::QueenMove() {
   if (queen_home_ < 0) queen_home_ = head_;
   queen_id_ = spawn_.id;
@@ -1643,6 +1667,16 @@ bot::Action StrategyAgent::QueenMove() {
         const int open=OpenRoom(t,candidate.body,kForageRoom);
         if(open<kForageRoom) candidate.value-=2.0*(kForageRoom-open);
       }
+      // g43-6 (follow-up): in the small-start opening the queen doesn't shut a worker in. Arena
+      // Colosseum games: she foraged r4-r19 in the 3-wide mouth of the home pocket and the founder
+      // left it only at r10-r32 (ring-contest-11: 184515, 184321; ring-contest-14: 186414). A flood
+      // from a worker's head that her body (where she'd stop) cuts to under kBoxRoom tiles costs her
+      // kBoxCost.
+      if(FOUNDER_MODE && founder_home && early_roaming)
+        for(const auto& [id,w]:seen_)
+          if(id!=spawn_.id && w.team==spawn_.team && w.round==round_ && w.head>=0 &&
+             Torus(t,w.head)<=kBoxReach && BoxedBy(w.head,candidate.body))
+            candidate.value-=kBoxCost;
       if(EARLY15_MODE==3 && early_roaming) {
         const int repeats=std::count(recent_.begin(),recent_.end(),t);
         candidate.value-=0.4*repeats; // Break food-free local cycles without changing danger penalties.

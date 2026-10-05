@@ -1,4 +1,4 @@
-# ring-founder-1 (g43-6, arena ring-contest-11, line ring-contest, parent ring-contest-4 = ring-contest-m1 code)
+# ring-founder-1 (g43-6; final = arena ring-contest-16; earlier ring-contest-11, -14, -15; line ring-contest, parent ring-contest-4 = ring-contest-m1 code)
 
 ## Idea
 On 1-2-starter maps (Colosseum 5-25, Trophy 14-46 in arena-r17) the queen sat at length 4 unsplit
@@ -70,3 +70,42 @@ a FOUNDER to the food and let the queen split at 4.
     forages in the pocket mouth. Most of the gain is the queen's splits and the second founder.
 - **Trophy is not fixed.** The paired record is a little worse, and the cup is still taken by the
   enemy when it gets there first.
+
+## Follow-up (orchestrator: the r0 founder lingers in the home pocket; make the queen stop blocking its mouth)
+Arena games showed the founder leaving its Colosseum home pocket late: r10/r30 in ring-contest-11,
+r23/r18 in ring-contest-14 (seat A/B). The queen foraged in the pocket's 3-wide mouth from r4 to r19.
+- **Iteration 6 (ring-contest-14):**
+  - The queen pays 12 for each ally head within 2 of where she'd stop.
+  - The founder keeps its way-goal (sticky), and doesn't treat it as a bed to wait at.
+  - Once the frontier runs out (the mirror fills memory), it walks to the stalest reachable view.
+  - Rival distance to a region is walking distance, not torus distance: the two pockets touch
+    across the wrap behind kelp.
+  - Verdict: 55-0-57 v parent, loses within noise.
+  - Paired same-seed games v the other 3 opponents on 1-2-starter maps: dragons at r20/40/60
+    3.8/6.4/8.9 v the parent's 3.9/6.6/9.4. ring-contest-11 was 3.9/6.8/9.6.
+  - Colosseum r40 8.5 v 5.3 (ring-contest-11: 12.2).
+  - Not fixed: in 186414 the queen still sat in the mouth from r4 to r19. The give-way never fired,
+    because the founder was at the back of the pocket.
+- **Iteration 7 (ring-contest-15) = iteration 6 + the queen doesn't box a worker in.** Where her body
+  would cut a worker within 6 off to under 30 reachable tiles, she pays 24 (BoxedBy).
+  - Arena Colosseum: the founder is out of the pocket by r7-8 in all 8 games, and the queen sits
+    in the mouth 2-4 turns in r0-19.
+  - But 54-0-58 v parent (eval at r100/200/300: .478/.475/.478).
+  - Paired 1-2-starter games: dragons at r60 8.2 v 9.4. The iteration-6 founder changes cost elsewhere.
+- **Iteration 8 (final, ring-contest-16) = ring-contest-11 + the no-box rule only.** Iteration 6's founder
+  changes are dropped.
+  - Local Colosseum traces: the founder is out by r8-9 in 8 of 10.
+  - Verdict: **58-0-54 v parent** (51.8%, "BEATS parent", within noise).
+    - By suite: server 35-33, custom 17-17, official 6-4.
+    - Decided by: elimination 30-26, queen 19-19, longest 9-9.
+  - Eval P(win) v parent: .508 / .512 / .519 at r100 / 200 / 300.
+  - Other opponents: ring-sprint-1 53-59, ring-sched-17 63-49, ring-rush-1 75-37.
+  - CPU: p99 26.3M, max 48.0M.
+  - Arena Colosseum games: **8-0**.
+    - The founder leaves the pocket at r8 in all 8 (ring-contest-11: r10 in seat A, r30-32 in seat B).
+    - The queen sits in the mouth 2-5 turns in r0-19, against 15+ before.
+    - Dragons at r40: 11-19 (188252: 3/19/34 at r20/40/60).
+  - Paired with the parent on the same opponent, seed and seat (the other three opponents):
+    - All 1-2-starter maps: W-L 57-51 v 53-55; dragons at r20/40/60 3.9/7.1/9.5 v 3.9/6.6/9.4.
+    - Colosseum: 6-0 v 3-3; dragons 3.2/16.0/20.7 v 2.0/5.3/14.2.
+    - Trophy: 4-8 v 5-7. Not addressed: the cup race is next round's problem.

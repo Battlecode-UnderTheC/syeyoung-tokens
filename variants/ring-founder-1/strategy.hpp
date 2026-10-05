@@ -68,6 +68,12 @@ inline constexpr int kFounderUntil = kContestUntil;   // the opening (r60), as t
 // bed field (Colosseum's middle, one pearl every 3-4 tiles) were all singletons, no region at all.)
 inline constexpr int kRegionLink = 3;
 inline constexpr int kArrive = 2;       // in a region: within 2 steps of one of its beds (its cluster radius)
+// the queen doesn't box a worker in (QueenMove, BoxedBy): a worker within kBoxReach of where she'd
+// stop that then reaches fewer than kBoxRoom tiles costs her two pearls' worth (24). kBoxRoom 30:
+// more than a home pocket holds (Colosseum's is 6x3 = 18) and less than the open board around it;
+// kBoxReach 6: a worker she could cut off is near (her home pull keeps her within 6 of home).
+inline constexpr int kBoxRoom = 30, kBoxReach = 6;
+inline constexpr double kBoxCost = 24.0;
 // g40-6 (ring-bedlearn-1): exact bed timing from the countdowns we observed. A bed read with
 // countdown c in round s grows its pearl at the tick of round s + c, and the engine redraws its
 // gap at every tick, eaten or blocked alike (docs/game.md; engine Game::BeginRound). Our head takes
@@ -541,6 +547,7 @@ class StrategyAgent : public bot::Agent {
   bot::Action QueenMove();
   bool Corridor(int32_t t) const;
   int OpenRoom(int32_t t, const std::vector<int32_t>& body, int cap) const;
+  bool BoxedBy(int32_t from, const std::vector<int32_t>& body) const;   // g43-6
   bot::Action RingQueen();
   bot::Action RingWorker(bot::Action normal, const rl::Observation& o);
   std::vector<int32_t> ring_;
@@ -732,7 +739,8 @@ class StrategyAgent : public bot::Agent {
   bool contest_ = false;
   // g43-6 (ring-founder-1): 0 undecided, 1 founder (until its first split in a region), 2 done, 3 not one (founder.cpp)
   int8_t founder_ = 0;
-  bool small_start_ = false;   // the queen: we started with <= 2 dragons (her r0 unit count)
+  bool small_start_ = false;
+   // the queen: we started with <= 2 dragons (her r0 unit count)
   int32_t FounderGoal(const Paths& paths, bool* here);   // *here: in the chosen region
   // g42-1 (ring-clustercall-1): the team-wide early cluster call (call.cpp). A dragon that sees a
   // bed cluster with more live or soon-due beds than our heads around it calls the team over
