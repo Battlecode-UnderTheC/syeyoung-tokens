@@ -49,9 +49,13 @@ Rules: `docs/game.md`, unswbc 1.2.7.
    - `tokenz --agent {task} submit <out> --bot {line} --parent {base_id} --note "Hypothesis: ... Change: ... Local: ..." --wait`
    - If the permission system blocks the submit, don't work around it. Report "ready" with
      the bot dir and the note, and the orchestrator submits it.
-6. Don't promote. The orchestrator checks each verdict and promotes. Report `beats_parent`
+6. **Check your draft's own arena games.** After the verdict, pull your draft's games against its parent (`tokenz games --sub <id> --vs <parent> --limit 1000`, plus replays and per-game metrics from the arena API).
+   - Measure the weak spot your change targets in exactly the situation the analysis describes, compared with the parent's games on the same seeds. Use the analysis's own scripts where they exist (../syeyoung-tokens.league/replays/*/tools or analysis/).
+   - Decode 2-3 of those games and confirm the behaviour.
+   - Report whether the targeted weak spot actually got fixed in the arena games, not just locally.
+7. Don't promote. The orchestrator checks each verdict and promotes. Report `beats_parent`
    as the arena gives it.
-7. Commit `variants/{variant}/`: the code, `variant.toml` and `NOTES.md` (idea, change,
+8. Commit `variants/{variant}/`: the code, `variant.toml` and `NOTES.md` (idea, change,
    local numbers, arena verdict).
 
 ## Watch replays (metrics are not the goal)
