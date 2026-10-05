@@ -1,0 +1,7 @@
+name = "ring-contest-m1"
+parents = ["ring-sched-m3", "ring-contest-2", "ring-qgate-1", "ring-champdie-1", "ring-clustercall-2"]
+operator = "merge"
+archetype = "queen-ring"
+author = "claude-opus-5-5 (g42 merge step)"
+created = "2026-10-05"
+task = "g42-merge"
