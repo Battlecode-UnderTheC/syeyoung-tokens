@@ -53,6 +53,7 @@ Rules: `docs/game.md`, unswbc 1.2.7.
    - Measure the weak spot your change targets in exactly the situation the analysis describes, compared with the parent's games on the same seeds. Use the analysis's own scripts where they exist (../syeyoung-tokens.league/replays/*/tools or analysis/).
    - Decode 2-3 of those games and confirm the behaviour.
    - Report whether the targeted weak spot actually got fixed in the arena games, not just locally.
+   - You built it, so you adjust it: if the arena games show the fix is incomplete or has a side effect, make a few more edits and resubmit each version (same --parent).
 7. Don't promote. The orchestrator checks each verdict and promotes. Report `beats_parent`
    as the arena gives it.
 8. Commit `variants/{variant}/`: the code, `variant.toml` and `NOTES.md` (idea, change,
