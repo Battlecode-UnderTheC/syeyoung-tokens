@@ -900,10 +900,7 @@ StrategyAgent::Goal StrategyAgent::ChooseGoal(const Paths& paths) const {
         }
       }
     }
-    // g43-3: ... but not on home ground (AtHome): there the x2 pulled the workers home whenever a
-    // rival head showed up, while the open middle, which the rival reaches about as soon as we
-    // do, kept x1 (arena-r17: middle eats r0-59 11.5 v 16.0; 167601/167062/167425 bunch at home)
-    if (score > 0 && contested && !AtHome(t)) score *= kContestDeny;
+    if (score > 0 && contested) score *= kContestDeny;
     for (int dir = 0; dir < 4; ++dir)
       if (board_.Step(t, dir) == kUnknown && !(p_.portal_explore && (portal_[t] >> dir & 1) && !WillCross())) {
         // g16-27: replay pattern #33 - in the opening, a frontier tile close to an ally who

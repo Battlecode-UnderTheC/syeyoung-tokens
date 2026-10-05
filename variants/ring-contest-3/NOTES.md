@@ -97,3 +97,32 @@ Submitted as **ring-contest-6** (line ring-contest, parent ring-contest-4); not 
     - On crowded maps the home contest is real, so dropping the x2 at home costs food.
   - The seat-B pair 177206/175759 shows the same, milder: 62 v 65 eats.
   - fixed-walled-centre 177965/176922 is unchanged.
+
+## Iteration 3 (this version): the x2 contest boost is kept at home
+ring-contest-6 ceded home food on fixed-crowded, so the boost is restored exactly as in the base.
+What remains: AtHome, the explorer far-food rule (skip uncontested far food only at home) and the
+home-call gate.
+- **Light duels v ring-contest-4** (eph-69f06640):
+  - server random:2, duel-3a7cbc8c: 37-31. 3+ starters 22-18, <=2 starters 15-13.
+  - 5-starter and crowded maps, duel-9bdfdd9e: 18-22.
+    - Dispersion: r60 dragons 22.5 v 22.4; r30 head distance 5.83 v 5.53.
+    - Eats r0-59 mid/far: 17.3/8.4 v 16.9/8.4.
+- **Arena: ring-contest-9** (parent ring-contest-4), not promoted.
+  - **vs ring-contest-4: 52-0-60** (46.4%, CI 37.5-55.6). It loses to the parent, within noise.
+    - By suite: server 31-37, custom 16-18, official 5-5.
+    - Decided by: elim 24-26, queen 20-17, longest 7-16.
+    - Eval P(win) v parent: r100 .508, r200 .516, r300 .496.
+  - vs ring-sched-17 67-45, ring-sprint-1 54-58, ring-rush-1 71-1-40.
+  - CPU: p99 26.3M, max 48.0M.
+- **Weak-spot check:** NOT fixed, but no longer harmful.
+  - vs ring-sched-17, 112 games paired with ring-contest-4's on the same map, seed and seat:
+    - W 67 v 66.
+    - Eats r0-59 own/mid/far: 38.1/16.3/6.5 v 37.9/16.1/6.3. Dragons r60: 18.8 v 19.0.
+    - 5+ starters (32 pairs): mid/far 19.1/11.2 v 19.0/10.9, dragons r60 28.1 v 28.9.
+    - 5+ starters on small maps (8 pairs): 22.1/8.9 v 23.4/9.8.
+  - fixed-crowded seat A (183038 v 175822): own-zone eats 13 v 25, and it loses where the parent
+    won. Seat B (183040 v 175759): 18 v 23, both lost.
+  - fixed-home-clusters: identical games.
+- **Conclusion:** the opening-ceding seen in arena-r17 was not caused by the explorer rule or the
+  home calls; in the arena the per-class opening metrics are indistinguishable from the parent's.
+  The 167601/167888 wins at the film seeds did not generalise.
