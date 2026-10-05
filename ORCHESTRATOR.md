@@ -107,9 +107,9 @@ These didn't work:
    - Drop an idea only when its target metric doesn't move.
    - Borrow from opponent bots: we have the full source of every arena bot (`tokenz get <id>`, `git show variant/<name>:...`). When an opponent clearly does something better, e.g. gst-giant-2's late giant-feeding, port that MECHANISM into our line as one change.
    - Keep a sustained effort on the biggest weak spot (late consolidation as of g40), instead of single shots spread thin.
-7. **Advance the head: one change per step, no merges.** This is how the ring-plus line climbed: ring-plus-1 → 4 → 7 → 9 → 16 → 19 → 21, each one change on its parent.
+7. **Advance the head: one change per step, no merges.** This is how the early lines climbed. gather-split-trade went 15 → 23 → 27 → 31 → 33 → 34 → 39 → 45 → 49 → 51 → 63 → 74 → 84 → 90 → 131 → gst-search-1 → 4 → 8, and ring-plus went 1 → 4 → 7 → 9 → 16 → 19 → 21. Each step was one change on the latest winning draft. It was continuous: as soon as a draft beat its parent, new workers built on it, with no round-end merge.
    - Every worker builds ONE change on the line's current head and submits with --parent = that head.
-   - The round's best draft that beats its parent becomes the new head. Next round's workers build on it.
+   - The newest draft that beats its parent becomes the base for the next workers right away (continuous, not per round).
    - Other good changes are NOT combined into it. If still promising, they are redone on the new head in a later round, each as its own single change, so a degradation is always traceable.
    - Keep the deployed or previous head on the leaderboard: promoting in the same line retires the parent. Put a new head in its own line, or resubmit the old one, before promoting.
    - Merges and diversity come later, not every round.
