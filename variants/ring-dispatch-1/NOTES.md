@@ -118,3 +118,60 @@ far eats, the same spread.
 - The quota should be set by the frontier's value (unseen share x distance), not by a fixed count.
 - v1's in-matching hysteresis gave the clearest fan-out but broke matching determinism. A version that carries each
   dragon's prior target in its TASK word, and applies it only for dragons whose word we heard, would keep both.
+
+## ring-dispatch-2: the explorer quota (follow-up, same variant directory)
+The orchestrator asked for the fix: a minimum number of explorers set by the value of unexplored ground, even when
+home food could feed everyone. Code: `strategy.cpp` ChooseGoal, marked g43-2b.
+- **Quota.** Before r60, n workers in view, at least round(n x 0.5 x unseen share) explore. Never a lone worker,
+  never all of them.
+- **Who goes.** The harvesters with the latest food match go first, ties to the higher id, then the food is matched
+  again without them. Every dragon that sees the same allies picks the same explorers.
+- **Stickiness.**
+  - A quota explorer keeps the role for 10 rounds.
+  - An ally in view whose last TASK word says EXPLORE is left out of the food matching. This is the previous task
+    carried in the sonar word.
+- **What a quota explorer values.**
+  - Its own sector's frontier scores x2.
+  - Food scores x0.3 unless it is contested, or within 3 steps and further from home than the explorer's head.
+
+**Trials** (arena duels vs ring-contest-4, server suite, random:2). Spread is the mean BFS distance of worker heads
+from our starters, at r30 and r50.
+
+| version | W-L | mid+far eats r0-59, us v them | spread@30 | spread@50 |
+|---|---|---|---|---|
+| quota share 1.0 | 32-36 | 8.7 v 9.0 | 8.36 v 8.89 | 10.24 v 10.62 |
+| quota share 0.5 | 36-32 | 7.3 v 9.9 | 9.19 v 9.65 | 10.12 v 11.29 |
+| 0.5 + 10-round hold + explorer words | 37-30 | 8.8 v 10.6 | 8.65 v 8.66 | 9.9 v 10.7 |
+
+- **Quota explorers.** In the devil seed-13802921253180459702 sim they rose from about 10% of worker turns to about
+  30% with the hold. About half of those turns still took food.
+- **Fresh mapgen**, before the last food tweak: 78-98. Open 4-12, crowded 5-11, sealed-spawn 5-11.
+- **Local maps/server**, seeds 1,2: 37-31.
+
+### Arena verdict: ring-dispatch-2 (parent ring-contest-4), beats_parent TRUE (within noise)
+- **vs ring-contest-4: 58-0-54** (51.8%, CI 42.6-60.8). Server maps 35-33.
+  - Decided by: elimination 25-23, queen 22-20, longest dragon 11-10.
+- **Other opponents:** ring-sprint-1 50-62, ring-sched-17 58-54, ring-rush-1 71-41.
+- **Seat gap:** seat A 139-85, seat B 98-126.
+- **CPU:** p99 24.1M, max 47.9M.
+- **Eval P(win) v the parent:** r100 0.504, r200 0.539, r300 0.537.
+
+**Weak-spot check, paired** (the draft's own 111 games v the parent; same games, so same seeds; r0-59, us v them):
+
+| games | middle eats | far eats | spread@30 | spread@50 |
+|---|---|---|---|---|
+| all | 10.5 v 9.8 | 6.4 v 7.1 | 8.59 v 8.58 | 10.03 v 10.36 |
+| server | 4.0 v 5.3 | 3.7 v 4.4 | 9.04 v 9.05 | 10.89 v 11.34 |
+| our 53 losses | 5.0 v 9.9 | 6.0 v 10.0 | 7.7 v 8.0 | 9.25 v 10.35 |
+
+**NOT fixed.**
+- **187477** (devil, the same seed as 184319): we ate 0 middle or far pearls, against their 31 middle and 12 far.
+  Spread@50 was 7.3 v 13.8.
+- **187444** (devil): middle eats 3 v 33.
+- **187354 and 187351** (fixed-crowded): far eats 10 v 27 and 12 v 37.
+- **The win came from later in the game,** not the opening: eval P(win) is 0.50 at r100 and 0.54 at r200.
+- **Why the quota doesn't move it.** Explorers carry the hunger and unseen multipliers but still eat home food on
+  the way; seat B collapses. In losses the gap is the parent's fan-out, not ours.
+
+**Next:** make the quota explorer's goal the sector frontier itself (as RushGoal does for the starters), not a score
+multiplier that home food can outbid. Measure it by mid/far eats in seat B losses.

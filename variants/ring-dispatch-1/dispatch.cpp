@@ -129,9 +129,9 @@ void StrategyAgent::SetTask(int32_t goal, const Paths& paths) {
     const bool kept = task_round_ == round_ - 1 && role == task_role_ &&
                       (role == kTaskExplore ? sector == task_sector_ : target == task_target_);
     const bool food_explore_flip = task_round_ == round_ - 1 && (role == kTaskExplore) != (task_role_ == kTaskExplore);
-    std::fprintf(stderr, "TDBG r%d team%d id%d role%d sec%d headsec%d kept%d flip%d prev%d home%d heard%d\n", round_, spawn_.team,
+    std::fprintf(stderr, "TDBG r%d team%d id%d role%d sec%d headsec%d kept%d flip%d prev%d home%d heard%d forced%d\n", round_, spawn_.team,
                  spawn_.id, role, sector, SectorOf(head_), int(kept), int(food_explore_flip), int(task_round_ == round_ - 1),
-                 home_kind_, int(tasks_heard_.size()));
+                 home_kind_, int(tasks_heard_.size()), int(forced_explorer_));
   }
 #endif
   task_role_ = role;

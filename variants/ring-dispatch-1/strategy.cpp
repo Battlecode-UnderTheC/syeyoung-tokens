@@ -656,6 +656,7 @@ StrategyAgent::Goal StrategyAgent::ChooseGoal(const Paths& paths) const {
   // dragon nearest to two pearls no longer scares everyone off both, and the dragons left
   // over (more dragons than food) look further or explore.
   std::vector<int32_t> sched_owner;
+  forced_explorer_ = false;
   int32_t sched_mine = 1 << 20;   // the arrival time of the tile matched to us
   std::vector<int32_t> sched_done;                          // g43-2: the ids matched to food
   std::vector<std::pair<int32_t, int32_t>> sched_view;     // g43-2: the workers in view (id, head)
@@ -719,14 +720,63 @@ StrategyAgent::Goal StrategyAgent::ChooseGoal(const Paths& paths) const {
         std::sort(pairs.begin(), pairs.end(), [](const Pair& a, const Pair& b) {
           return std::tie(a.ready, a.id, a.tile) < std::tie(b.ready, b.id, b.tile);
         });
-        sched_owner.assign(board_.size(), -1);
         std::vector<int32_t>& done = sched_done;
-        for (const Pair& p : pairs) {
-          if (sched_owner[p.tile] >= 0 || std::find(done.begin(), done.end(), p.id) != done.end()) continue;
-          sched_owner[p.tile] = p.id;
-          done.push_back(p.id);
-          if (p.id == spawn_.id) sched_mine = p.ready;
-          if (done.size() == parts.size()) break;
+        std::vector<int32_t> skip;   // g43-2b: workers sent exploring by the quota (not matched)
+        // g43-2b stickiness: a worker the quota sent out keeps exploring kForcedHold rounds, and an
+        // ally in view whose TASK word of last round says EXPLORE is left out of the food matching
+        // (it is exploring: booking food for it left that food unclaimed)
+        if (TASK_MODE && TASK_ABL != 7 && round_ < kQuotaUntil && !IsQueen()) {
+          if (forced_until_ > round_) skip.push_back(spawn_.id);
+          for (const auto& [id, h] : parts)
+            if (h >= 0 && id != spawn_.id)
+              if (const auto it = tasks_heard_.find(id); it != tasks_heard_.end() && round_ - it->second.round <= 1 && it->second.role == kTaskExplore)
+                skip.push_back(id);
+        }
+        auto match = [&] {
+          sched_owner.assign(board_.size(), -1);
+          done.clear();
+          sched_mine = 1 << 20;
+          for (const Pair& p : pairs) {
+            if (sched_owner[p.tile] >= 0 || std::find(done.begin(), done.end(), p.id) != done.end() ||
+                std::find(skip.begin(), skip.end(), p.id) != skip.end()) continue;
+            sched_owner[p.tile] = p.id;
+            done.push_back(p.id);
+            if (p.id == spawn_.id) sched_mine = p.ready;
+            if (done.size() == parts.size()) break;
+          }
+        };
+        const size_t held = skip.size();
+        match();
+        // g43-2b: the explorer quota. arena (ring-dispatch-1's own games): home food matched every
+        // worker, so nobody left home (devil 184319: 0 middle/far eats r0-59 v their 44). Of the n
+        // workers in view, at least round(n * kQuotaShare * unseen share) explore before
+        // kQuotaUntil, never all of them and never a lone worker: the more of the board is
+        // unknown, the more of the team looks. The harvesters with the latest match go first
+        // (ties: higher id), and every dragon seeing the same allies picks the same ones.
+        if (TASK_MODE && TASK_ABL != 7 && round_ < kQuotaUntil && !IsQueen()) {
+          std::vector<std::pair<int32_t, int32_t>> harv;   // (ready, id) of in-view harvesters
+          int32_t n = 0, natural = 0;
+          for (const auto& [id, h] : parts) {
+            if (h < 0) continue;
+            ++n;
+            if (std::find(skip.begin(), skip.end(), id) != skip.end()) {
+              ++natural;
+              continue;
+            }
+            int32_t r = 1 << 20;
+            for (const Pair& p : pairs)
+              if (p.id == id && sched_owner[p.tile] == id) r = p.ready;
+            if (r <= kSchedHarvest) harv.push_back({r, id});
+            else ++natural;
+          }
+          int32_t unseen = 0;
+          for (int32_t t = 0; t < board_.size(); ++t) unseen += board_.at(t).seen_round < 0;
+          const int32_t quota = n >= 2 ? std::min(n - 1, int32_t(n * kQuotaShare * unseen / double(board_.size()) + 0.5)) : 0;
+          std::sort(harv.begin(), harv.end(), [](const auto& a, const auto& b) { return a.first != b.first ? a.first > b.first : a.second > b.second; });
+          for (int32_t k = 0; k < quota - natural && k < static_cast<int32_t>(harv.size()); ++k) skip.push_back(harv[k].second);
+          forced_explorer_ = std::find(skip.begin(), skip.end(), spawn_.id) != skip.end();
+          if (forced_explorer_ && forced_until_ <= round_) forced_until_ = round_ + kForcedHold;
+          if (skip.size() > held) match();
         }
       }
     }
@@ -993,6 +1043,12 @@ StrategyAgent::Goal StrategyAgent::ChooseGoal(const Paths& paths) const {
       }
     }
     if (score > 0 && contested) score *= kContestDeny;
+    // g43-2b: a worker the quota sent exploring takes food only on its way out (within kExplorerNear)
+    // ... and only food that takes it further from home (devil sim: half the quota explorers' turns
+    // went to home food within 3 steps, which a rich home always has, so they never left)
+    if (score > 0 && value0 > 0 && forced_explorer_ && !contested &&
+        (d > kExplorerNear || (home_ >= 0 && Torus(t, home_) <= Torus(head_, home_))))
+      score *= kForcedFood;
     // g43-2 hysteresis: last turn's food goal is worth 30% more (a new one must beat it by 30%)
     if (score > 0 && value0 > 0 && t == keep_food) score *= double(kTaskKeepNum) / kTaskKeepDen;
     for (int dir = 0; dir < 4; ++dir)
@@ -1024,7 +1080,7 @@ StrategyAgent::Goal StrategyAgent::ChooseGoal(const Paths& paths) const {
         // g43-2: our sector's frontier is worth more, a sector an ally holds less
         double sm = 1.0;
         if (!frontier_sector.empty() && frontier_sector[t] >= 0) {
-          if (frontier_sector[t] == my_sector_) sm = kSectorMine;
+          if (frontier_sector[t] == my_sector_) sm = forced_explorer_ ? kSectorForced : kSectorMine;
           else if (sector_owner_[frontier_sector[t]] >= 0) sm = kSectorOther;
         }
         score = std::max(score, sm * pull * mult * pm * hunger_mult * p_.explore_value / (d + 1));

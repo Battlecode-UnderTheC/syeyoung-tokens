@@ -41,6 +41,14 @@ inline constexpr int kTaskSectors = 8;            // directions from home (45 de
 inline constexpr int kTaskQueenNear = 4;          // within this of our queen or her ring: ring word on all four
 inline constexpr int kTaskKeepNum = 13, kTaskKeepDen = 10;   // a new task must beat the old one by 30%
 inline constexpr double kSectorMine = 1.0, kSectorOther = 0.5;
+// g43-2b: the explorer quota (strategy.cpp ChooseGoal): before kQuotaUntil (the opening the
+// evidence is about, r0-59), round(n x kQuotaShare x unseen share) of the n workers in view
+// explore; such a worker's sector frontier scores x kSectorForced and food beyond kExplorerNear x kForcedFood
+inline constexpr int kQuotaUntil = 60;
+inline constexpr double kQuotaShare = 0.5, kSectorForced = 2.0, kForcedFood = 0.3;
+// a quota explorer keeps the role this long: leaving the 7x7 home view takes ~4-8 rounds, and the
+// per-turn choice flipped (forced on ~10% of worker turns, spread unchanged in the arena)
+inline constexpr int kForcedHold = 10;
 // g42-6 (ring-contest-1): the opening food contest (ChooseGoal, Decide steps 4-5). 0: off.
 #ifndef CONTEST_MODE
 #define CONTEST_MODE 1
@@ -749,7 +757,9 @@ class StrategyAgent : public bot::Agent {
   std::unordered_map<int32_t, HeardTask> tasks_heard_;   // ally id -> its latest TASK word
   int32_t home_ = -1, home_kind_ = 0;                   // sectors are directions from home (dispatch.cpp HearTasks)
   int32_t task_role_ = -1, task_target_ = -1, task_sector_ = -1, task_round_ = -1000;   // our announced task
-  mutable int32_t my_sector_ = -1;                      // this turn's sector (ChooseGoal), -1 none
+  mutable int32_t my_sector_ = -1;
+  mutable int32_t forced_until_ = -1;                  // g43-2b: we explore until this round
+  mutable bool forced_explorer_ = false;               // g43-2b: the quota sent us exploring this turn                      // this turn's sector (ChooseGoal), -1 none
   mutable std::vector<int32_t> sector_owner_;          // this turn: sector -> the ally holding it (-1 free)
   void HearTasks(const rl::Observation& o);
   int32_t SectorOf(int32_t t) const;                    // -1 near home or home unknown
