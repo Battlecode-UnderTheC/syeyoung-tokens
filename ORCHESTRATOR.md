@@ -418,3 +418,5 @@ findings accordingly.
 - Briefs name the target behaviour, and workers confirm it in replays.
 - A follow-up try is earned when replays show the mechanism working, not when a number moves.
 - Before promoting or merging, look at replays of the draft (have a subagent render and describe them): check the change does what it claims and has no ugly side effects.
+
+- Analysts and workers must LOOK at the filmstrip PNGs (with the Read tool) and say which conclusions came from the images. Put this in every analysis prompt. User: "i want analyzers to look at pictures too. they do tell you smth".

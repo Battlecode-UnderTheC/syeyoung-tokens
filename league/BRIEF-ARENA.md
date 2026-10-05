@@ -57,6 +57,7 @@ Rules: `docs/game.md`, unswbc 1.2.7.
 ## Watch replays (metrics are not the goal)
 The metrics in this brief (eval P(win), counts at round N) are evidence, not the target. A change can move a number without fixing the behaviour (Goodhart's law).
 - Before and after your change, render and watch replays of your bot in the situation the change is for. Use the render tools in `../syeyoung-tokens.league/replays/*/tools`, or arena game replays.
+- Open the rendered PNGs with the Read tool, which displays images, and LOOK at them. Don't only decode numbers: pictures show patterns the metrics miss (user, 2026-10-05).
 - Describe concretely what the dragons now do differently, and whether it is what was intended and sensible.
 - If a metric moved but the replays don't show the intended behaviour (or show a side effect), say so: that is not a success.
 
