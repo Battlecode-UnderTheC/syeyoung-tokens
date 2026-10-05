@@ -107,11 +107,12 @@ These didn't work:
    - Drop an idea only when its target metric doesn't move.
    - Borrow from opponent bots: we have the full source of every arena bot (`tokenz get <id>`, `git show variant/<name>:...`). When an opponent clearly does something better, e.g. gst-giant-2's late giant-feeding, port that MECHANISM into our line as one change.
    - Keep a sustained effort on the biggest weak spot (late consolidation as of g40), instead of single shots spread thin.
-7. **Stacking step (incremental, not one big merge).**
-   - Pick the single strongest draft of the round, promote it, and deploy it if it's the best.
-   - Then add the other non-losing changes ONE AT A TIME on top of it. Each addition is its own submission, with --parent set to the previous stack, so any degradation shows up against a known parent and can be dropped.
-   - Order the additions by evidence strength. Each one needs its own verdict (and a replay-backed behaviour check) before the next goes on.
-   - Never mix all the changes together and submit them as one bot: that hides which change hurt.
+7. **Advance the head: one change per step, no merges.** This is how the ring-plus line climbed: ring-plus-1 → 4 → 7 → 9 → 16 → 19 → 21, each one change on its parent.
+   - Every worker builds ONE change on the line's current head and submits with --parent = that head.
+   - The round's best draft that beats its parent becomes the new head. Next round's workers build on it.
+   - Other good changes are NOT combined into it. If still promising, they are redone on the new head in a later round, each as its own single change, so a degradation is always traceable.
+   - Keep the deployed or previous head on the leaderboard: promoting in the same line retires the parent. Put a new head in its own line, or resubmit the old one, before promoting.
+   - Merges and diversity come later, not every round.
    - Also port useful changes across lines (e.g. ring-sched-2 = ring-sched-1 + ring-plus-19 + ring-plus-21).
 8. **Measure and record.**
    - Close g<N>.md with Results, What we learned and Next.
