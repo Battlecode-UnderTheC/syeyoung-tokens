@@ -153,7 +153,7 @@ https://tokenz-arena.lonk-kelvin.ts.net. Tailnet only; code in `../tokenz-arena`
 - **Teammates share the server slot.** The live bot may be a teammate's. Don't replace a
   teammate's live bot unless ours is clearly better on the server.
 - **Server games:** ranked games use 5 random maps; unranked games choose up to 10 maps.
-  The quota is 60/hour, shared with teammates. Never play v9.
+  The quota is 60/hour, shared with teammates. The user permits launching games against opponents with our submission.
 
 ### Pitfalls already paid for (don't repeat)
 
