@@ -419,5 +419,4 @@ findings accordingly.
 - A follow-up try is earned when replays show the mechanism working, not when a number moves.
 - Before promoting or merging, look at replays of the draft (have a subagent render and describe them): check the change does what it claims and has no ugly side effects.
 
-- Analysts and workers must LOOK at the filmstrip PNGs (with the Read tool) and say which conclusions came from the images. Put this in every analysis prompt. User: "i want analyzers to look at pictures too. they do tell you smth".
-- Watch games as IMAGE filmstrips (render.py --film, several strips over the stretch that matters) and look at them. The orchestrator does this too, on at least one key loss per round. User: "yeah then do image strips then".
+- Only ANALYST agents look at images: filmstrip PNGs via Read, several render.py --film strips over the stretch that matters, saying which conclusions came from the images. Workers and the orchestrator don't view images; they use decoded data and the analysts' reports. User: "i kinda only want analyzers to look at images".

@@ -56,9 +56,7 @@ Rules: `docs/game.md`, unswbc 1.2.7.
 
 ## Watch replays (metrics are not the goal)
 The metrics in this brief (eval P(win), counts at round N) are evidence, not the target. A change can move a number without fixing the behaviour (Goodhart's law).
-- Before and after your change, render and watch replays of your bot in the situation the change is for. Use the render tools in `../syeyoung-tokens.league/replays/*/tools`, or arena game replays.
-- Render image filmstrips across the stretch you care about (render.py --film <replay> <round> <out.png> --frames N --step K), open them with Read, and look at how the dragons move from frame to frame.
-- Open the rendered PNGs with the Read tool, which displays images, and LOOK at them. Don't only decode numbers: pictures show patterns the metrics miss (user, 2026-10-05).
+- Before and after your change, check from decoded replays and your action labels or debug counters that your bot does what was intended in the situation the change is for. Name the game ids. Don't view images: image analysis is done by analyst agents.
 - Describe concretely what the dragons now do differently, and whether it is what was intended and sensible.
 - If a metric moved but the replays don't show the intended behaviour (or show a side effect), say so: that is not a success.
 
