@@ -1,0 +1,7 @@
+name = "ring-champdie-1"
+parents = ["ring-champfood-1"]
+operator = "mutate"
+archetype = "queen-ring"
+author = "claude-opus-5-5"
+created = "2026-10-05"
+task = "g42-8"
