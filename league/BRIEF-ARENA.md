@@ -54,6 +54,12 @@ Rules: `docs/game.md`, unswbc 1.2.7.
 7. Commit `variants/{variant}/`: the code, `variant.toml` and `NOTES.md` (idea, change,
    local numbers, arena verdict).
 
+## Watch replays (metrics are not the goal)
+The metrics in this brief (eval P(win), counts at round N) are evidence, not the target. A change can move a number without fixing the behaviour (Goodhart's law).
+- Before and after your change, render and watch replays of your bot in the situation the change is for. Use the render tools in `../syeyoung-tokens.league/replays/*/tools`, or arena game replays.
+- Describe concretely what the dragons now do differently, and whether it is what was intended and sensible.
+- If a metric moved but the replays don't show the intended behaviour (or show a side effect), say so: that is not a success.
+
 ## CPU
 A turn over the judge's 100M CPU-point cap kills that dragon. Keep the worst turn under 80M: check `tokenz report <your id>` (the `cpu:` line, max) after the verdict, and don't add per-turn work without a cap.
 
@@ -66,6 +72,7 @@ A turn over the judge's 100M CPU-point cap kills that dragon. Keep the worst tur
 - the local numbers;
 - the CPU line from `tokenz report <id>` (p99 and max);
 - the eval P(win) vs the parent: average `game.eval` at r100/r200/r300 over your games against the parent, from `GET /api/v1/games/{id}/metrics`. It is calibrated on about 8k real games a day, and has less variance than W-L;
+- what the replays show: 2-3 concrete game ids and what changed in them;
 - what you'd try next.
 
 ## Rules (non-negotiable)

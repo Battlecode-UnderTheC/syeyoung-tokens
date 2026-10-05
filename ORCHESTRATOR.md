@@ -411,3 +411,10 @@ findings accordingly.
 - **Disk:** keep over 10 GB free. Finished worktrees go; their branches stay.
 - If a worker goes silent for a long time, check its worktree for progress before deciding
   it is stuck. Don't start a replacement for the same task while one is still running.
+
+
+## Metrics are not goals (user, 2026-10-05)
+"At some point metrics will be overfitted and you'll have to analyze actual replays. Don't make metrics the goal: the good ol' Goodhart's law."
+- Briefs name the target behaviour, and workers confirm it in replays.
+- A follow-up try is earned when replays show the mechanism working, not when a number moves.
+- Before promoting or merging, look at replays of the draft (have a subagent render and describe them): check the change does what it claims and has no ugly side effects.
