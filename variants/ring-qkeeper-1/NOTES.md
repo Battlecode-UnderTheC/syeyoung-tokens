@@ -83,3 +83,31 @@ Submitted as **ring-contest-7** (line ring-contest, parent ring-contest-4); not 
   and she is boxed (split to 3) by r492 anyway. That fix isn't in the submitted code.
 - Win flip with the intended behaviour: 179960 stronghold v ring-sprint-1. Ours goes 13 -> 58 from
   r460 and wins 61-38; the parent's game on the same seed is lost 24-55.
+
+## v6 = arena ring-contest-12 (coordinator's follow-up list)
+Changes vs ring-contest-7:
+- TOPUP back to r460, no worker walk-ins: qrace again needs a fresh sighting.
+- queen11 wait-splits: at most 3 per 20-round window, no longer counted only in a row.
+- From r430, no route ending in a pocket: open ground smaller than her body + 4, walled by kelp and
+  other dragons only (PocketRoom; her own body counts as passable).
+- Wider enemy-queen death detection, so PARK can fire. She was seen last turn at an exact length L
+  and is gone now. Every tile within ceil(L/4) + (L-2) of her old head is in our view, and no
+  portal is there. In local traces it fired 2 times, both on real deaths (trophy r84, australia
+  r356). It only works for queens of length 2-3.
+Light duels v ring-contest-4: server random:2 34-34 (queen 18-15, longest 4-7, queen length at
+end 10.5 v 9.3), official 10-10. CPU max 30.2M. Fresh mapgen per family, same as v4: 88-88.
+Arena: ring-contest-12 v ring-contest-4 71-0-69 (50.7%, CI 42.5-58.9; beats_parent True,
+within noise). By suite: server 42-46, custom 22-18, official 7-5. Decided by: elim 33-33,
+queen 24-24, longest 14-12. v ring-sprint-1 64-76, ring-sched-17 87-57, ring-rush-1 94-1-57.
+CPU p99 26.3M, max 48.0M. Eval v parent at r100/200/300: .496 / .501 / .500.
+Weak spot, 436 games paired with ring-contest-4's (same opponent/map/seed/seat):
+- B 11.2 v 10.3, C2 3.0 v 3.2, D1 8.7 v 8.5 per 100. No change beyond noise.
+- Both queens alive at r430 (162 games): queen at end 23.0 v 23.3, races won 74 v 80.
+- Enemy queen dead before r430 (153 games): ours survives 74% v 75%.
+- Decoded 24 of these pairs (enemy queen dead r150-429). PARK still rarely fires. In 185521 and
+  185520 ours tops up 3 -> 21 and 2 -> 20 with 14 and 11 two-step moves, where the parent stays
+  at 2-3; she survives in both. Across the 17 pairs where our queen was alive at r430: no queen
+  deaths for either bot, ours grew +186 v +141 in total, with 227 v 172 multi-step moves.
+- Bleeding: in the local reproduction of 179191 the waits stop at 3 (20 -> 14). She is then boxed
+  by her own coil at a dead-end corridor's mouth (queen10 boxed splits, dies r492). That is not a
+  pocket by the static test, so it is still not fixed.
