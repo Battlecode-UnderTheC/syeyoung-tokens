@@ -1,0 +1,7 @@
+name = "ring-qscout-1"
+parents = ["ring-qgate-1"]
+operator = "mutate"
+archetype = "queen-ring"
+author = "claude-opus-5-5 (g42-10 worker)"
+created = "2026-10-05"
+task = "g42-10"
