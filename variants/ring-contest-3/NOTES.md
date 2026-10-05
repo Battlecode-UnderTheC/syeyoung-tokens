@@ -74,4 +74,26 @@ gap was -2.3 at r40 and -6.6 at r60.
 - **CPU:** max 36.6M (server duel), 38.1M (official).
 
 ## Arena
-(filled in after the verdict)
+Submitted as **ring-contest-6** (line ring-contest, parent ring-contest-4); not promoted.
+- **vs ring-contest-4:** **55-0-57** (49.1%, CI 40.0-58.2). It loses to the parent, within noise.
+  - By suite: server 31-37, custom 19-15, official 5-5.
+  - Decided by: elim 23-26, queen 19-18, longest 12-13.
+  - Eval P(win) v parent: r100 .51, r200 .53, r300 .50.
+- **vs the other bots:** ring-sched-17 64-48, ring-sprint-1 52-60, ring-rush-1 69-1-42.
+- **CPU:** p99 26.3M, max 48.0M.
+- **Weak-spot check in the arena games:** NOT fixed.
+  - The draft games have no rotating (wg39xxx/mg39xxx) maps.
+  - vs ring-sched-17, 111 games paired with ring-contest-4's on the same map, seed and seat:
+    - W 63 v 66.
+    - Eats r0-59 own/mid/far: 37.1/16.3/6.4 v 37.2/16.3/6.3.
+    - r30 head distance: 7.43 v 7.52. Dragons r60: 18.3 v 18.6.
+    - 5+ starters (32 pairs): 71.6/18.8/11.2 v 72.6/19.0/10.9, dragons r60 28.0 v 28.9.
+    - 5+ starters with area<1500 (8 pairs): mid/far eats 21.9/7.2 v 23.4/9.8, so slightly worse.
+  - vs the parent (110 games): the opening metrics are the same on both sides in every class.
+  - **Side effect on fixed-crowded**, 178046 v 175822 (seat A, same seed):
+    - More of our heads go to the middle: 6 v 4 at r20.
+    - Home food is ceded: our own-zone eats r0-59 drop to 5 v 25, and the enemy eats 35 v 12 in
+      our zone. Total eats 43 v 91, and the game is lost where the parent won.
+    - On crowded maps the home contest is real, so dropping the x2 at home costs food.
+  - The seat-B pair 177206/175759 shows the same, milder: 62 v 65 eats.
+  - fixed-walled-centre 177965/176922 is unchanged.
