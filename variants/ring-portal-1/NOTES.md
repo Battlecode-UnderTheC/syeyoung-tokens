@@ -142,3 +142,20 @@ reachable only through one), from the starting dragons.
   - server random:2 duel-d9bd6e66: 35-33 (3+ starters 24-16, <=2 11-17; dragons@100 25.2 v 23.5,
     @300 38.5 v 34.6; board control .50 v .45; queen alive 60% v 60%).
   - official: 11-9.
+- **Arena: ring-contest-13** vs ring-contest-4: 53-0-59 (47.3%, within noise; "loses to parent").
+  - Server maps: 31-37.
+  - Decided by: elimination 24-24, queen 20-24, longest 8-11.
+  - vs ring-sprint-1 52-60, vs ring-sched-17 59-53, vs ring-rush-1 69-1-42.
+  - CPU p99 24.2M, max 41.1M.
+- **Eval P(win) vs the parent** (game.eval, our side), r100 / r200 / r300:
+  - rc13: .519 / .534 / .550.
+  - rc8: .505 / .474 / .479.
+- **Its own games vs ring-contest-4** (72 on portal maps, decoded; per game, us v them):
+  - Overall: r0-150 portal steps 36.3 v 22.1 (rc8: 26.9 v 21.8). Pearls on gated tiles 198 v 145
+    (rc8: 165 v 159). Deaths on crossing turns 4.4 v 4.1. Pearls r0-150 217 v 202.
+  - Default: 57.8 v 7.2 steps, gated pearls 288 v 99.
+  - Islands: 110 v 30 steps, but deaths on crossing turns 9.0 v 5.2.
+  - Schooltime: 57 v 25 steps, gated pearls 649 v 418.
+  - Trophy: 5.0 v 1.5 steps (rc8 1.5 v 1.5). Games 186052 and 186034 (seat A): 10 crossings each,
+    32 and 13 pearls in the cup, both won. Games 186053 and 186016 (seat B): 0 crossings, lost.
+  - Around UNSW: 13.8 v 7.0 steps, 1-3.
