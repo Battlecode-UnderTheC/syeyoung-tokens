@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstring>
 #include <tuple>
 #include <functional>
 #include <unordered_map>
@@ -51,11 +52,14 @@ static constexpr int32_t kLateConcFrom = 430, kQueenAliveFresh = 80;
 static constexpr int32_t kLateFeedDistance = 3;
 #ifdef PORTAL_DBG
 static std::atomic<long> g_pdbg_pref{0}, g_pdbg_refused{0};
+static std::atomic<long> g_r_ally{0}, g_r_dirty{0}, g_r_occ{0}, g_r_other{0}, g_r_exp{0}, g_r_libs{0}, g_r_level{0}, g_r_room{0}, g_r_ok{0};
 static std::atomic<long> g_pdbg_jumps{0}, g_pdbg_turns{0}, g_pdbg_bk{0}, g_pdbg_bu{0}, g_pdbg_ck{0}, g_pdbg_cu{0};
 static struct PortalReport {
   ~PortalReport() {
     std::fprintf(stderr, "PORTALDBG r0-150 jumps %ld turns %ld beside-known %ld beside-unknown %ld cross-known %ld cross-unknown %ld goal-via-known %ld refused %ld\n", g_pdbg_jumps.load(),
                  g_pdbg_turns.load(), g_pdbg_bk.load(), g_pdbg_bu.load(), g_pdbg_ck.load(), g_pdbg_cu.load(), g_pdbg_pref.load(), g_pdbg_refused.load());
+    std::fprintf(stderr, "PSTEPDBG ally %ld dirty %ld occ %ld otherblind %ld exposed %ld libs %ld level %ld room %ld ok %ld\n", g_r_ally.load(), g_r_dirty.load(), g_r_occ.load(), g_r_other.load(),
+                 g_r_exp.load(), g_r_libs.load(), g_r_level.load(), g_r_room.load(), g_r_ok.load());
   }
 } g_portal_report;
 #endif
@@ -140,6 +144,9 @@ void StrategyAgent::Remember(const rl::Observation& o) {
   }
   for (const auto& [id, n] : segments) { seen_[id].length = n; seen_[id].partial = boundary[id] || n < 2; }
   for (const uint64_t w : o.inbox) Decode(w);
+  ally_pings_.clear();
+  if (PT_SHARE)
+    for (const uint64_t w : o.inbox) HearPortal(w);
   // g39-sym: infer the map's symmetry and mirror what we have seen into board_
   sym_.Observe(o, board_);
   // deaths: an ally long in view, its head beside ours last turn, is gone (we moved one plain step)
@@ -233,7 +240,7 @@ void StrategyAgent::Remember(const rl::Observation& o) {
     for (int k = 1; k < 5; ++k) any |= o.echo[k] != "0";   // ally, ally head, enemy, enemy head
     exit_clear_ = !any;
     exit_dirty_ = any;
-    if (any) dirty_tile_ = ping_tile_, dirty_dir_ = ping_dir_, dirty_round_ = round_;   // g43-9
+    if (any && (!PT_SHARE || ping_isolated_)) dirty_tile_ = ping_tile_, dirty_dir_ = ping_dir_, dirty_round_ = round_;   // g43-9
   }
   // the loop breaker's history
   if (length_ > last_length_ && round_ > born_) last_eat_ = round_;
@@ -1280,7 +1287,9 @@ bot::Action StrategyAgent::SafeStep(int preferred, bool trap_ok, bool trap_grow)
     // (gst115) a known portal is not a one-way door: last turn's ping through it came back
     // clean, or its exit was seen empty a round or two ago, or we already refused this goal's
     // blind step twice (unless our ping found a dragon on the far side)
-    if (blind && p_.known_portal) {
+    // g43-9 iteration 2: an ally pinged through this portal's far end last round from our landing
+    const bool ally_there = PT_SHARE && blind && AllyAtLanding(d);
+    if (blind && p_.known_portal && !ally_there) {
       const bool here = ping_tile_ == head_ && ping_dir_ == d;
       const TileMemory& m = board_.at(to);
       if (exit_clear_ && here) lifted = "portal: pinged clear";
@@ -1295,11 +1304,44 @@ bot::Action StrategyAgent::SafeStep(int preferred, bool trap_ok, bool trap_grow)
       // remember: refused only when a ping through this very portal hit a dragon within kLandingMemory rounds, or
       // when we last saw a dragon on the landing within kLandingMemory rounds. The queen keeps
       // the old caution (she plays safe).
-      if (!lifted && PORTAL_TRUST && PT_KNOWN && !IsQueen() && (portal_[head_] >> d & 1) && !(dirty_tile_ == head_ && dirty_dir_ == d && round_ - dirty_round_ <= kLandingMemory) &&
+      if (!lifted && PORTAL_TRUST && PT_KNOWN && PT_STEP && !IsQueen() && (portal_[head_] >> d & 1) && !(dirty_tile_ == head_ && dirty_dir_ == d && round_ - dirty_round_ <= kLandingMemory) &&
           !(m.seen_round >= 0 && m.occupant >= 0 && round_ - m.seen_round <= kLandingMemory))
         lifted = "portal: step";
+      // g43-9 iteration 2, restoring gather-split-trade-46 (g13-18): a lift with no clean ping
+      // behind it is withdrawn when the exit is open to the unknown. Measured there: crossings into
+      // an exit with 3 unknown sides died on the crossing move (head to head) far more often than
+      // into corridor exits (2 unknown sides: 2 of 57); clean-pinged lifts are not vetoed.
+      if (PT_SHARE && lifted && !IsQueen() && std::strcmp(lifted, "portal: pinged clear") != 0) {
+        int32_t heads = 0, risk = 0;
+        for (int k = 0; k < 4; ++k) {
+          if (k == (d + 2) % 4) continue;   // back through the portal, to us
+          const int32_t n = board_.Step(to, k);
+          if (n == kBlocked) continue;
+          if (n == kUnknown) { ++risk; continue; }
+          const TileMemory& x = board_.at(n);
+          const int32_t age = x.seen_round < 0 ? 1 << 20 : round_ - x.seen_round;
+          if (x.occupant >= 0 && x.occupant_head && x.occupant_team != spawn_.team && age <= 4) ++heads, ++risk;
+          else if (x.occupant >= 0 && age <= 2) ++risk;
+          else if (age > 2) ++risk;
+        }
+        if (heads > 0 || risk > 2) lifted = nullptr;
+      }
       if (lifted) blind = false;
     }
+#ifdef PORTAL_DBG
+    if (k == 0 && preferred >= 0 && (portal_[head_] >> d & 1) && round_ <= 150) {
+      const TileMemory& m = board_.at(to);
+      if (ally_there) ++g_r_ally;
+      else if (blind && dirty_tile_ == head_ && dirty_dir_ == d && round_ - dirty_round_ <= kLandingMemory) ++g_r_dirty;
+      else if (blind && m.seen_round >= 0 && m.occupant >= 0 && round_ - m.seen_round <= kLandingMemory) ++g_r_occ;
+      else if (blind) ++g_r_other;
+      else if (exposed) ++g_r_exp;
+      else if (libs < 2) ++g_r_libs;
+      else if (level < 1) ++g_r_level;
+      else if (room < need) ++g_r_room;
+      else ++g_r_ok;
+    }
+#endif
     if (blind) {
       // the goal step refused only for being blind: remember it (ping it next time we stand here)
       if (p_.known_portal && k == 0 && preferred >= 0 && cur_goal_ >= 0 && !exposed && libs >= 2 && level >= 1) {
@@ -1873,6 +1915,9 @@ bot::Action StrategyAgent::Turn(const rl::Observation& o) {
     if (n >= 0 && n == blind_tile_ && blind_dir_ != (d + 2) % 4 && (portal_[n] >> blind_dir_ & 1)) {
       a.sonar = {};
       a.sonar[blind_dir_] = champ.id >= 0 ? Encode(champ) : 1;
+      if (const uint64_t pw = PT_SHARE ? PortalWord(n, blind_dir_, true) : 0) a.sonar[blind_dir_] = pw;
+      ping_isolate_ = PT_SHARE && !IsQueen();
+      ping_word_ = *a.sonar[blind_dir_];
       ping_round_ = round_;
       ping_tile_ = n;
       ping_dir_ = blind_dir_;
@@ -1887,27 +1932,41 @@ bot::Action StrategyAgent::Turn(const rl::Observation& o) {
         if (e != (d + 2) % 4 && UnknownPortal(n, e)) {
           a.sonar = {};
           a.sonar[e] = champ.id >= 0 ? Encode(champ) : 1;
+          if (const uint64_t pw = PT_SHARE ? PortalWord(n, e, true) : 0) a.sonar[e] = pw;
+          // g43-9 iteration 2: keep the ping alone to the end (gst115's isolated ping; the ring relay
+          // added in queen-ring-portal-fixed-1 refilled all four directions after it)
+          ping_isolate_ = PT_SHARE && !IsQueen();
+          ping_word_ = *a.sonar[e];
           ping_round_ = round_;
           ping_tile_ = n;
           ping_dir_ = e;
           break;
         }
   }
-  // g43-9: stepping next to a known portal whose landing is out of view: ping through it, so
-  // that next turn a clean echo lets us cross at once and a dragon past it holds us back
-  if (PORTAL_TRUST && PT_KNOWN && !IsQueen() && ping_round_ != round_ && a.kind == bot::Action::kMove && !a.resign && a.steps.size() == 1) {
+  // g43-9: stepping next to a known portal whose landing is out of view, when crossing it is on a
+  // shortest way to our goal: ping through it alone, so that next turn a clean echo lets us cross at
+  // once and a dragon past it holds us back
+  if (PORTAL_TRUST && PT_KNOWN && !IsQueen() && ping_round_ != round_ && last_goal_ >= 0 && a.kind == bot::Action::kMove && !a.resign &&
+      a.steps.size() == 1) {
     const int d = a.steps[0];
     const int32_t n = board_.Step(head_, d);
+    int e = -1;
     if (n >= 0 && board_.Current(n))
-      for (int e = 0; e < 4; ++e)
-        if (const int32_t l = board_.Step(n, e); e != (d + 2) % 4 && (portal_[n] >> e & 1) && l >= 0 && !board_.Current(l)) {
-          // the team's other words stay (they only make a clean echo rarer, never a false one)
-          if (!a.sonar[e]) a.sonar[e] = champ.id >= 0 ? Encode(champ) : 1;
-          ping_round_ = round_;
-          ping_tile_ = n;
-          ping_dir_ = e;
-          break;
-        }
+      for (int k = 0; k < 4 && e < 0; ++k)
+        if (const int32_t l = board_.Step(n, k); k != (d + 2) % 4 && (portal_[n] >> k & 1) && l >= 0 && !board_.Current(l)) e = k;
+    if (e >= 0) {
+      const Paths back = Search(board_, last_goal_, [&](int32_t t) { return t == n || !Occupied(t); });
+      const int32_t l = board_.Step(n, e);
+      if (back.dist[n] > 0 && back.dist[l] >= 0 && back.dist[l] == back.dist[n] - 1) {
+        a.sonar[e] = champ.id >= 0 ? Encode(champ) : 1;
+        if (const uint64_t pw = PT_SHARE ? PortalWord(n, e, true) : 0) a.sonar[e] = pw;
+        ping_isolate_ = true;
+        ping_word_ = *a.sonar[e];
+        ping_round_ = round_;
+        ping_tile_ = n;
+        ping_dir_ = e;
+      }
+    }
   }
 #ifdef PORTAL_DBG
   if (round_ <= 150 && !IsQueen()) {
@@ -1951,6 +2010,19 @@ bot::Action StrategyAgent::Turn(const rl::Observation& o) {
       for (int d = 0; d < 4; ++d)
         if (a.sonar[d] && (*a.sonar[d] >> 56) == 0xBA) a.sonar[d] = CallInRing(*a.sonar[d], ct, cc);
   }
+  // g43-9 iteration 2: a ping through a portal we mean to cross goes alone (the ring relay above
+  // fills all four directions, and an echo off any of them made every portal ping dirty)
+  ping_isolated_ = false;
+  if (ping_round_ == round_ && ping_isolate_) {
+    a.sonar = {};
+    a.sonar[ping_dir_] = ping_word_;
+    ping_isolated_ = true;
+  } else if (PT_SHARE && !IsQueen() && round_ % 2 == 0) {
+    // every other round one direction (turning each time) carries a portal pair we know, so
+    // allies learn portals whose ends they never both saw
+    if (const uint64_t pw = NextPairWord()) a.sonar[(round_ / 2) % 4] = pw;
+  }
+  ping_isolate_ = false;
   return a;
 }
 
@@ -2282,7 +2354,7 @@ bot::Action StrategyAgent::Decide(const rl::Observation& o) {
   }
   last_goal_ = goal;
   // exploring beside an unknown portal whose exit our ping found clear: step through it
-  if (WillCross() && exit_clear_ && ping_tile_ == head_ && !target.trap && length_ >= 2 && UnknownPortal(head_, ping_dir_) &&
+  if (WillCross() && exit_clear_ && ping_tile_ == head_ && !(PT_SHARE && AllyAtLanding(ping_dir_)) && !target.trap && length_ >= 2 && UnknownPortal(head_, ping_dir_) &&
       BodyInView() && (goal < 0 || (PORTAL_TRUST && portal_better_) || (poor_ && p_.poor_cross > 0 && paths.dist[goal] >= p_.poor_cross) || [&] {
         int32_t ready;
         return TileValue(goal, paths.dist[goal], &ready) == 0.0;

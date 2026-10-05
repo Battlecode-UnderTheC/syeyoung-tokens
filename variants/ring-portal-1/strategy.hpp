@@ -34,6 +34,12 @@ inline constexpr double kSchedOther = 0.1;
 #ifndef PT_KNOWN
 #define PT_KNOWN 1      // parts 1-2: known portals trusted, pre-pinged
 #endif
+#ifndef PT_STEP
+#define PT_STEP 0       // 1: a known portal's landing trusted with no ping behind it (killed 8%: off)
+#endif
+#ifndef PT_SHARE
+#define PT_SHARE 1      // iteration 2: portal pairs over sonar, and no crossing onto an ally's ping tile
+#endif
 #ifndef PT_UNKNOWN
 #define PT_UNKNOWN 1    // part 3: an unknown portal beside us scored as unseen ground
 #endif
@@ -690,6 +696,18 @@ class StrategyAgent : public bot::Agent {
 #ifdef PORTAL_DBG
   int dbg_pref_ = -1, dbg_pref_round_ = -1;              // g43-9: this turn's goal step, when through a known portal
 #endif
+  // g43-9 iteration 2 (portal_share.cpp): portal pairs over sonar; allies' pings through portals
+  struct AllyPing { int32_t tile; int dir; int32_t code; };
+  std::vector<AllyPing> ally_pings_;                    // heard this turn
+  size_t pair_cursor_ = 0;
+  bool ping_isolate_ = false, ping_isolated_ = false;   // this turn's portal ping goes alone; last turn's did
+  uint64_t ping_word_ = 0;
+  long pairs_heard_ = 0;
+  int32_t PortalCode(int32_t t, int d) const;
+  uint64_t PortalWord(int32_t t, int d, bool ping) const;
+  uint64_t NextPairWord();
+  void HearPortal(uint64_t w);
+  bool AllyAtLanding(int d) const;
   int32_t dirty_tile_ = -1, dirty_dir_ = -1, dirty_round_ = -1000;   // g43-9: the last portal ping that hit a dragon
   bool exit_clear_ = false;                             // last turn's ping through that portal echoed no dragon
   // (gst115) known portals: the last goal step we refused only for being blind

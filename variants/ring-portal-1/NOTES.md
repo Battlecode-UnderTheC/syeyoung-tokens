@@ -1,5 +1,8 @@
 # ring-portal-1 (g43-9, line ring-contest)
 
+Iteration 1 = arena ring-contest-8. Iteration 2 (this code) = arena ring-contest-13; see
+"Iteration 2" at the end.
+
 Base: ring-contest-m1 (= arena ring-contest-1 / ring-contest-4; its notes are in
 variants/ring-contest-m1/NOTES.md). Operator: mutate. One idea: workers use portals like
 ordinary steps.
@@ -91,3 +94,51 @@ The submit ran in the background and exited 0, but its output (the arena id and 
 not read: the permission classifier blocked reading it. The orchestrator checks the verdict.
 The committed code also has the PT_KNOWN / PT_UNKNOWN ablation switches (both default 1, so
 behaviour is identical to the submitted bot).
+
+ring-contest-8 vs ring-contest-4: 55-57 (server 36-32; elimination 24-27, queen 18-21, longest 12-8).
+
+## ring-contest-8's own arena games vs ring-contest-4 (112 games, 71 on portal maps; decoded)
+Per game, us v them. "Gated" tiles = tiles at least 8 steps nearer with portals than without (or
+reachable only through one), from the starting dragons.
+- r0-150 portal steps 26.9 v 21.8; pearls eaten on gated tiles 165 v 159 (r0-150: 39.5 v 36.9);
+  deaths on a crossing turn 4.3 v 4.5; pearls r0-150 213.5 v 204.2.
+- Default 35.5 v 6.2 steps, gated pearls 218 v 94, W-L 4-0; Islands 58 v 26.5, 26 v 11, 3-1;
+  Schooltime 46 v 27, 548 v 447 (deaths 10.2 v 14.2); Trophy 1.5 v 1.5 (unchanged: not fixed).
+- Weaker: queen_of_spades gated pearls 164 v 240, stripes 94 v 146, trauma 364 v 439.
+
+## Iteration 2 (ring-contest-13)
+- **Where the gst-42/gst115 crossing fix was lost:** the parameters and lifts (clean ping, exit
+  seen empty, 2-refusal fallback) survived the whole chain. But queen-ring-portal-fixed-1 added
+  the ring-word relay on all four directions AFTER gst115's isolated portal ping. Every portal ping
+  then also pinged sideways and backwards, echoed off our own body or allies, came back dirty,
+  and the "pinged clear" lift almost never fired: the one-way door returned.
+- **Restored:**
+  - A worker's portal ping goes alone again: it is applied after the ring relay, for the
+    unknown-portal ping, the blind-return ping, and a new pre-ping. The pre-ping fires only when
+    a shortest way to the goal crosses the known portal next turn, checked by a BFS from the goal.
+  - The dirty-ping memory counts only isolated pings.
+  - gather-split-trade-46's veto: a lift with no clean ping behind it is withdrawn when the exit
+    has an enemy head or more than 2 unknown/occupied sides.
+  - ring-contest-8's no-ping "portal: step" trust is off (PT_STEP 0): even with the veto it killed
+    1.1 of 14 uses, against 0.7 of 59 for "pinged clear".
+- **Portal pairs over sonar** (portal_share.cpp, magic 0xAB word, its own word): every other
+  round one direction carries a pair the dragon knows. Hearers write it into BoardMemory with the
+  same private-access exemption sym.hpp uses, so pathing, frontier and arrival times use it.
+  - Trophy, 12 sim games: known-portal crossings r0-150 23 -> 83, turns beside a known portal
+    88 -> 265.
+- **Bug fix:** every portal ping word carries the sender's end and side. An ally that hears it
+  doesn't cross onto that tile, or through the same pair in the opposite direction, that turn.
+  Before, two allies crossed one portal from both sides and died head to head. 91-116 refusals
+  per 28 sim games.
+- **Local (vs ring-contest-m1):**
+  - Portal maps seeds 1,2: 14-14; r0-150 jumps 1124 (base 600); r100 32.2 v 29.2 dragons.
+    Deaths per use: explore 0.9/67, pinged clear 0.9/60.
+  - Server seeds 3,4: 33-35.
+  - Fresh mapgen seed 5517023: 95-81. Per family: anti-centre 8-8, crowded 8-8, maze 10-6,
+    mixed 11-5, off-axis 11-5, open 7-9, rich-near-home 6-10, ring 10-6, rooms 7-9,
+    sealed-spawn 8-8, sparse 9-7.
+  - Old rooms sets: 3-4-9 (was 1-4-11) and 17-15.
+- **Duels vs ring-contest-4** (eph-a6805b9e):
+  - server random:2 duel-d9bd6e66: 35-33 (3+ starters 24-16, <=2 11-17; dragons@100 25.2 v 23.5,
+    @300 38.5 v 34.6; board control .50 v .45; queen alive 60% v 60%).
+  - official: 11-9.
