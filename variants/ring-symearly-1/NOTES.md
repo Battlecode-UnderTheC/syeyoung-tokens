@@ -55,3 +55,15 @@ everything but the countdowns.
 - Final (beds on own evidence): server 37-31 (dilemma 1-3, autarky 2-2, default 0-4,
   portals 4-0), official 9-11. Queen alive 56% vs 60%. CPU max 35M.
 - Local fresh mapgen (first version): 257-4-259 v ring-sched-m3, no family clearly lost.
+
+## Arena verdict (ring-sched-35)
+
+- Against the parent ring-sched-17: 47-0-65 (42.0%, CI 33-51), so it loses to the parent. By suite: server 28-40,
+  official 5-5, custom 14-20. Eval P(win) against the parent: r100 0.485, r200 0.457, r300 0.454.
+- Against ring-rush-1: 67-45. Against cs-queen-split-tail-risk-v1-7: 65-47. Overall 226-222.
+- Worst maps: trophy 3-13, autarky 3-13, custom home-clusters 1-7, dilemma/portals/devil 5-11.
+- CPU p99 27.3M, max 39.5M.
+- Replays (dilemma seed 8191469905430442526, portals same seed): the games match the base
+  move for move until r20-45 and then diverge. No change you can see is clearly the intended
+  one: the earlier symmetry only changes memory (mirrored kelp), and the knock-on effects
+  (different routes and splits) look like noise, not better play.
