@@ -61,7 +61,8 @@ These didn't work:
      (`/api/v1/submissions/<id>/metrics`).
    - **Disk:** `df -h .` must show ≥10 GB free. If not, delete finished worktrees' `build/` dirs.
    - **Strays:** stop any of your own stray sims or agents.
-2. **Real-match analysis** (a subagent, Opus, read-only).
+2. **Real-match analysis.** Also analyse the ARENA losses of the line head by replay (user, 2026-10-05: arena losses are plentiful and reveal weak spots well; e.g. replays/arena-r14). Run it alongside the server analysis.
+   **Server analysis** (a subagent, Opus, read-only).
    - It fetches recent server replays of our submissions with `bcweb.py battles/fetch`,
      decodes them (`decode.py` under `../syeyoung-tokens.league/replays/*/analysis/`), and
      writes `replays/<round>/analysis/REPORT.md`.
