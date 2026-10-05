@@ -61,4 +61,25 @@ Labels: "keeper: park", "keeper: park run", "keeper: topup", "keeper: topup spri
   sparse (a r439 sighting reached one neighbour at r441, the queen never) - the relay helps little.
 
 ## Arena
-(filled after submit)
+Submitted as **ring-contest-7** (line ring-contest, parent ring-contest-4); not promoted.
+- vs ring-contest-4: **54-0-58** (48.2%, CI 39.2-57.4), beats_parent False (within noise).
+  By suite: server 33-35, custom 16-18, official 5-5. Decided by: elim 30-27, queen 15-23, longest 9-8.
+- vs ring-sprint-1 53-59, ring-sched-17 66-46, ring-rush-1 70-1-41. All: server 144-1-127,
+  custom 78-58, official 21-19. CPU p99 26.3M, max 48.0M.
+- Eval P(win) v parent at r100/200/300: 0.500 / 0.500 / 0.500 (the code is identical before r300).
+- **Weak spot, 272 games paired with ring-contest-4's on the same opponent/map/seed/seat:**
+  B 6.2 v 7.4 per 100, C2 2.9 v 2.9, D1 7.4 v 7.4. Both queens alive at r430 (88 games): our
+  queen ends 24.2 v 21.2 long and the race is won 49 v 46. Enemy queen dead before r430 (98
+  games): ours survives 71% v 72%. So PARK hardly fires: the enemy queen's death is almost never
+  seen, so the resign-fed walk-out (C2) is not fixed.
+- **Side effect (decoded):** with the enemy queen dead but unseen, TOPUP from r430 plus qrace
+  feeding grows the queen, and she dies. 179801: enemy queen dead at r93; ours 4 -> 16 from r430,
+  lunged at r481. The parent stayed at 4 in its ring and won. 179195: 2 -> 9, died at r470; the
+  parent survived. This undoes the qgate's "enemy queen dead" wins.
+- **Bleeding not fixed (decoded):** 179191 portals, reproduced locally with ring-sched-m3 and the
+  same seed. Our queen eats her way into a pocket (r471-477) and waits 3 times. One step forward
+  is into the closed branch again, so the in-a-row cap restarts: 20 -> 2, dead at r492. A
+  20-round window cap was tried locally: she enters after 3 waits, but the dead end is too shallow
+  and she is boxed (split to 3) by r492 anyway. That fix isn't in the submitted code.
+- Win flip with the intended behaviour: 179960 stronghold v ring-sprint-1. Ours goes 13 -> 58 from
+  r460 and wins 61-38; the parent's game on the same seed is lost 24-55.
