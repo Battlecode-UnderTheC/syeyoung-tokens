@@ -21,10 +21,13 @@ sections of `league/KNOWLEDGE.md` and the latest `league/generations/g*.md`, bef
 ## What the goal is measured by
 
 **The competition server ladder** (game.battlecode.au, team UnderTheC, id 328) is the
-ground truth.
-- Our in-house arena is a filter, not the goal. In round 9 it became our own bots playing
-  each other: queen-guard-7 was #2 on the arena but went 60-0-73 on the server.
-- Check the ladder and our live submission's record at the start of every round:
+ground truth, and the goal is our server **Elo**.
+- A raw server W-L (e.g. 60-73) is not a measure: the samples are small, the matchmaker picks
+  the opponents, and the user sometimes starts matches against the top teams.
+- When judging a live bot on the server, use rating-adjusted performance, broken down **per map**.
+  Per-map Elo is the breakdown that means something.
+- The arena is our filter for choosing what to deploy.
+- Check the ladder and our live submission at the start of every round:
   `python3 scripts/server/bcweb.py leaderboard`, `... submissions`.
 
 **Ladder history:**
