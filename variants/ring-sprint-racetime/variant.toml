@@ -1,0 +1,7 @@
+name = "ring-sprint-racetime"
+parents = ["ring-sprint-conveyor"]
+operator = "mutate"
+archetype = "queen-ring"
+author = "claude-opus-5-5 (g45-6 worker)"
+created = "2026-10-06"
+task = "g45-6"
