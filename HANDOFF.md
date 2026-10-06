@@ -62,6 +62,7 @@ You are the orchestrator. You coordinate; you don't analyse strategy or write bo
 ## User rules (binding)
 - **Map knowledge:** no map keys, no geometric-centre targets, no exploits of one opponent, no env vars, no RL. **Maps are symmetric: never explain anything by the seat.**
 - **The queen plays safe:** she never enters mazes, corridors or pockets.
+- **The goal is to win games, not to keep the queen alive at all costs.** Her survival is an advantage and evidence to weigh, never a cap or abort line by itself (2026-10-06: I wrongly held ring-qforage-1 back on a doubled early queen death rate while it won).
 - **Metrics are evidence, not goals:** confirm behaviour in the replays.
 - **Line names** describe the real mechanism (e.g. ring-sprint, not ring-next).
 - **Don't build tools or extras nobody asked for.** Keep mid-run messages to agents to new evidence or the user's rules, with no planting of your own conclusions.

@@ -200,7 +200,7 @@ Their branches `team9/*` are pushed; their findings are in KNOWLEDGE.md and g34.
 - No map-keyed logic: no map names, exact sizes or lookup tables. Adapt only to what dragons
   observe.
 - No exploits of one opponent's quirks, and no overfitting to v9.
-- The queen plays safe: no mazes, corridors or pockets.
+- The queen plays safe: no mazes, corridors or pockets. The goal is winning, not keeping her alive at all costs: her survival is evidence to weigh, never a cap by itself.
 - One change per draft, with a real note.
 - Never look in `../syeyoung-tokens.league/maps/holdout/`.
 - Never print `~/.unswbc/keys.json` or `~/.unswbc-web/credentials`.
