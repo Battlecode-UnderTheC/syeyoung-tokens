@@ -1,0 +1,7 @@
+name = "ring-sprint-nobleed"
+parents = ["ring-sprint-1"]
+operator = "mutate"
+archetype = ""
+author = "claude-opus-5-5 (g44-5 worker)"
+created = "2026-10-06"
+task = "g44-5"
