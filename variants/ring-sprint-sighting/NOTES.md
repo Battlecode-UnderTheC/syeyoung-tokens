@@ -48,3 +48,23 @@ assumed open in that flood (159 tiles, 6 near her head).
   out of her view); the queen moved SS instead of the base's S, and that seat's queen ended 73
   instead of 63.
 - The targeted situation is rare in our-bot duels: the change alters ~1 game in 30.
+
+## Arena verdict: ring-sprint-7 (draft, parent ring-sprint-2)
+- vs parent 56-0-57 (49.6%, loses within noise); server 34-35, custom 17-17, official 5-5.
+  Decided by: elimination 29-29, longer queen 17-18, longest 10-10.
+- vs ring-contest-4 62-50, ring-sched-17 68-46, ring-rush-1 72-40. CPU p99 25.8M, max 41.9M.
+- eval P(win) vs parent (seat-corrected mean): r100 0.499, r200 0.498, r300 0.501.
+- 53 of 55 mirror pairs vs the parent are move-for-move identical; the 2 that diverge split 1-1
+  like their parent pair, so the single-game difference is the one unpaired game.
+  - portals 194340 v 194329: at r476 a relayed sighting (enemy 632, len 6, 2 rounds old, out of
+    her view) made the queen step W instead of the parent's NN; she ended 20 instead of 29 (still
+    won 20-19). Over-caution, the enemy never came.
+  - maze 194383 v 194372: first divergence is a worker (r443), from the sonar words the sighting
+    pings replaced; the queen got 4 relays (enemy 897 at 2-4 tiles).
+- Targeted weak spot NOT fixed: our queen died to a late lunge (r430+) in 10 games v the
+  parent's 10-11. In all 10 she received no sighting in her last 4 rounds; in 9 none was sent.
+  In 6 no ally had the killer in view, in 2 she had no allies left; where an ally did see it
+  (194601: a 2-long child saw 7-8 segments of a 19-long killer 5-7 tiles from her), it didn't
+  know where the queen was (no queen report within 5 rounds), so it never sent.
+- Conclusion: the relay's reach is bounded by who sees the killer (usually nobody near her late)
+  and by sonar delivery (kelp stops most rays). Not worth stacking.
