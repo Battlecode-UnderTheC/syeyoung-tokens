@@ -6,7 +6,7 @@
 // (shared/engine/dragons, of unswbc 1.0.0) uses a 32-bit std::mt19937 at the fixed
 // kPearlRngSeed, so no pearl after the first draw matches any judge game. The ABI
 // header (core.hpp) cannot change, so this file recompiles game.cpp unchanged with
-// two substitutions: the member's type becomes std::mt19937_64 and Reset seeds it
+// two substitutions: the member's type becomes std::mt19937_64 (padded where needed) and Reset seeds it
 // from tools::PearlSeed() (the calling thread's seed, set by tools::Play). Every
 // tool links this in place of shared's game.o (it comes first on the link line, so
 // the archive's copy is never pulled in); variant plugins keep their own engine.
@@ -25,14 +25,31 @@
 #include <string>
 #include <vector>
 
-static_assert(sizeof(std::mt19937_64) == sizeof(std::mt19937) && alignof(std::mt19937_64) == alignof(std::mt19937),
-              "Game's layout would change with the judge's RNG");
-
+// On Linux, std::mt19937's state is uint_fast32_t (8 bytes), so it is 5000 bytes to
+// mt19937_64's 2504; there the judge's engine is padded to the header's size.
 namespace tools {
 uint64_t PearlSeed();
-}
 
-#define mt19937 mt19937_64
+template <std::size_t Pad>
+struct JudgeRng : std::mt19937_64 {
+  using std::mt19937_64::mt19937_64;
+  unsigned char pad_[Pad];
+};
+template <>
+struct JudgeRng<0> : std::mt19937_64 {
+  using std::mt19937_64::mt19937_64;
+};
+}  // namespace tools
+
+static_assert(sizeof(std::mt19937_64) <= sizeof(std::mt19937) && alignof(std::mt19937_64) == alignof(std::mt19937),
+              "Game's layout would change with the judge's RNG");
+
+namespace std {
+using judge_mt19937 = ::tools::JudgeRng<sizeof(mt19937) - sizeof(mt19937_64)>;
+}
+static_assert(sizeof(std::judge_mt19937) == sizeof(std::mt19937), "Game's layout would change with the judge's RNG");
+
+#define mt19937 judge_mt19937
 #define seed(x) seed(::tools::PearlSeed())
 #include "../shared/engine/dragons/game.cpp"
 #undef seed
