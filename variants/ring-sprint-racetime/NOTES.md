@@ -42,6 +42,19 @@ feeders) as soon as that is true.
 
 - check maps/official: all passed.
 - sim v ring-sprint-conveyor, maps/server seed 1: 17-0-17 (mirror; identical games, the gate
-  doesn't fire in self-play with equal queens). Smoke v cross-queengrow-1 (8 maps): no change.
+  doesn't fire in self-play with equal queens). Forced-firing test (g = 1/40, reverted): v qg-board-1
+  server s1, early exits happen and queens finish +18-22 longer (australia B, autarky A, portals B):
+  the mechanism works (exit, conveyor, no settle-split).
 
 ## Arena
+
+- ring-sprint-18 (draft). Duels (server, random:2): v ring-sprint-6 34-0-34, every metric
+  identical; v cs-queen-split-tail-risk-v1-7 48-0-20 (no early growth seen).
+- Verdict (in progress at 112 games): v ring-sprint-6 56-0-56 (even); v ring-qforage-1 51-61,
+  ring-contest-4 63-49, ring-sched-17 72-39. CPU p99 25.8M, max 41.6M (= parent).
+- Paired with ring-sprint-6 (333 games, same opponent/map/seed/seat): every result and every
+  queen-length/total/eval series identical; 0 pairs differ by r430. The gate never fired: in the
+  arena every opponent parks its queen at 2-4 until ~r430 (29 B losses: their queen 2-4 at r400),
+  so there is never a gap before r430. The B losses here are races lost after both start at r430.
+  The targeted situation (server opponents with an 11+ queen by r400) doesn't occur in the arena
+  pool; the change is inert there, and can only be judged on the server.
