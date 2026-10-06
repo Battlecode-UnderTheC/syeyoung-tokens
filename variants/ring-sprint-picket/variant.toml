@@ -1,0 +1,7 @@
+name = "ring-sprint-picket"
+parents = ["ring-sprint-1"]
+operator = "mutate"
+archetype = "queen-ring"
+author = "claude-opus-5-5 (g44-6 worker)"
+created = "2026-10-06"
+task = "g44-6"
