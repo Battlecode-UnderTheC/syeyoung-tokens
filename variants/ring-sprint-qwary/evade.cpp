@@ -13,8 +13,9 @@
 //
 // QueenEvade scores each of her legal single steps by the turns it keeps her safe from every
 // visible enemy head over a kHorizon-turn search of her own steps (her body moving with her), then
-// by the worst margin at the first tile. She keeps patrolling her loop when its next tile is as
-// safe as the best; otherwise she takes the best step. The queen plays safe: a step never enters
+// by the worst margin at the first tile. She takes the best step only when it keeps her safe for
+// more turns than the loop's next tile (or she has no loop) and at least this turn; otherwise the
+// base decides as before. The queen plays safe: a step never enters
 // a corridor tile (kelp on 2+ sides) or a smaller room than she has now, so she never flees into
 // mazes, corridors or pockets. With no such step this returns nothing and the base decides.
 #include <algorithm>
@@ -134,14 +135,18 @@ bot::Action StrategyAgent::QueenEvade() {
   }
 #endif
   ++evade_turns_;
-  // the loop's next tile is as safe as anything else: keep the ring (its patrol and splits)
-  if (patrol.dir >= 0 && patrol.turns >= best.turns && (patrol.turns == horizon || patrol.margin >= best.margin))
-    return bot::Action{};
+  // Only a step that buys turns: the loop's next tile is as safe (keep the ring, its patrol and
+  // splits), or no step escapes at all (iteration 1 then walked her off the loop by margin alone,
+  // away from the workers around it, and arena head-on deaths of the short queen rose 101 -> 113).
+  // Between the two, equal turns short of the horizon go to the wider margin (away from the hunter).
+  if (best.turns <= 0) return bot::Action{};
+  if (patrol.dir >= 0 && (patrol.turns > best.turns ||
+      (patrol.turns == best.turns && (patrol.turns == horizon || patrol.margin >= best.margin)))) return bot::Action{};
   body_.push_front(best.tile);
   if (!best.pearl) body_.pop_back();
   if (std::find(ring_.begin(), ring_.end(), best.tile) == ring_.end()) ring_.clear();
   ++evade_moves_;
-  return Because(best.turns >= horizon ? "evade: off the loop (safe)" : best.turns > 0 ? "evade: off the loop (gains turns)" : "evade: off the loop (widest margin)",
+  return Because(best.turns >= horizon ? "evade: off the loop (safe)" : "evade: off the loop (gains turns)",
                  bot::Action::Move(best.dir));
 }
 
