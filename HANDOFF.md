@@ -89,3 +89,28 @@ This setup assumes the Mac:
 - the local build (`cmake`, `build/tools/sim`).
 
 A cloud session needs the arena reachable over Tailscale, the `tokenz` client, and credentials provided by the user. Without them it can analyse code and plan, but not submit, duel or deploy.
+
+## Cloud session state (2026-10-06, after the Mac hit its weekly limit)
+**Setup a cloud container needs** (lost on restart; the user supplies the Tailscale auth key and the files):
+- Full network access; Tailscale installed from pkgs.tailscale.com, `tailscaled` with state in /var/lib/tailscale, `tailscale up --auth-key=<key from the user>`. The device is tagged, so pass `--owner cyoung06@github` to every `tokenz` ephemeral/duel/submit.
+- `export NO_PROXY="$NO_PROXY,.ts.net" no_proxy="$no_proxy,.ts.net"` at the TOP of ~/.bashrc (above the non-interactive return), and ~/.local/bin on PATH.
+- `tokenz`: `curl -fsSL https://tokenz-arena.lonk-kelvin.ts.net/tokenz.py -o ~/.local/bin/tokenz && chmod +x ~/.local/bin/tokenz`.
+- League folder: a text-only copy (md/py/sh/toml/json/txt under 5 MB, no maps/holdout) unpacked to /home/user/syeyoung-tokens.league. bcweb credentials in ~/.unswbc-web/credentials (0600).
+- sim/check build on Linux after commit 2cd97cf (judge RNG padded to std::mt19937's size).
+- Use default permission mode: in auto mode a safety check blocked Bash, SendMessage and the workers' `tokenz ephemeral`/mapgen calls.
+
+**Ladder:** #16, 2139 (ring-sprint-1, server 2136). #10 is 2242. ring-sprint-1 per map: weakest Devil 1858 (4-14), Trophy 1926 (10-16).
+
+**g44 state:**
+| Task | Draft | State |
+|---|---|---|
+| g44-1 founder | ring-sprint-2 | 58-54 beats parent (noise); merged; the base for new workers. Not promoted: first resubmit ring-sprint-1 (live), and check trophy 4-8 / tower_defense 3-9, CPU, replays (analyst) |
+| g44-2 portals | ring-sprint-4 | 52-60 loses; its target metric not yet checked |
+| g44-3 lunge guard | ring-sprint-3 | 58-54 beats parent (noise); step-6 check was running (worktree g44-3) |
+| g44-4 queen parked | — | relaunched from WIP (worktree g44-4); no report yet |
+| g44-5 no bleed | ring-sprint-5 | 55-57 loses; step-6 check was running (worktree g44-5) |
+| g44-6 pickets | — | not submitted: the role fires ~2 times a game (id%3 over shared ids, few children before r60). Retry brief updated (briefs/g44-6.md), continue from task/g44-6 6baecbd |
+| g44-7 feeding conveyor | — | strategist #3, base and parent ring-sprint-2 (must be promoted before it submits); running (worktree g44-7) |
+
+**Running analyst:** server-r19 (ring-sprint-1's server games; briefs/server-r19.md). Its brief now REQUIRES filmstrips; the running agent read the older "may" version.
+**Queue:** strategist #1 (race feeding) after g44-4; #4, #5; port winners onto the head one per worker; g45 needs 2-3 strategists after server-r19.

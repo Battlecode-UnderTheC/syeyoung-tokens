@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(tailscale status)",
+      "Bash(tailscale status *)",
+      "Bash(tokenz replay *)",
+      "Bash(tokenz show *)",
+      "Bash(tokenz report *)",
+      "Bash(tokenz games *)",
+      "Bash(tokenz --json games *)",
+      "Bash(python3 scripts/server/bcweb.py submissions)",
+      "Bash(python3 scripts/server/bcweb.py submissions *)",
+      "Bash(python3 scripts/server/bcweb.py fetch *)"
+    ]
+  }
+}
