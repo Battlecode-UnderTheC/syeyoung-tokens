@@ -838,12 +838,14 @@ StrategyAgent::Goal StrategyAgent::ChooseGoal(const Paths& paths) const {
 #endif
   const int32_t call_at = CallAnswered(&call_value);
   const int32_t call_here = call_at >= 0 ? Torus(head_, call_at) : 0;
-  // g45-4: seen food with no known path, credited to the reachable unknown-portal tiles near it
-  // (kGateRadius). gate[t] is the summed value of that food; a portal tile scores
-  // gate / (d + 1 + kGateDelay). Maps without portals have no such tile: nothing changes there.
+  // g45-4: seen food we cannot walk to, credited to the reachable unknown-portal tiles one view
+  // window can hold together with it. gate[t] is the summed value of that food; a portal tile
+  // scores gate / (d + 1 + kGateDelay). Maps without portals have no such tile: nothing changes.
   gate_cross_ = false;
+  gate_goal_ = -1;
   std::vector<double> gate;
-  if (GATE_MODE && !IsQueen() && round_ < kGateUntil && WillCross()) {
+  std::vector<uint8_t> gate_won;   // the gate credit is what scored this tile
+  if (GATE_MODE && !IsQueen() && round_ < kGateUntil && WillCross() && (gate_spent_ < 0 || last_eat_ > gate_spent_)) {
     std::vector<int32_t> doors, walled;
     for (int32_t t = 0; t < board_.size(); ++t) {
       if (paths.dist[t] < 0) {
@@ -857,10 +859,22 @@ StrategyAgent::Goal StrategyAgent::ChooseGoal(const Paths& paths) const {
         }
     }
     if (!doors.empty() && !walled.empty()) {
+      // iteration 2: walled by the board, not by bodies: food behind a dragon (ours or theirs)
+      // is reached by walking once it moves, and is no reason to leave through a portal
+      const Paths walk = Search(board_, head_, [](int32_t) { return true; });
+      constexpr int32_t kSeenTogether = 2 * dragons::kVisionRadius;
+      auto near = [](int32_t a, int32_t b, int32_t span) {   // one axis, on the torus
+        const int32_t d = std::abs(a - b);
+        return std::min(d, span - d) <= kSeenTogether;
+      };
       gate.assign(board_.size(), 0.0);
-      for (const int32_t p : doors)
-        for (const int32_t f : walled)
-          if (torus(p, f) <= kGateRadius) gate[p] += base[f];
+      gate_won.assign(board_.size(), 0);
+      for (const int32_t f : walled) {
+        if (walk.dist[f] >= 0) continue;
+        for (const int32_t p : doors)
+          if (near(board_.X(p), board_.X(f), board_.width()) && near(board_.Y(p), board_.Y(f), board_.height()))
+            gate[p] += base[f];
+      }
     }
   }
   if (!gate.empty() && gate[head_] > 0) gate_cross_ = true;   // checked against the chosen goal below
@@ -990,7 +1004,7 @@ StrategyAgent::Goal StrategyAgent::ChooseGoal(const Paths& paths) const {
           g *= p_.share_factor;
           break;
         }
-      score = std::max(score, g);
+      if (g > score) score = g, gate_won[t] = 1;
     }
     // swh17: fold patrol (towards what hasn't been seen for longest) into this same scan
     // when crowded, so it competes with weak bed/pearl goals directly instead of only
@@ -1081,6 +1095,19 @@ StrategyAgent::Goal StrategyAgent::ChooseGoal(const Paths& paths) const {
                           : best.tile == nearest_pearl ? std::max(best_score, nearest_pearl_score) : best_score;
     gate_cross_ = gate[head_] / (1 + kGateDelay) > chosen;
   }
+  if (!gate_won.empty() && best.tile >= 0 && !call_goal_ && gate_won[best.tile]) gate_goal_ = best.tile;
+#ifdef GATE_DBG
+  if (!gate.empty() && best.tile >= 0 && gate[best.tile] > 0) {
+    const Paths free = Search(board_, head_, [](int32_t) { return true; });
+    int32_t body = 0, topo = 0;
+    for (int32_t f = 0; f < board_.size(); ++f)
+      if (paths.dist[f] < 0 && base[f] > 0 && torus(best.tile, f) <= 6) (free.dist[f] >= 0 ? body : topo)++;
+    std::fprintf(stderr, "GATE r%d team%d id%d L%d head(%d,%d) goal(%d,%d) d%d gate%.2f best%.3f np%.3f body%d topo%d\n", round_, spawn_.team, spawn_.id,
+                 length_, board_.X(head_), board_.Y(head_), board_.X(best.tile), board_.Y(best.tile), paths.dist[best.tile], gate[best.tile], best_score,
+                 nearest_pearl >= 0 ? nearest_pearl_score : -1.0, body, topo);
+  }
+  if (gate_cross_) std::fprintf(stderr, "GATEX r%d id%d head(%d,%d) gate%.2f\n", round_, spawn_.id, board_.X(head_), board_.Y(head_), gate[head_]);
+#endif
   // nothing worth going for: patrol, towards what we have not seen for longest
   if (best.tile < 0 && p_.patrol) {
     double top = 0;
@@ -1963,6 +1990,13 @@ bot::Action StrategyAgent::Turn(const rl::Observation& o) {
           break;
         }
   }
+#ifdef GATE_DBG
+  if (round_ < 60)
+    std::fprintf(stderr, "ACT r%d id%d L%d head(%d,%d) goal(%d,%d) %s %s%d ping%d\n", round_, spawn_.id, length_, board_.X(head_), board_.Y(head_),
+                 cur_goal_ >= 0 ? board_.X(cur_goal_) : -1, cur_goal_ >= 0 ? board_.Y(cur_goal_) : -1, reason_,
+                 a.kind == bot::Action::kMove ? "mv" : "sp", a.kind == bot::Action::kMove && !a.steps.empty() ? a.steps[0] : a.split,
+                 int(ping_round_ == round_));
+#endif
 #ifdef GM2_DEBUG
   ++g_turns;
   if (Looping()) ++g_idle;
@@ -2261,6 +2295,7 @@ bot::Action StrategyAgent::Decide(const rl::Observation& o) {
   // 5. a goal, and the first safe step towards it
   poor_ = false;
   gate_cross_ = false;
+  gate_goal_ = -1;
   Goal target;
   if (ally_head >= 0 && paths.dist[ally_head] > 0) target = Goal{ally_head, false};
   else if (founding && !founder_here) target = Goal{founder_goal, false};   // g43-6
@@ -2340,6 +2375,7 @@ bot::Action StrategyAgent::Decide(const rl::Observation& o) {
   // g40-6: the goal is a bed whose pearl is still to grow (rounds to its tick; -1 otherwise)
   const int32_t goal_due = [&] {
     if (!BEDTIME_MODE || goal < 0) return -1;
+    if (goal == gate_goal_) return -1;   // g45-4: a gated-food door: the portal is the goal, not the bed
     const TileMemory& m = board_.at(goal);
     if (m.pearl || m.countdown < 0 || m.seen_round < 0) return -1;
     const int32_t due = m.countdown - (round_ - m.seen_round);
@@ -2366,8 +2402,16 @@ bot::Action StrategyAgent::Decide(const rl::Observation& o) {
       }())) {
     bool enemy = false;
     for (const auto& [id, w] : seen_) enemy |= w.team != spawn_.team && w.round == round_ && w.head >= 0;
-    if (!enemy) return Because(gate_cross_ ? "portal: gated food" : "portal: explore", bot::Action::Move(ping_dir_));
+    if (!enemy) {
+      if (gate_cross_) gate_spent_ = round_;
+      return Because(gate_cross_ ? "portal: gated food" : "portal: explore", bot::Action::Move(ping_dir_));
+    }
   }
+  // g45-4: our ping through this gated-food door came back and we still did not cross (a dragon
+  // past the exit, an enemy head in view, our body out of view): leave this door for loop_ban
+  // rounds, as the loop breaker does, instead of circling it (iteration 2, default seed
+  // 2100420407280668120: a worker re-pinged one door every 3 rounds from r8 to r32, never crossing)
+  if (gate_cross_ && ping_tile_ == head_ && ping_round_ == round_ - 1) banned_[head_] = round_ + p_.loop_ban;
   int preferred = goal >= 0 ? paths.first[goal] : -1;
   // g40-6: next to a bed before its tick, stepping on would put us on it at the tick (a blocked
   // pearl, the wait wasted). Take a free step that stays nearest to it instead and come back

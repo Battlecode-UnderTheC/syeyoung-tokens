@@ -46,18 +46,19 @@ inline constexpr double kSchedOther = 0.1;
 #define CONTEST_MODE 1
 #endif
 inline constexpr int kContestUntil = 60;   // the opening, as rush.cpp's kMiddleUntil (r30-59 is where we lost the food)
-// g45-4 (ring-sprint-portalfood, strategist b g45 #3): food we see but have no known path to
-// (a pearl or bed walled off from us) is credited to the reachable unknown-portal frontier tiles
-// within kGateRadius of it, so a worker goes to find out where that portal leads instead of
-// walking past. Workers only, before kGateUntil. kGateRadius 6 = 2 x the view radius (3): a
-// portal and food one head can see from the same spot. kGateUntil: server-r19's portal-step gap
-// is in r0-60 (2 starters) and r60-100 (3-4 starters); later the poor-home rule (poor_) covers
-// dragons locked off from food. kGateDelay: the strategist's +2 on the distance (one turn to
-// ping the exit, one to cross), so a reachable pearl at the same distance still wins.
+// g45-4 (ring-sprint-portalfood, strategist b g45 #3): food we see but cannot walk to (walled
+// off by kelp and unseen edges, not merely by a dragon lying in the way) is credited to the
+// reachable unknown-portal frontier tiles that one 7x7 view can hold together with it (|dx| and
+// |dy| both <= 2 x the view radius: a head saw, or could see, the portal and the food from one
+// spot), so a worker goes to find out where that portal leads instead of walking past. Workers
+// only, before kGateUntil. kGateUntil: server-r19's portal-step gap is in r0-60 (2 starters) and
+// r60-100 (3-4 starters); later the poor-home rule (poor_) covers dragons locked off from food.
+// kGateDelay: the strategist's +2 on the distance (one turn to ping the exit, one to cross), so a
+// reachable pearl at the same distance still wins.
 #ifndef GATE_MODE
 #define GATE_MODE 1
 #endif
-inline constexpr int kGateUntil = 100, kGateRadius = 6, kGateDelay = 2;
+inline constexpr int kGateUntil = 100, kGateDelay = 2;
 // an enemy head seen up to kRivalMemory rounds ago still counts: arena-r16's A losses show the
 // enemy taking a food area by ~r16 and staying on it (median turning point r20), so where a head
 // was seen is where it farms. It may have come up to kRivalDrift steps nearer since (a farmer moves
@@ -753,6 +754,16 @@ class StrategyAgent : public bot::Agent {
   // g45-4 (ring-sprint-portalfood): set by ChooseGoal: the head stands beside an unknown portal
   // near seen-but-unreachable food, and that food's credit beats the goal it chose (cross it)
   mutable bool gate_cross_ = false;
+  // ... and the door tile ChooseGoal picked for its gated-food credit (-1 none): a door that is
+  // also an unripe bed is walked onto (Decide skips the bed-tick wait for it; iteration 2: on
+  // Trophy, where every tile is a bed, and in schooltime's bed rooms, the wait kept workers
+  // circling one step from the door for 10-20 rounds)
+  mutable int32_t gate_goal_ = -1;
+  // ... and the round this dragon last crossed for gated food (-1 never). Until it eats again it
+  // gets no more gate credit: that crossing showed it where one portal leads, and it did not find
+  // the food (iteration 2, schooltime: workers hopped portal to portal at length 2-3 for 20-40
+  // rounds, each portal's far end in another part of the board, eating nothing)
+  int32_t gate_spent_ = -1;
   bool UnknownPortal(int32_t t, int d) const { return (portal_[t] >> d & 1) && board_.Step(t, d) == kUnknown; }
   bool BodyInView() const;
   bool WillCross() const { return p_.portal_cross && round_ < p_.cross_until; }
