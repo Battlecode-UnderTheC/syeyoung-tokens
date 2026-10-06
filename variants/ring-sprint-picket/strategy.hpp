@@ -754,6 +754,7 @@ class StrategyAgent : public bot::Agent {
   mutable bool picket_food_ = false;                    // this turn's picket goal is food
   mutable bool picket_band_ = false;                    // ... in the band (not home food within reach)
   mutable int32_t picket_walk_ = -1;                    // the band tile it walks to (kept on near-ties)
+  uint8_t picket_refuted_ = 0;                          // symmetry candidates that map our team onto itself (r0)
   // g42-3 (ring-champfood-1): the late champion grows from pearls (champfood.cpp)
   bot::Action ChampionHarvest();
   bool Banned(int32_t t) const {

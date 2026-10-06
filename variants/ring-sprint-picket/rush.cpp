@@ -325,14 +325,14 @@ namespace gm2 {
 // their 9.4. They take the contested ground first and leave their home food for later. g43-2 and
 // g43-3 re-weighted food and home food still outbid the frontier, so this is a ROLE, not a weight.
 //
-// Every 3rd child born before kContestUntil (by id: a split child knows nothing else about its
-// order) is a picket until kContestUntil. Its goal is the contested band: tiles whose arrival time
-// for us is within kPicketBand of the rival's.
+// Every 3rd dragon of our team born before kContestUntil (strategy.cpp Remember: starters by
+// their place in the team, children by their first UNIT_COUNT) is a picket until kContestUntil.
+// Its goal is the contested band: tiles whose arrival time for us is within kPicketBand of the
+// rival's.
 // - Rivals: enemy heads seen in the last kRivalMemory rounds (RivalDist, as ChooseGoal's contest).
-//   Until any is seen: our own counterparts under every symmetry candidate still alive (contest
-//   maps are mirror-symmetric, docs/game.md). The counterpart of our head reaches t as fast as we
-//   reach t's mirror, so its arrival is paths.dist[mirror(t)] (exact over known ground; the torus
-//   distance where the mirror is not reached yet). Allies' counterparts count by torus distance.
+//   Until any is seen: our own counterpart under every symmetry candidate still alive (contest
+//   maps are mirror-symmetric, docs/game.md), on the mirror of our head.
+// - A rival's arrival: a search over the board as we know it (kelp blocks, unseen edges open).
 // - It eats food inside the band, and home food (ours < theirs - band) only within kPicketHome
 //   steps; never food on their side. With no band food it walks to the band tile with the most
 //   beds and unseen ground per step. No fixed point: the band is where the two arrivals meet.
@@ -350,34 +350,44 @@ int32_t StrategyAgent::PicketGoal(const Paths& paths) const {
   std::vector<Rival> rivals;
   for (const auto& [id, s] : seen_)
     if (s.team != spawn_.team && s.head >= 0 && round_ - s.round <= kRivalMemory) rivals.push_back({s.head, round_ - s.round});
-  std::vector<int> cands;   // mirror candidates (sym.hpp: 0 y flips, 1 x flips, 2 both)
-  const bool mirrored = rivals.empty();
-  if (mirrored) {
-    const uint8_t alive = sym_.Alive();
-    for (int c = 0; c < 3; ++c)
-      if (alive >> c & 1) cands.push_back(c);
-    if (cands.empty()) return -1;
-    std::vector<int32_t> allies = AllyHeads();
-    for (const int c : cands)
-      for (const int32_t a : allies) {
-        const int32_t x = board_.X(a), y = board_.Y(a);
-        rivals.push_back({board_.Tile(c == 0 ? x : w - 1 - x, c == 1 ? y : h - 1 - y), 0});
-      }
+  // Until a rival is seen: our own counterpart under every symmetry candidate still alive (and
+  // not refuted for the teams at r0), standing on the mirror of our head.
+  if (rivals.empty()) {
+    const uint8_t alive = sym_.Alive() & ~picket_refuted_;
+    const int32_t x = board_.X(head_), y = board_.Y(head_);
+    for (int c = 0; c < 3; ++c)   // sym.hpp: 0 y flips, 1 x flips, 2 both
+      if (alive >> c & 1) rivals.push_back({board_.Tile(c == 0 ? x : w - 1 - x, c == 1 ? y : h - 1 - y), 0});
+    if (rivals.empty()) return -1;
   }
-  auto mirror = [&](int c, int32_t t) {
-    const int32_t x = board_.X(t), y = board_.Y(t);
-    return board_.Tile(c == 0 ? x : w - 1 - x, c == 1 ? y : h - 1 - y);
-  };
-  auto theirs = [&](int32_t t) {
-    int32_t best = 1 << 20;
-    for (const auto& r : rivals) best = std::min(best, RivalDist(Torus(r.tile, t), r.age));
-    for (const int c : cands) {   // our own counterpart (mirrored mode only)
-      const int32_t m = mirror(c, t);
-      const int32_t dm = paths.dist[m] >= 0 ? paths.dist[m] : Torus(mirror(c, head_), t);
-      best = std::min(best, dm);
+  // v2: a rival's arrival over the board as we know it (kelp blocks; edges never seen are open),
+  // not the torus distance. v1 used the torus distance (and our paths to the mirror tile, else
+  // the torus): on devil (arena duel-69f43886 g28/g29, a full kelp column on the wrap edge) the
+  // rival across the wall was 2-4 torus steps from the tiles behind our home, so the picket took
+  // them as the band and camped there at length 2 for 60 rounds. v1 also counted the allies'
+  // mirrored counterparts by torus distance; now only our own.
+  std::vector<int32_t> rival_at(n, 1 << 20);
+  {
+    std::vector<int32_t> dist(n), queue;
+    queue.reserve(n);
+    for (const auto& r : rivals) {
+      std::fill(dist.begin(), dist.end(), -1);
+      queue.assign(1, r.tile);
+      dist[r.tile] = 0;
+      for (size_t i = 0; i < queue.size(); ++i) {
+        const int32_t t = queue[i], x = board_.X(t), y = board_.Y(t);
+        for (int d = 0; d < 4; ++d) {
+          int32_t m = board_.Step(t, d);
+          if (m == kUnknown) m = board_.Tile(x + dragons::kDx[d], y + dragons::kDy[d]);   // never seen: open
+          if (m < 0 || dist[m] >= 0) continue;
+          dist[m] = dist[t] + 1;
+          queue.push_back(m);
+        }
+      }
+      for (int32_t t = 0; t < n; ++t)
+        if (dist[t] >= 0) rival_at[t] = std::min(rival_at[t], RivalDist(dist[t], r.age));
     }
-    return best;
-  };
+  }
+  auto theirs = [&](int32_t t) { return rival_at[t]; };
   int32_t food = -1, walk = -1;
   bool food_band = false;
   double food_score = 0, walk_score = 0;
@@ -412,6 +422,9 @@ int32_t StrategyAgent::PicketGoal(const Paths& paths) const {
   picket_walk_ = best_food ? -1 : walk;
   picket_food_ = best_food;
   picket_band_ = best_food ? food_band : true;
+#ifdef PICKET_DBG
+  if (best >= 0) std::fprintf(stderr, "PKDBG r%d id%d alive%d ref%d rivals%zu th%d d%d\n", round_, spawn_.id, int(sym_.Alive()), int(picket_refuted_), rivals.size(), theirs(best), paths.dist[best]);
+#endif
   return best;
 }
 }  // namespace gm2

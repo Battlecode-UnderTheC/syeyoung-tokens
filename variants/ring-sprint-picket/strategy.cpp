@@ -105,8 +105,32 @@ void StrategyAgent::Remember(const rl::Observation& o) {
     leader_ = o.round == 0;
     born_ = o.round;                         // alive at the start: not a split child
     first_turn_ = false;
-    // g44-6: every 3rd child born in the opening is a picket (the role sticks; see PicketGoal)
-    picket_ = PICKET_MODE && !leader_ && born_ < kContestUntil && spawn_.id % 3 == 0;
+    // g44-6: every 3rd dragon of OUR team born in the opening is a picket (the role sticks; see
+    // PicketGoal). v1 used id % 3 over split children only: ids are shared by both teams and on
+    // 3+-starter maps few children are born before r35 (default.map seed 1: one at r8, the next
+    // at r35), so the first picket came at r39 and the r0-30 opening never had one. Now the
+    // team's k-th dragon (1-based) is a picket when k % 3 == 0, counting the starters too:
+    // - a starter (born r0) is the team's (id / 2 + 1)-th dragon: the map's dragons alternate
+    //   teams (docs/game.md), so id / 2 is its place in its team and the queen (id 0/1) is first;
+    // - a split child is the k-th by its first UNIT_COUNT (our living dragons, itself included).
+    const int32_t k = leader_ ? spawn_.id / 2 + 1 : o.unit_count;
+    picket_ = PICKET_MODE && born_ < kContestUntil && spawn_.id > 1 && k % 3 == 0;
+    // v2: the starters are mirror images of the rival's (docs/game.md), so at r0 a symmetry
+    // candidate is wrong for the TEAMS when it maps our head onto a tile in view with no enemy
+    // on it. The terrain can't drop it when the map is symmetric both ways (devil, duel-69f43886
+    // g28/g29: the y-flip kept our own home as the "rival" side and the picket camped there).
+    if (picket_ && leader_) {
+      const int32_t w = board_.width(), h = board_.height(), x = o.head_x(), y = o.head_y();
+      for (int c = 0; c < 3; ++c) {
+        const int32_t mx = c == 0 ? x : w - 1 - x, my = c == 1 ? y : h - 1 - y;
+        int32_t dx = std::abs(mx - x), dy = std::abs(my - y);
+        dx = std::min(dx, w - dx), dy = std::min(dy, h - dy);
+        if (dx > dragons::kVisionRadius || dy > dragons::kVisionRadius) continue;   // out of view: can't tell
+        bool enemy = false;
+        for (const rl::Segment& s : o.segments) enemy |= s.team != spawn_.team && s.x == mx && s.y == my;
+        if (!enemy) picket_refuted_ |= uint8_t(1 << c);
+      }
+    }
 #ifdef PICKET_DBG
     std::fprintf(stderr, "BORN r%d team%d id%d picket%d\n", round_, spawn_.team, spawn_.id, int(picket_));
 #endif
