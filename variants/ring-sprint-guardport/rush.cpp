@@ -303,8 +303,9 @@ bot::Action StrategyAgent::FreeSprint(bot::Action a, int32_t goal) const {
       if (t < 0 || !board_.Current(t) || g[t] < 0 || g[t] != g[cur] - 1) continue;
       if (t == goal && !goal_free) continue;
       if (Classify(t) != Cell::kFree || std::find(body.begin(), body.end(), t) != body.end()) continue;
-      // g44-3: the lunge guard (g43-7) applies to each extra step as to the single step
-      if (Exposed(t) || LungeExposed(t) || RoomAround(board_, t, open, need) < need) continue;
+      // g44-3: the lunge guard (g43-7) applies to each extra step as to the single step; g45-1 v2: each
+      // extra step may be the move's last, so it is held to the end-tile reach (unknown lengths unbounded)
+      if (Exposed(t) || LungeEndExposed(t) || RoomAround(board_, t, open, need) < need) continue;
       std::vector<int32_t> nb(body);
       nb.insert(nb.begin(), t);
       if (!(board_.Current(t) && board_.at(t).pearl)) nb.pop_back();

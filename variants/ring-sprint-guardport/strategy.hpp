@@ -572,6 +572,9 @@ class StrategyAgent : public bot::Agent {
   // ends clear of every lunge reach and adjacent head, with room; empty if none
   std::vector<int> LungeEscapeRun(const std::function<bool(int32_t)>& open, int32_t need) const;
   bool LungeExposed(int32_t tile) const { return lunge_round_ == round_ && tile >= 0 && lunge_mark_.Has(tile); }
+  // g45-1 v2: the same, for the last tile of a multi-step move: a seen enemy whose body leaves the view
+  // (its length unknown) reaches every free tile in view it has a path to
+  bool LungeEndExposed(int32_t tile) const { return lunge_round_ == round_ && tile >= 0 && lunge_end_mark_.Has(tile); }
   int FleeDirection() const;                            // the step furthest from the enemy heads seen (-1: none seen)
   int32_t EnemiesSeen() const;
   struct Report {
@@ -643,7 +646,7 @@ class StrategyAgent : public bot::Agent {
     int32_t Get(int32_t t) const { return value[t]; }
   };
   mutable Scratch esc_index_, esc_when_, q_body_, q_dist_, q_mine_, cont_index_, sched_seen_;
-  mutable Scratch lunge_mark_, lunge_dist_;   // g43-7: the lunge field and its per-enemy BFS
+  mutable Scratch lunge_mark_, lunge_end_mark_, lunge_dist_;   // g43-7: the lunge field and its per-enemy BFS
   mutable int32_t lunge_round_ = -1;
   mutable std::vector<int32_t> lunge_queue_;
   mutable std::vector<int32_t> esc_queue_, q_queue_, sched_queue_;

@@ -2,6 +2,7 @@
 
 
 #include <algorithm>
+#include <limits>
 #include <cmath>
 #include <tuple>
 #include <functional>
@@ -337,6 +338,7 @@ bool StrategyAgent::WorthTrading(int32_t enemy_id) const {
 void StrategyAgent::BuildLungeField() const {
   lunge_round_ = round_;
   lunge_mark_.Begin(board_.size());
+  lunge_end_mark_.Begin(board_.size());
   if (IsQueen() || length_ < 6) return;
   for (const auto& [id, w] : seen_) {
     if (w.team == spawn_.team || w.round != round_ || w.head < 0) continue;
@@ -344,6 +346,12 @@ void StrategyAgent::BuildLungeField() const {
     // (its seen length is a lower bound): count that segment
     const int32_t le = std::max<int32_t>(2, w.length + (w.partial ? 1 : 0));
     const int32_t reach = (le + 3) / 4 + le - 2;
+    // g45-1 v2: the end of a multi-step move of ours (escape run, sprint) must be clear of the reach
+    // of the enemy's TRUE length. A body that leaves our view has unknown length, so its reach to
+    // that end tile is unbounded within view. In ring-sprint-10's arena games 74 of 169 deaths of our
+    // 6+ workers right after our own multi-step move were to an enemy head in view whose body left
+    // the view: every one ended inside the reach of its true length, none inside the seen one.
+    const int32_t end_reach = w.partial ? std::numeric_limits<int32_t>::max() : reach;
 #ifdef LUNGE_DBG
     ++g_lf_enemy;
     if (w.partial) ++g_lf_partial;
@@ -356,12 +364,13 @@ void StrategyAgent::BuildLungeField() const {
     lunge_dist_.Set(w.head, 0);
     for (size_t qi = 0; qi < lunge_queue_.size(); ++qi) {
       const int32_t t = lunge_queue_[qi], dt = lunge_dist_.Get(t);
-      if (dt >= reach) continue;
+      if (dt >= end_reach) continue;
       for (int d = 0; d < 4; ++d) {
         const int32_t n = board_.Step(t, d);
         if (n < 0 || lunge_dist_.Has(n) || !board_.Current(n) || Classify(n) != Cell::kFree) continue;
         lunge_dist_.Set(n, dt + 1);
-        lunge_mark_.Set(n);
+        lunge_end_mark_.Set(n);
+        if (dt + 1 <= reach) lunge_mark_.Set(n);
         lunge_queue_.push_back(n);
       }
     }
@@ -391,9 +400,15 @@ std::vector<int> StrategyAgent::LungeEscapeRun(const std::function<bool(int32_t)
       const int32_t n = board_.Step(at, d);
       if (n < 0 || !board_.Current(n) || Classify(n) != Cell::kFree || (avoid_tile_ >= 0 && n == avoid_tile_)) continue;
       if (std::find(tiles.begin(), tiles.end(), n) != tiles.end()) continue;
+      // g45-1 v3: each tile is entered only by its shortest runs (the run prefers the shortest anyway).
+      // With end tiles held to the unknown-length reach, few ends pass and the evaluation cap no longer
+      // stopped the search: every self-avoiding walk of up to ceil(L/4) steps in view was tried (a
+      // 94M-point turn in ring-sprint-15's arena games, v 52M for ring-sprint-10)
+      if (lunge_dist_.Has(n) && lunge_dist_.Get(n) < k + 1) continue;
+      lunge_dist_.Set(n, k + 1);
       path.push_back(d);
       tiles.push_back(n);
-      if (k + 1 >= 2 && !Exposed(n) && !LungeExposed(n) && (best.empty() || static_cast<int>(path.size()) <= static_cast<int>(best.size()))) {
+      if (k + 1 >= 2 && !Exposed(n) && !LungeEndExposed(n) && (best.empty() || static_cast<int>(path.size()) <= static_cast<int>(best.size()))) {
         ++evals;
         const int32_t room = RoomAround(board_, n, open, need);
         if (room >= need && (best.empty() || path.size() < best.size() || room > best_room)) {
@@ -414,6 +429,7 @@ std::vector<int> StrategyAgent::LungeEscapeRun(const std::function<bool(int32_t)
       tiles.pop_back();
     }
   };
+  lunge_dist_.Begin(board_.size());   // free again: the lunge field is built (this turn's BFS is done)
   dfs(head_);
   return best;
 }

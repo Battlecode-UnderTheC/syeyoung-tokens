@@ -1,4 +1,4 @@
-# ring-sprint-guardport (g45-1) = arena ring-sprint-10
+# ring-sprint-guardport (g45-1) = arena ring-sprint-17 (iteration 2; iteration 1 was ring-sprint-10)
 
 - **Line:** ring-sprint.
 - **Parent:** ring-sprint-6 (variants/ring-sprint-conveyor: ring-sprint-1 + founder + feeding conveyor).
@@ -93,3 +93,73 @@ shorter than 6.
 - Deaths right after our own multi-step move: 1.52 v 0.63 a game (server 0.75 v 0.37).
 - Eats per 6+ turn: -6% overall, -2% on server.
 - Custom suite: 15-19, eats .132 v .147.
+
+## Iteration 2: the run's end tile (arena ring-sprint-15, then ring-sprint-17)
+
+### Cause found in ring-sprint-10's 112 games v the parent
+- Deaths of our 6+ workers to an enemy head within a round of our own multi-step move: 169 (the
+  parent: 71).
+  - 94 by a killer not in view when we moved (parent 71, all of this kind).
+  - 74 by a killer in view whose body left our 7x7 view. For every one of the 74, the run's end was
+    inside the reach of the killer's TRUE length and outside the reach of its seen length (seen
+    count + 1). Its memory of earlier sightings would have covered only 14.
+  - 198498 r450: the 10-long enemy showed 4 segments, so we used a seen length of 5 (reach 5). The
+    end tile was 6 steps away and its true reach is 11.
+- **Fix (strategy.cpp/.hpp, rush.cpp):**
+  - `BuildLungeField` also builds `lunge_end_mark_`. A seen enemy whose body leaves the view has
+    unknown length, so its reach to the END tile of a multi-step move of ours is unbounded: every
+    free view tile it has a path to. An enemy fully in view keeps its exact reach.
+  - `LungeEscapeRun`'s end tile and FreeSprint's extra steps test `LungeEndExposed`. The single-step
+    guard and the run trigger are unchanged.
+- **CPU bug (ring-sprint-15, max 94.4M points):**
+  - With few clear ends, the run search's 16-evaluation cap no longer stopped it, so it walked every
+    self-avoiding path of up to ceil(L/4) steps.
+  - v3 (ring-sprint-17) enters each tile only by its shortest runs. Most search nodes in one local
+    big_empty game: 1156 -> 399.
+  - All 112 parent games of ring-sprint-15 and ring-sprint-17 are identical in result and reason.
+
+### Local (v2/v3)
+- `check` passed.
+- Server smoke, 1 seed: 18-16.
+- Fresh mapgen, 22 maps, seed 4501: 26-18. 10+ dragons lunged: 16.2 v 19.3 a match.
+- Duels v ring-sprint-6:
+  - v2: server 28-40 and 35-33, official 12-8;
+  - v3: server 28-40, official 11-9 (CPU max 38.9M).
+
+### Arena: ring-sprint-17
+- **Verdict v ring-sprint-6:** 56-0-56 (50.0%, CI 40.9-59.1), beats_parent none (within noise).
+  - The CLI's `--wait` printout showed 403-334; the API verdict is 56-56.
+  - By suite: server 33-35, official 6-4, custom 17-17.
+  - Decided by: elimination 26-28, longer queen 21-17, longest dragon 9-11.
+  - By starters: ≤2 18-18, 3+ 38-38.
+- **Other opponents:** ring-contest-4 62-50, ring-sched-17 69-43, ring-rush-1 76-36.
+- **CPU:** p99 25.8M, max 44.4M (ring-sprint-15: 94.4M).
+- **Eval P(win) v parent:** r100 .500, r200 .495, r300 .515, r400 .531.
+
+| suite | non-queen 6+ deaths to heads | by stubs | after our multi-step move | eats per 6+ turn |
+|---|---|---|---|---|
+| server (68) | 5.25 v 6.87 (-24%) | 3.82 v 5.43 | 0.37 v 0.44 | .137 v .144 |
+| official (10) | 16.1 v 20.6 | 7.8 v 12.1 | 1.30 v 1.10 | .152 v .151 |
+| custom (34) | 16.1 v 21.0 | 10.7 v 14.9 | 0.59 v 1.12 | .136 v .143 |
+| all (112) | 9.51 v 12.38 (-23%) | 6.25 v 8.89 | 0.52 v 0.71 | .139 v .144 |
+
+- **Deaths right after our own multi-step move:** 58 v 78 (ring-sprint-10: 169 v 71).
+  - None by a killer in view (ring-sprint-10: 74).
+  - All 58 are by killers that were out of view when we moved.
+- **Threatened states** (threat.py, seen-length reach):
+  - It ran clear in 68 of 1939 (the parent: 15 of 2222).
+  - Death to an enemy head within 2 rounds after a clear run: 3 of 68.
+- **Conveyor:** 44 games had both queens alive at r400.
+  - Queen growth from r400: +15.0 v +14.5.
+  - Queen deaths after r400: 11 v 12.
+- **Replays:**
+  - 202971 (australia, same seed and seat as 198498):
+    - r448: a 22-long worker runs WSSSE away from an 11-long enemy that shows 4 segments. It ends
+      24 steps from that enemy and lives 9 rounds.
+    - r455: a 19-long worker runs NNENE clear of a 20-long and a 3-long enemy, both partly in view,
+      and lives 7 rounds.
+  - 203181 r495: a 72-long worker runs EEES out of a partly seen 30-long enemy's reach and lives
+    to the end.
+  - 203240 r474: a 27-long worker runs WWSW and is lunged next round by a 5-long enemy (2 segments
+    seen). The enemy's path left our view, which no in-view field can see.
+- **Side effects:** eats per 6+ turn -4%; custom board control .465.
