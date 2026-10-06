@@ -714,3 +714,11 @@ Details: `../syeyoung-tokens.league/replays/server-r15/analysis/REPORT.md`.
   - sonar stub sightings: late killers are already visible (51 of 58);
   - a late portal escape: trapped queens are in 1-exit pockets.
 - **Real queen loss while ahead:** 6 trap deaths, P .77-.97, often after a chain of split-2s.
+
+### ring-sprint-1 on the server; free sprints net zero (server-r19, 2026-10-06)
+Details: `../syeyoung-tokens.league/replays/server-r19/analysis/REPORT.md`.
+- **Performance:** 2046±20 v ring-contest-1's 2035±30; on 12 common opponents −0.9 points. The free sprints moved nothing measurable. The server rating (2136) counts ranked games only and runs ~90 above measured performance.
+- **Why the sprints net zero:** they are used on 33% of eligible moves (2.5% before), but our 5+-long non-queen dragons killed by enemies rose 8.8 → 11.0 a game, and the longest at r400/r490 is unchanged.
+- **Opening snowball is half of all losses** (80 of 156 decided by r60). On Devil we eat 33 of 34 pearls at home before r60 and never reach the middle; they eat 16 in our zone. On Trophy, 1-2 of our heads reach the cup v their 10-12; we don't take the cup's portal. Strong teams take 2x our portal steps.
+- **Queen blunders (36 of 156):** S1, 26 killed while ahead, circling her 2x2 beside a visible hunter (her moves are 81% circling v 30% for opponents' queens); S2, 10 split to death or boxed by her own children.
+- **The late resign wave misses:** 61 resigns a game, 77% more than 3 tiles from our queen; opponents eat more of our late remains than we do.

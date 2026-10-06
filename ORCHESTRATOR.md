@@ -37,6 +37,7 @@ ground truth, and the goal is our server **Elo**.
 | v9 | #72 | 1767 | — |
 | v10 | — | 1797 | — |
 | 2026-10-04 | #35 | 1832 | the teammate's queen-ring17-first-then-grow-1, 77-0-75 |
+| 2026-10-06 | #16 | 2139 | ring-sprint-1 (server 2136; measured performance 2046, server-r19) |
 
 ## The method (what climbed the ladder)
 
