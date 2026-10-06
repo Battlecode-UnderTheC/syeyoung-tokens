@@ -49,6 +49,10 @@ one) uses the sprint-sized buffer and lays at <= 3.
 - check: all passed.
 
 ## Light duels vs ring-sprint-2
+- Iteration 2, queen-decided duel replays (24 games with both queens alive at r400):
+  - growth from r400: 19.0 v 15.8;
+  - W-L 14-10;
+  - queen deaths after r400: 7 v 7.
 - Iteration 1 (eph-4d480802):
   - server 33-35 (queen-decided 11-18, queen at end 7.2 v 8.9);
   - official 9-11 (queen 2-4).
@@ -57,4 +61,24 @@ one) uses the sprint-sized buffer and lays at <= 3.
     CPU max 32.1M.
 
 ## Arena
-(filled in after the verdict)
+- **ring-sprint-6 v parent ring-sprint-2:** 58-0-54 (51.8%, CI 42.6-60.8), "BEATS parent", within
+  noise.
+  - By suite: server 36-32, custom 17-17, official 5-5.
+  - Decided by: elimination 27-27, queen 18-16, longest 13-11.
+- **Other opponents:** ring-sprint-1 60-52, ring-contest-4 63-49, ring-sched-17 73-39.
+- **Eval P(win) v parent:** r100/200/300 .500/.500/.500, since the code is identical before r430.
+- **CPU:** p99 25.8M, max 41.6M.
+- **Targeted situation** (arena games v parent with both queens alive at r400: 44 games):
+  - our queen grows +13.5 from r400, theirs +11.2;
+  - record 23-21;
+  - queen-decided 15-13; margin >=5 (B) losses 11, wins 13;
+  - our queen dies after r400 in 14 v 11 (slightly more).
+- **Replays:**
+  - 191697 (Around UNSW): the conveyor lays one feeder per round at most, 3 steps from her head:
+    L5 r450, L6 r452, L6 r455, L11 r459, L13 r469, L8 r473, L5 r475, L18 r476. Our queen goes
+    4 -> 33, eating 30 pearls. The parent's queen stays at 2-3: its race gate never fires, and it
+    has no walks and 4 nearby resigns.
+  - 191588 (Maze): 23 near lays over r430-488 (max 2 in a round), and the queen goes 3 -> 78
+    v 34.
+  - 191492 (Default): the loss is a queen death at r423, before the conveyor starts.
+  - The resigns far from her (d 15-35, length 2) are trapped stubs, not the conveyor.
