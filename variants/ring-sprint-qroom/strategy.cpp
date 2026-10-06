@@ -1463,52 +1463,27 @@ bool StrategyAgent::BoxedBy(int32_t from, const std::vector<int32_t>& body) cons
   return true;
 }
 
-// g44-10: step distances from every visible enemy head over free tiles (bodies, kelp and unseen
-// edges stop it), up to `cap` steps: the tiles an enemy can take before the queen does.
-void StrategyAgent::QueenSpaceBegin(int cap) const {
-  qs_enemy_.Begin(board_.size());
-  qs_queue_.clear();
-  for (const auto& [id, e] : seen_) {
-    if (e.team == spawn_.team || e.round != round_ || e.head < 0 || !board_.Current(e.head) ||
-        board_.at(e.head).occupant != id || !board_.at(e.head).occupant_head || qs_enemy_.Has(e.head)) continue;
-    qs_enemy_.Set(e.head, 0);
-    qs_queue_.push_back(e.head);
-  }
-  for (size_t qi = 0; qi < qs_queue_.size(); ++qi) {
-    const int32_t u = qs_queue_[qi], du = qs_enemy_.Get(u);
-    ++work_;
-    if (du >= cap) continue;
-    for (int d = 0; d < 4; ++d) {
-      const int32_t n = board_.Step(u, d);
-      if (n < 0 || qs_enemy_.Has(n) || Occupied(n)) continue;
-      qs_enemy_.Set(n, du + 1);
-      qs_queue_.push_back(n);
-    }
-  }
-}
-
-// g44-10: free tiles the queen reaches from t strictly before any visible enemy head (q_body_ is the
-// route's body, which blocks; her tiles outside it are free; other bodies and kelp block), up to
-// cap. An unseen edge counts as open ground, as in OpenRoom.
+// g44-10: free tiles the queen reaches from t (q_body_ is the route's body, which blocks; her tiles
+// outside it are free; other bodies and kelp block), up to cap. An unseen edge is worth
+// kQueenUnknownSpace tiles; a portal whose far end she hasn't found is worth none.
 int StrategyAgent::QueenSpace(int32_t t, int cap) const {
   qs_dist_.Begin(board_.size());
   qs_queue_.assign(1, t);
-  qs_dist_.Set(t, 0);
+  qs_dist_.Set(t);
   int reached = 1;
   for (size_t qi = 0; qi < qs_queue_.size(); ++qi) {
-    const int32_t u = qs_queue_[qi], du = qs_dist_.Get(u);
+    const int32_t u = qs_queue_[qi];
     ++work_;
     for (int d = 0; d < 4; ++d) {
       const int32_t n = board_.Step(u, d);
       if (n == kUnknown && (portal_[u] >> d & 1)) continue;   // an unfound portal end: no room
-      if (n == kUnknown) {   // an unseen edge: some room, not open ground (kQueenUnknownSpace)
+      if (n == kUnknown) {   // an unseen edge: some room, not open ground
         if ((reached += kQueenUnknownSpace) >= cap) return cap;
         continue;
       }
       if (n < 0 || qs_dist_.Has(n) || q_body_.Has(n)) continue;
       if (board_.Current(n) && board_.at(n).occupant >= 0 && board_.at(n).occupant != spawn_.id) continue;
-      if (qs_enemy_.Has(n) && qs_enemy_.Get(n) <= du + 1) continue;   // an enemy head gets there first
-      qs_dist_.Set(n, du + 1);
+      qs_dist_.Set(n);
       if (++reached >= cap) return cap;
       qs_queue_.push_back(n);
     }
@@ -1663,7 +1638,6 @@ bot::Action StrategyAgent::QueenMove() {
   bool over_budget = false;
   // g44-10: the queen keeps room as her space shrinks (kQueenSpacePerLength), outside the opening forage
   const bool keep_space = !(queen_forage_ && early_roaming) && !(QUEEN_ENDGAME && round_ == 499);
-  if (keep_space) QueenSpaceBegin(kQueenSpaceCap);
   for (int depth = 0; depth < max_steps && !over_budget; ++depth) {
     std::vector<Route> next;
     for (const auto& route : beam) {
@@ -1759,6 +1733,8 @@ bot::Action StrategyAgent::QueenMove() {
         // route eats and the food it heads for (kQueenSpaceCost note)
         candidate.space_cost = space < need ? kQueenSpaceCost * (need - space) +
             double(need - space) / need * (12.0 * candidate.eaten.size() + food) : 0.0;
+        // a pocket she can't fit in is a sure bleed: the same weight as no escape at all
+        if (space < int(candidate.body.size()) + 2) candidate.space_cost += 1000000.0;
         candidate.value -= candidate.space_cost;
 #ifdef QROOM_DBG
         std::fprintf(stderr, "QS r%d team%d depth%d steps%d to%d,%d space%d need%d esc%d room%d risk%d value%.1f\n", round_, spawn_.team, depth, int(candidate.steps.size()), board_.X(t), board_.Y(t), space, need, escape, room, QueenRisk(t), candidate.value);

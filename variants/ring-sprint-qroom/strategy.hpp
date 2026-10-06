@@ -116,16 +116,23 @@ inline int32_t BedReady(int32_t dist, int32_t due, double wait_factor) {
 inline constexpr int kForageSettleUnits = 6, kForageSettleRound = 120, kForageRoom = 20;
 // g44-10 (server-r19 S2, ring-sprint-qroom): the queen keeps room as her space shrinks. Every route
 // she considers outside the opening forage is scored on the free tiles she reaches from where it
-// ends before any visible enemy head does (her own new body, every dragon's body and kelp block;
-// an unseen edge counts as kQueenUnknownSpace tiles, a portal whose far end she hasn't found as
-// none). Below kQueenSpacePerLength x her length (at least kForageRoom, at most kQueenSpaceCap)
-// each missing tile costs kQueenSpaceCost.
+// ends (her own new body, every dragon's body and kelp block; an unseen edge counts as
+// kQueenUnknownSpace tiles, a portal whose far end she hasn't found as none). Below
+// kQueenSpacePerLength x her length (at least kForageRoom, at most kQueenSpaceCap) each missing
+// tile costs kQueenSpaceCost; below her length + 2 the route is a sure bleed (1e6, as no escape).
 //  - 3x length: she needs her own length of free tiles to turn round in, as much again for what she
 //    eats, and a margin for bodies closing in. Observed: arena 191534 (portals) a 17-long queen
 //    sprinted from 111 tiles into a 13-tile kelp corridor for 2 pearls, then split 19 -> 3 and
 //    resigned; 191730 (slithery) a 34-long queen coiled into 47 tiles, then 6, and split 39 -> 3;
 //    g44-5's 190320 repro: 40 free tiles ahead closed to 4 in four rounds by enemy bodies.
-//  - tiles an enemy head reaches first are not hers: that is how a pocket closes (190320).
+//  - below her length + 2 she can't fit: weighed like no escape (1e6), above the risk of a lunge
+//    (10000 x QueenRisk). Ring-sprint-12's arena games: on portals (199911, as the parent's 191524)
+//    a 19-long queen, enemy heads 4-5 tiles off, ate one pearl into a 9-tile strip whose far end
+//    she hadn't seen (the escape test reads an unseen edge as an exit), then split 23 -> 2. The
+//    room cost alone (hundreds) lost to QueenRisk, as g44-5 found for 190320.
+//  - (v1-v3 also took tiles an enemy head reaches first out of her space; dropped in v4: it pushed
+//    her away from every nearby head, a flee the gst line found costly, and her long late queens
+//    were lunged more in ring-sprint-12's arena games.)
 //  - cap 90: past that it is open ground for any queen we grow (the CPU of one flood stays small).
 //  - cost 4: a pearl (12) for every 3 missing tiles, so food still wins small trades of room but
 //    not a dive from open ground into a pocket (191534: 98 tiles for 24 of pearls).
@@ -144,6 +151,7 @@ inline constexpr int kForageSettleUnits = 6, kForageSettleRound = 120, kForageRo
 //    seed 13: her space read open through one while 1 tile was left, then she split 7 -> 3).
 inline constexpr int kQueenSpacePerLength = 3, kQueenSpaceCap = 90, kQueenUnknownSpace = 4;
 inline constexpr double kQueenSpaceCost = 4.0;
+
 #ifndef SUPPLY14_MODE
 #define SUPPLY14_MODE 1
 #endif
@@ -601,9 +609,7 @@ class StrategyAgent : public bot::Agent {
   bool Corridor(int32_t t) const;
   int OpenRoom(int32_t t, const std::vector<int32_t>& body, int cap) const;
   bool BoxedBy(int32_t from, const std::vector<int32_t>& body) const;   // g43-6
-  // g44-10: enemy head distances for this turn, then the queen's own-first free tiles from t
-  // (q_body_ holds the route's body), up to cap
-  void QueenSpaceBegin(int cap) const;
+  // g44-10: the queen's free tiles from t (q_body_ holds the route's body), up to cap
   int QueenSpace(int32_t t, int cap) const;
   bot::Action RingQueen();
   bot::Action RingWorker(bot::Action normal, const rl::Observation& o);
@@ -662,7 +668,7 @@ class StrategyAgent : public bot::Agent {
   };
   mutable Scratch esc_index_, esc_when_, q_body_, q_dist_, q_mine_, cont_index_, sched_seen_;
   mutable std::vector<int32_t> esc_queue_, q_queue_, sched_queue_;
-  mutable Scratch qs_enemy_, qs_dist_;   // g44-10 QueenSpace
+  mutable Scratch qs_dist_;   // g44-10 QueenSpace
   mutable std::vector<int32_t> qs_queue_;
   // QueenContinuation's states: the base body plus up to four new head tiles (ring.cpp)
   struct ContState { int added[4]; int k = 0; int size = 0; int ate[4]; int ne = 0; int first = -1; };
