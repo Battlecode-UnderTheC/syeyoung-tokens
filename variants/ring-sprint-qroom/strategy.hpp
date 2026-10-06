@@ -131,8 +131,7 @@ inline constexpr int kForageSettleUnits = 6, kForageSettleRound = 120, kForageRo
 //    she hadn't seen (the escape test reads an unseen edge as an exit), then split 23 -> 2. The
 //    room cost alone (hundreds) lost to QueenRisk, as g44-5 found for 190320.
 //  - (v1-v3 also took tiles an enemy head reaches first out of her space; dropped in v4: it pushed
-//    her away from every nearby head, a flee the gst line found costly, and her long late queens
-//    were lunged more in ring-sprint-12's arena games.)
+//    her away from every nearby head, a flee the gst line found costly.)
 //  - cap 90: past that it is open ground for any queen we grow (the CPU of one flood stays small).
 //  - cost 4: a pearl (12) for every 3 missing tiles, so food still wins small trades of room but
 //    not a dive from open ground into a pocket (191534: 98 tiles for 24 of pearls).

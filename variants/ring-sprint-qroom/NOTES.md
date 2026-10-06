@@ -47,8 +47,9 @@ Official random:2: v2 9-10, v4 9-11. "bled" = queen death with 2+ own splits in 
   ate a pearl into a 9-tile strip (its far end unseen, so the escape test read it as open), then
   split 23 -> 2. The room cost (hundreds) lost to QueenRisk (10000 per unit), g44-5's finding.
   Four late long queens (31-44) were lunged where the parent's lived (200156, 199980, 200052,
-  199887): the enemy-head part of v1-v3 pushed her off every nearby head (a flee).
-- v4 answers both: can't-fit weighed like no escape, enemy heads out of the room count.
+  199887). I blamed the enemy-head part of v1-v3 (a flee) and dropped it in v4, but the same four
+  seeds diverge the same way in ring-sprint-16 (below), so that was wrong: they follow the room rule.
+- v4 adds the can't-fit term (weighed like no escape).
 
 ## Local
 - check maps/official: pass.
@@ -59,4 +60,26 @@ Official random:2: v2 9-10, v4 9-11. "bled" = queen death with 2+ own splits in 
   are the evidence.
 
 ## Arena verdict, ring-sprint-16 (v4)
-(pending)
+- vs parent 58-0-54 (51.8%, beats_parent within noise); server 36-32, custom 17-17, official 5-5.
+  Decided by elimination 27-26, longer queen 19-18, longest 11-10.
+- vs ring-contest-4 62-50 (parent 63-49), ring-sched-17 73-39 (parent 73-39), ring-rush-1 74-38.
+- CPU p99 25.8M, max 41.9M. Eval P(win) v parent r100/200/300: 0.502/0.500/0.495; v contest-4
+  0.508/0.510/0.522 (parent 0.507/0.507/0.520); v sched-17 0.518/0.546/0.507 (parent
+  0.516/0.541/0.519).
+- Step 6, paired with the parent's games (contest-4 and sched-17, same map/seed/seat, 224 games):
+  208 identical; wins 135 v 136; boxed-or-bled queens 9 v 13 (after r400: 1 v 3); queen alive at
+  the end 114 v 117.
+  - Fixed: 202279 (portals) = 191524: at r477 the 19-long queen now turns S into the 95-tile area
+    instead of E into the 9-tile strip, ends 30 long and wins (the parent's split 22 -> 2, lost 17-0).
+    202361 (stripes) = 191548: alive, where the parent's bled to 3 at r247.
+  - Side effect: 4 late long queens are lunged in open ground where the parent's lived (202536
+    around_unsw 33, 202344 queen_of_spades 37, 202555 slithery 31, 202407 islands). In 202344 the
+    parent's queen bled 23 -> 2 in a pocket from r461 yet survived and won; ours kept 37 in the
+    open and an enemy 5 tiles off lunged her at r481 (S1, g44-9's lane). In 202536 the paths part
+    at r451 in open ground (room 312, need 60) and she is lunged at r468.
+
+## Next
+- The room rule moves a long late queen into open ground, where lunges (S1) take her: pair it with
+  g44-9's hunter reaction before judging it.
+- EscapeLevel itself still reads an unseen edge as an exit (kUnknownWorth 0) for every dragon; the
+  queen's room count no longer does.
