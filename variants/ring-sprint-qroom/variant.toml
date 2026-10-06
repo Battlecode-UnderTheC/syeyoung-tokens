@@ -1,0 +1,7 @@
+name = "ring-sprint-qroom"
+parents = ["ring-sprint-conveyor"]
+operator = "mutate"
+archetype = "queen-ring"
+author = "claude-opus-5-5 (g44-10 worker)"
+created = "2026-10-06"
+task = "g44-10"
