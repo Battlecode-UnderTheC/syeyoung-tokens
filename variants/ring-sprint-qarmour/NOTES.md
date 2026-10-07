@@ -31,3 +31,18 @@
 - Penalty 2 x (tiles out of her view within Chebyshev 2 of the endpoint) late. Duel v ring-sprint-21
   server 32-36; queen alive 60% v 57% but end queen 8.3 v 10.2: the sprint-gating trade the
   KNOWLEDGE note warns about. Reverted.
+
+## Iteration 3 = arena ring-sprint-27 (the current code): enemy-head relay
+- Requested by the orchestrator: from r429 a worker that sees our queen's head and an enemy head she
+  can't see (>3 Chebyshev) within 12 steps of her pings it (0xBE word: tile, length, partial, round)
+  on each direction whose ping reaches her body first, never over a 0xBA ring word; she treats relayed
+  heads (not on tiles in her view) as heads for 3 rounds (torus distance, reach ceil(L/4)+L-2+age,
+  unbounded if partial). Local maze trace: relays arrive (e.g. r459-462 she held 1-2 relayed heads).
+- Check passed. Duel v ring-sprint-21 server 33-35 (longer queen 17-12, queen alive 53% v 51%).
+- Arena vs parent 52-0-60 (46.4%, noise): server 32-36, custom 15-19, official 5-5. Elimination
+  28-24, longer queen 17-23, longest 7-12. CPU p99 25.8M, max 56.8M.
+- Late (r430+) queen deaths in h2h games: 8 v 8 (5+ long: 4 v 3); end queen length 6.2 v 7.7.
+- Why the relay changes nothing: in all 18 late deaths of 5+ queens in its games, no ally head was
+  within 3 tiles (Chebyshev) of both her and the killer; in 17 of 18 no ally head was within 3 of
+  her at all, and in 16 none was within 3 of the killer. She is alone late; nobody can relay.
+  The killers were 4-5 tiles off before her move, 2-3 after, with no segment in her view.
