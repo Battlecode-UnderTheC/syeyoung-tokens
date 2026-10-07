@@ -59,3 +59,14 @@ champion concentration only at r400/430.
    42 such lines remain.
 - Local after the fixes: server seed 1 18-16, seed 2 17-17; Schooltime seeds 1-4 6-2; fresh mapgen
   (seed 46307) 39-49 (the arena build 41-47 on the same maps); check passed.
+
+## Arena verdict, ring-sprint-28 (commit 8eb1dfa, iteration 3)
+- vs parent: 51-0-61 (45.5%, within noise); server maps 30-38; decided by elimination 27-26, longer
+  queen 16-25, longest 8-8, total 0-2. vs ring-qforage-1 54-58, ring-contest-4 67-45, ring-sched-17
+  67-45. CPU p99 25.8M, max 55.0M.
+- Queen-decided losses are mostly our queen dying after r300 (13 of 25, at r311-485), not diverted
+  feeding: races with both queens alive went 8-8. "Only our queen dead" games 0-16 (their queen only:
+  8-0); her behaviour is unchanged from the parent, so this needs queen armour (strategist C #3).
+- Both queens dead: 6-8; longest r400 21.1 v 14.6 but r500 33.7 v 36.5.
+- Schooltime 2-2: the champion grows (59-66 by r450-490) but long champions are lunged late
+  (219130: a 64-long champion lunged at r496, lost on total; 219106: a 65-long lunged at r460, won 30-24).
