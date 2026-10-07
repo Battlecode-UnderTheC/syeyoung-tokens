@@ -75,7 +75,9 @@ int StrategyAgent::PenSpace(int cap) const {
 }
 
 // g48-3: the queen's state each turn: her pen (refreshed while she patrols a ring), her threat
-// clock (an enemy head able to reach her within its reach + 2), and whether she may grow
+// clock (an enemy head able to reach her within its reach + 2), and whether she may grow: her pen
+// must reach her body plus as many free tiles again + 4 (iteration 3: with L+1, arena ring-field-4's
+// queens coiled in full pens, boxed-split 17 -> 15 -> 9 and strayed up to 16 tiles from r300)
 void StrategyAgent::QFeedUpdate() {
   qgrow_ = false;
   if (!QFEED_MODE || round_ < kQFeedFrom - kQFeedQuiet || round_ >= kRaceFrom || queen_growing_) return;
@@ -89,7 +91,7 @@ void StrategyAgent::QFeedUpdate() {
     qanchor_ = ring_;
   }
   if (!QFeedWindow() || !qpen_on_) return;
-  qgrow_ = round_ - qthreat_round_ > kQFeedQuiet && !EnemyQueenDeadKnown() && PenSpace(length_ + 1) >= length_ + 1;
+  qgrow_ = round_ - qthreat_round_ > kQFeedQuiet && !EnemyQueenDeadKnown() && PenSpace(2 * length_ + 4) >= 2 * length_ + 4;
 }
 
 int StrategyAgent::QPenOut(int32_t t) const {
@@ -154,7 +156,12 @@ bot::Action StrategyAgent::Conveyor() {
   const int32_t need = std::max(1, (qlen + 3) / 4);
   int32_t pending = 0;
   if (in_view)
-    for (int32_t t = 0; t < board_.size(); ++t) pending += zone.dist[t] > 0 && board_.Current(t) && board_.at(t).pearl;
+    for (int32_t t = 0; t < board_.size(); ++t)
+      // g48-3: early, every pearl within kQueueDist (Manhattan) of her head counts, behind bodies or
+      // not (arena ring-field-4 228416 r310: a wave of stubs laid in one round, each line's pearls
+      // walled off from the free-path zone by her coil and the other feeders)
+      pending += board_.Current(t) && board_.at(t).pearl &&
+                 (early ? Torus(t, target) <= kQueueDist : zone.dist[t] > 0);
   const bool busy = in_view && pending >= need;
 #ifdef CONVEYOR_DBG
   std::fprintf(stderr, "CVD r%d team%d id%d len%d mine%d first%d busy%d view%d zd%d\n", round_, spawn_.team, spawn_.id, length_, mine, int(first), int(busy), int(in_view), zone.dist[head_]);

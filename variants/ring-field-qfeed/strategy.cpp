@@ -1905,9 +1905,9 @@ bot::Action StrategyAgent::QueenMove() {
         const int open=OpenRoom(t,candidate.body,kForageRoom);
         if(open<kForageRoom) candidate.value-=2.0*(kForageRoom-open);
       }
-      // g48-3 (qfeed): she stays in her pen while no enemy can reach her (1000 a tile beyond it:
-      // below every risk and escape term), eats only where her space holds L+4, none while paused
-      if (qpen_hold) candidate.value -= 1000.0 * QPenOut(t);
+      // g48-3 (qfeed): she stays in her pen while no enemy can reach her (kQFeedPenCost a tile beyond
+      // it), eats only where her space holds L+4, none while paused
+      if (qpen_hold) candidate.value -= kQFeedPenCost * QPenOut(t);
       if (QFeedWindow() && qpen_on_ && !queen_growing_ && !candidate.eaten.empty() && candidate.eaten.back() == t) {
         if (qpaused) candidate.value -= 24.0;
         else if (QueenSpace(t, int(candidate.body.size()) + 4) < int(candidate.body.size()) + 4) candidate.value -= 24.0;

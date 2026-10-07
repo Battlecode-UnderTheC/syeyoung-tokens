@@ -43,6 +43,10 @@ inline constexpr int kLineReach = 3, kQueueDist = kLineReach + kRaceReach;
 #ifndef QFEED_MODE
 #define QFEED_MODE 1
 #endif
+//  - kQFeedPenCost: a tile beyond her pen, below every risk, escape and sure-bleed term (1e4-1e6)
+//    and above any food or room pull (iteration 3: 20 let room pull her out; server s1-2 35-33 and
+//    queen deaths up, v 39-29 at 1000)
+inline constexpr double kQFeedPenCost = 1000.0;
 inline constexpr int kQFeedFrom = 300, kQFeedQuiet = 20, kQFeedPen = 3, kQFeedStub = 3, kQFeedWalk = 20;
 inline constexpr int kHungerUntil = 150, kHungerRounds = 20;
 // g38-sched (ring-sched-1): deterministic arrival-time assignment of nearby food among the
