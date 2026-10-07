@@ -28,3 +28,21 @@ skips dead-end steps as before). A child with no capacity left fails the check a
 
 ## Arena
 - Duels v ring-sprint-21: server random:2 34-0-34; official random:2 11-0-9 (both within noise).
+- **Verdict (ring-sprint-31):** 57-0-55 vs ring-sprint-21 (50.9%, CI 41.8-60.0, within noise; the
+  arena flags beats_parent). By suite: server 33-35, custom 19-15, official 5-5. Decided by:
+  elimination 28-27, queen 18-16, longest 11-11, total 0-1. Others: ring-field-3 50-62,
+  ring-qforage-1 54-58, spar-field-2 47-65.
+- CPU: p99 24.7M, max 40.9M.
+- Eval P(win) vs parent: r100 0.497, r200 0.491, r300 0.489 (104/98/89 games).
+- Replays (105 of 112 games, draft side v parent side in the same games; /tmp tool, door pockets =
+  regions under 8 tiles behind one door tile): pearls eaten in pockets r20-100 by 2-3 long workers
+  7.9 v 7.5 a game; all pocket eats 13.1 v 12.9; eats r60-100 66.1 v 67.7; dragons r60 17.3 v 17.5,
+  r100 22.8 v 23.4; length-2 resigns before r300 63.7 v 63.2.
+- Film 226697 (Stripes, draft = seat A): draft stubs enter the 2x2 bed boxes at (7,1-2) and
+  (20-21,11) from r24 and re-farm them every ~10 rounds; the parent's first box eat there is r73.
+  Most other boxes still stand full for both sides (an enemy head in reach, or not yet seen), and
+  the parent still leads on dragons by r60 (8 v 5). 226724 (maze): draft farms two pockets from r45.
+- Conclusion: the behaviour is what the brief asked for, but it is too rare to move results. The
+  big walled bed rooms the evidence names (212730's 12-bed room) are not pockets under RoomAround,
+  so this change never touches them; what keeps them full is that nobody goes there (exploration,
+  strategist-g48 #1), not the trap cost.
