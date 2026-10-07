@@ -48,3 +48,27 @@ Not run: `tokenz ephemeral` was blocked by the permission system for this worker
 submission or arena replay check. Ready to submit:
 `scripts/make-bot.sh variants/ring-sprint-qstarter <out>` then
 `tokenz --agent g46-2 submit <out> --bot ring-sprint --parent ring-sprint-21 --note "..."`.
+
+## Arena: ring-sprint-23 (commit 8463d58, submitted by the orchestrator), BEATS parent (within noise)
+- vs ring-sprint-21 85-0-81 (51.2%); server maps 54-52. Decided by: longest 28-30, longer queen 31-25,
+  elimination 26-26. vs ring-qforage-1 79-89, ring-contest-4 90-82, ring-sched-17 112-60.
+- CPU worst p99 24.0M, max 44.4M.
+- The 112 games listed v the parent: 3+-starter games are mirror-identical (eval exactly 0.500; server
+  20-20, custom 17-17, official 1-1). 1-2-starter games 17-19 (server 14-14, official 3-5); eval
+  P(win) r60/100/200/300 .454/.499/.471/.466.
+- 1-2-starter games, our queen v the parent's queen in the same games (36): pearls eaten by r40
+  2.67 v 1.44 (>=2 in 21 v 12 games); queen descendants alive at r60 4.92 v 5.39; queen dead before
+  r100 6 v 7. Per map W-L: QoS 4-0, maze 2-2 (eats 5.0 v 0), stronghold 1-1 (8 v 0), trophy 2-2
+  (2.5 v 2.25, descendants 7.25 v 8.0), weakhold 1-3 (0.25 v 0; descendants 3.75 v 4.75), trauma 2-2
+  (0 v 0), stripes 1-3, TD 2-2, Colosseum 0-2, default_small 1-1, arena 1-1.
+- Films r0-40:
+  - Trophy 215257 (1.2.7 map: queens in side rooms, cup in the middle): she leaves her room by its
+    west exit at r15-20 and roams the top edge outside the cup, eating 5 by r40; she is NOT in the cup
+    by r20-25. The lead starts in the bottom corner, never in her view, so the follow never engages.
+    The parent's queen sits in its room. Same in 215230.
+  - QoS 215245: she follows the lead north 1-2 tiles behind (r5-r15) and is beside the top bed room
+    by r20-25, but not inside (its entrance is a corridor the lead never took); ate 3 by r40.
+  - weakhold 215270: our queen stays in the top-left corner inside a crowd of our own workers (two of
+    them die beside her at r30); team 6 v 9 dragons at r58. The parent's queen parks in its room.
+- Not fixed by this change: Trophy-like starts where the lead is out of view (no lead position is
+  relayed by sonar); 4-long-queen barren-home starts (weakhold) where she crowds the workers.
