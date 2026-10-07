@@ -2056,6 +2056,7 @@ bot::Action StrategyAgent::Turn(const rl::Observation& o) {
     if (a.kind == bot::Action::kMove && !a.resign) for (int d : a.steps) if (end >= 0) end = board_.Step(end, d);
     std::fprintf(stderr, "QA r%d team%d len%d head%d,%d steps%d end%d,%d risk%d why=%s |", round_, spawn_.team, length_, board_.X(head_), board_.Y(head_),
                  int(a.steps.size()), end >= 0 ? board_.X(end) : -1, end >= 0 ? board_.Y(end) : -1, end >= 0 ? QueenRisk(end) : -1, reason_);
+    for (const auto& h : relay_heads_) std::fprintf(stderr, " R%d,%d L%d a%d", board_.X(h.tile), board_.Y(h.tile), h.length, round_ - h.round);
     for (const auto& [id, w] : seen_)
       if (w.team != spawn_.team && w.round == round_)
         std::fprintf(stderr, " e%d L%d%s at%d,%d", id, w.length, w.partial ? "p" : "", w.head>=0?board_.X(w.head):-1, w.head>=0?board_.Y(w.head):-1);
@@ -2163,6 +2164,7 @@ bot::Action StrategyAgent::Turn(const rl::Observation& o) {
     for (int d = 0; d < 4; ++d) a.sonar[d] = RingWord();
   if (QUEEN_ENDGAME >= 2 && IsQueen() && round_ >= kPantryFrom)
     for (int d = 0; d < 4; ++d) a.sonar[d] = DeliveryWord();
+  SendThreat(o, a);   // g46-4 v3: never over a ring word (armour.cpp)
   // g42-1: every dragon that knows the queen's ring relays the ring word on all four directions,
   // so the call rides in its spare bits 36-55 (the ring readers use bits 0-25, qgate 26-35)
   {
@@ -2181,6 +2183,7 @@ bot::Action StrategyAgent::Decide(const rl::Observation& o) {
   ring4_observed_body_.assign(body_.begin(),body_.end());
   if(RING5_MODE==3)ReadRing5(o);
   UpdateHot(o);
+  ReadThreats(o);     // g46-4 v3 (armour.cpp)
   CollectArmour(o);   // g46-4 (armour.cpp)
   if (QUEEN_ENDGAME >= 2 && !IsQueen()) ReadDelivery(o);
   // g42-4: the last enemy-queen sighting relayed in our ring words (see enemy_queen_heard_)

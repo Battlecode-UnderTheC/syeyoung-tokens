@@ -233,6 +233,15 @@ inline constexpr int kPantryFrom = 360;
 #define QARMOUR 1
 #endif
 inline constexpr int kArmourFeedRate = 2;
+// v3 (the relay): in ring-sprint-24's arena games 18 of 19 late killers of 5+ queens had no segment in
+// her view (Chebyshev 4-5 before her move) while our workers stood around her. A worker that sees our
+// queen's head and an enemy head she can't see (more than 3 tiles off, Chebyshev) within kRelayRadius
+// steps of her head pings it (0xBE word) in every direction whose ping reaches her body first; she
+// treats it as a head in view for kRelayFresh rounds. kRelayRadius = 12: the queen12 attack's path
+// limit, and the reach of a 10-long enemy. kRelayFresh = 3: the word arrives a round late; a few
+// more rounds keep a head she just lost sight of in mind while it can still be near.
+inline constexpr uint64_t kThreatMagic = 0xBE;
+inline constexpr int kRelayRadius = 12, kRelayFresh = 3;
 #ifndef QUEEN_CLEARANCE_MODE
 #define QUEEN_CLEARANCE_MODE 2 // 0 off, 1 move only, 2 emergency exit, 3 proactively preserve two exits
 #endif
@@ -707,7 +716,12 @@ class StrategyAgent : public bot::Agent {
   mutable int64_t work_ = 0;   // (ring-cpu-1) this turn's work: tiles expanded by the searches below
   int QueenRisk(int tile) const;
   // g46-4 (qarmour, armour.cpp): the lunge guard ported to the queen from kRaceFrom
-  struct ArmourSrc { int32_t tile, offset, reach; bool head; };
+  struct ArmourSrc { int32_t tile, offset, reach; bool head; bool relay = false; };
+  // v3: enemy heads relayed by workers near her (0xBE words, armour.cpp)
+  struct RelayHead { int32_t tile, length, round; bool partial; };
+  std::vector<RelayHead> relay_heads_;
+  void ReadThreats(const rl::Observation& o);
+  void SendThreat(const rl::Observation& o, bot::Action& a) const;
   std::vector<ArmourSrc> armour_src_;
   int32_t armour_round_ = -1, enemy_len_max_ = 0;
   mutable int32_t armour_field_round_ = -1;
