@@ -154,7 +154,7 @@ void StrategyAgent::Remember(const rl::Observation& o) {
     if (s.head) w.head = board_.Tile(s.x, s.y);
   }
   for (const auto& [id, n] : segments) { seen_[id].length = n; seen_[id].partial = boundary[id] || n < 2; }
-  // g45-5: enemy lengths by id (whole body in view: exact; otherwise at least what we saw before).
+  // g45-5: enemy lengths by id, from the latest sighting (segments in view, a lower bound).
   // The segments in a 7x7 view badly undercount a long dragon (a local log vs giant-8: at most 14
   // seen at r450 while its champion was 30-57), so a dragon also follows each enemy head it keeps
   // in view: a dragon's body is the last L tiles its head stood on, so while we have seen its head
@@ -166,9 +166,10 @@ void StrategyAgent::Remember(const rl::Observation& o) {
     auto& e = enemy_len_[id];
     int32_t est = n;
     auto& trail = enemy_trail_[id];
-    if (w.head >= 0 && w.round == round_) {
+    const bool head_now = std::any_of(o.segments.begin(), o.segments.end(), [&](const rl::Segment& g) { return g.id == id && g.head; });
+    if (head_now) {
       if (!trail.empty() && trail.back().second != round_ - 1) trail.clear();   // lost sight of the head
-      if (trail.empty() || trail.back().first != w.head || trail.back().second != round_) trail.emplace_back(w.head, round_);
+      if (trail.empty() || trail.back().second != round_) trail.emplace_back(w.head, round_);
       while (trail.size() > kTrailMax) trail.pop_front();
     }
     if (trail.size() >= 2 && trail.back().second == round_)
@@ -181,8 +182,10 @@ void StrategyAgent::Remember(const rl::Observation& o) {
           if (trail[i - 1].first == t) { est = std::max(est, changes + 1); break; }
         }
       }
-    const bool exact = !w.partial && est == n;
-    e.first = exact ? n : std::max(e.first, est);
+    // the latest sighting replaces older ones: a dragon that split is shorter now (iteration 3
+    // kept the longest partial count ever seen while the enemy stayed in sight now and then; in
+    // arena game 206051 our champion grew from r400 while the enemy's longest was 9-11)
+    e.first = est;
     e.second = round_;
   }
   for (const uint64_t w : o.inbox) Decode(w);
@@ -2503,26 +2506,36 @@ void StrategyAgent::UpdateLateChampion() {
   // queens dead): the opponent converts material into one dragon ~50 rounds before our r430
   // start (longest 13 v 18 at r400, 18 v 30 at r450) while totals are level. From kNoBurnFrom,
   // when the longest enemy this dragon has itself seen within p_.enemy_memory rounds is at least
-  // kGiantMargin longer than our champion's reported length, concentration switches on and stays
-  // on (latched) for this dragon. kGiantMargin = kFeedMaxLen / 2: the pearls one full-size feeder
-  // leaves when it resigns (ceil(L/2) of its 8 segments), i.e. a gap one feeding can't close.
-  // Our side of the comparison is never below kFeedMaxLen: a dragon shorter than that is itself a
-  // feeder, not a champion, so a report naming one says only that this dragon hears no long ally
-  // (iteration 1 compared with the champion report alone: at r250-340 a dragon's reports often
-  // name a 2-5 long local champion, and the latch fired on 6-10 long enemies in most games, i.e.
-  // feeding on a clock again). The giant bar is therefore at least kFeedMaxLen + kGiantMargin =
-  // 12. (Iteration 2 used kParallelGrowLen, 20: our own sightings, even with the head trail
-  // in Remember(), never reached that in local games vs giant-8 whose champion was 30-57: never fired.)
+  // kGiantMargin longer than the longest ally it knows of over the SAME window, concentration
+  // switches on and stays on (latched) for this dragon.
+  //  - kGiantMargin = kFeedMaxLen / 2: the pearls one full-size feeder leaves when it resigns
+  //    (ceil(L/2) of its 8 segments), i.e. a gap one feeding can't close.
+  //  - Both sides are measured the same way, over the same p_.enemy_memory window: our side is
+  //    the longest ally report (any non-queen, length > 0) no older than that, not only the fresh
+  //    (kReserveFresh) champion report. Iteration 1 compared with the champion report: at r250-340
+  //    a dragon's fresh reports often name a 2-5 long local champion, and the latch fired on 6-10
+  //    long enemies in most games (feeding on a clock). Our side is also never below kFeedMaxLen:
+  //    a dragon shorter than that is itself a feeder, not a champion. Once the team has reached
+  //    the cap (cap_latched_), the floor is kParallelGrowLen: from then on every worker grows to
+  //    that length in parallel, on both sides, so an enemy of 12-16 is an ordinary worker, not a
+  //    giant. Iteration 3 (floor 8 always) latched on such workers: arena game 206090 (vs
+  //    ring-contest-4, enemy longest 14-16 in r270-400) fed from r360, fell 55 -> 25 dragons by
+  //    r430 and lost on longest 33-59 where the parent won.
+  //  - Our own sightings rarely show 20+: vs giant-8 (champion 30-57) the most seen was 14.
   // Without such a sighting nothing changes (r400 champion, r430 concentration as before).
   static constexpr int32_t kGiantMargin = kFeedMaxLen / 2;
   if (late_champ_ >= 0 && !giant_latched_) {
-    int32_t enemy_best = 0;
+    int32_t enemy_best = 0, enemy_id = -1, enemy_at = -1;
+    // not the enemy queen (ids 0-1): the longest-dragon tiebreak only decides once she is dead
     for (const auto& [id, e] : enemy_len_)
-      if (round_ - e.second <= p_.enemy_memory) enemy_best = std::max(enemy_best, e.first);
-    if (enemy_best >= std::max<int32_t>(best_len, kFeedMaxLen) + kGiantMargin) {
+      if (id > 1 && round_ - e.second <= p_.enemy_memory && e.first > enemy_best) enemy_best = e.first, enemy_id = id, enemy_at = e.second;
+    int32_t ours = std::max<int32_t>(best_len, cap_latched_ ? kParallelGrowLen : kFeedMaxLen);
+    for (const auto& [id, r] : reports_)
+      if (id > 1 && r.length > 0 && round_ - r.round <= p_.enemy_memory) ours = std::max(ours, r.length);
+    if (enemy_best >= ours + kGiantMargin) {
       giant_latched_ = true;
 #ifdef GM2_TRACE
-      std::fprintf(stderr, "GIANTDBG r%d me%d champ%d len%d enemy%d\n", round_, spawn_.id, late_champ_, best_len, enemy_best);
+      std::fprintf(stderr, "GIANTDBG r%d me%d champ%d len%d ours%d enemy%d id%d at%d\n", round_, spawn_.id, late_champ_, best_len, ours, enemy_best, enemy_id, enemy_at);
 #endif
     }
   }

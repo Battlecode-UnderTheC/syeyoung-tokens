@@ -705,8 +705,8 @@ class StrategyAgent : public bot::Agent {
   int32_t late_champ_ = -1;    // g40-3: the agreed late champion (sticky until it dies), -1: none
   bool late_conc_ = false;     // g40-3: concentrating into late_champ_ this turn
   bool die_near_ = false;     // g42-8: the team agrees on late_champ_ and doomed stubs die beside it (from kDieNearFrom)
-  // g45-5 (ring-sprint-giantwatch): the longest each enemy dragon has been seen (segments in view:
-  // a lower bound unless its whole body was in view) and when; and the latch set once an enemy
+  // g45-5 (ring-sprint-giantwatch): each enemy dragon's length at its latest sighting (segments in view
+  // or the head-trail bound, a lower bound) and when; and the latch set once an enemy
   // giant is observed clearly longer than our late champion (see kGiantMargin in strategy.cpp)
   std::unordered_map<int32_t, std::pair<int32_t, int32_t>> enemy_len_;   // id -> (length, round)
   bool giant_latched_ = false;
