@@ -1,0 +1,7 @@
+name = "spar-field-1"
+parents = ["ring-sprint-guard2"]
+operator = "mutate"
+archetype = "spar-field"
+author = "claude-opus-5-5 (g46-6 worker)"
+created = "2026-10-07"
+task = "g46-6"
