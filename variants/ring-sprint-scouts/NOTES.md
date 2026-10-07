@@ -71,6 +71,5 @@ In the code the explorers stop at the first cluster (rush.cpp) and the cluster c
 - Duels (eph-ec7acfaf): vs ring-sprint-21 server random:2 32-0-36; paired vs gst-search-12 (seeds
   4801,4802) 58-10, same as ring-sprint-33. Economy in those games unchanged: eats/dragon 0.92, bed
   share r60 0.55, dragons r60 16.3, r100 24.5. Not resubmitted: no measurable gain over v4.
-- Next: the scrum is not 'over capacity' by beds within 3 most of the time (the corner field on islands
-  has live beds); the missing behaviour is going to a known, uncontested, richer field 6-10 tiles away,
-  which is ChooseGoal's valuation (crowding/travel), not exploration.
+- Next (hypothesis, not measured): the missing behaviour may be going to a known, uncontested, richer
+  field 6-10 tiles away, i.e. ChooseGoal's valuation of crowding and travel, rather than exploration.
