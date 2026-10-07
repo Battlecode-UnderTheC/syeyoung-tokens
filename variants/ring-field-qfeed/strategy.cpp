@@ -583,7 +583,7 @@ void StrategyAgent::Note(const Report& r) {
 StrategyAgent::Report StrategyAgent::Champion() const {
   if (IsQueen()) {
     Report self{spawn_.id, head_, length_, round_, false};
-    self.paused = QFeedWindow() && qpen_on_ && !queen_growing_ && !qgrow_;   // g48-3: feeders hold off
+    self.paused = qpaused_ && (round_ >= kRaceFrom || (qpen_on_ && !queen_growing_));   // g48-3: feeders hold off
     return self;
   }
   if (die_near_ && late_champ_ >= 0)
@@ -1721,7 +1721,8 @@ bot::Action StrategyAgent::QueenMove() {
   // (a corpse line), she leaves the ring patrol for the pen-bound harvest below
   QFeedUpdate();
   const bool qpen_hold = QFeedWindow() && qpen_on_ && !queen_growing_ && qthreat_round_ != round_;
-  const bool qpaused = QFeedWindow() && qpen_on_ && !queen_growing_ && !qgrow_;
+  // iteration 4: paused also from r430 (QFeedUpdate: no room for her coil, a threat, their queen dead)
+  const bool qpaused = qpaused_ && (round_ >= kRaceFrom || (qpen_on_ && !queen_growing_));
   bool qpen_food = false;
   if (qgrow_)
     for (int32_t t = 0; t < board_.size() && !qpen_food; ++t)
@@ -1905,10 +1906,10 @@ bot::Action StrategyAgent::QueenMove() {
         const int open=OpenRoom(t,candidate.body,kForageRoom);
         if(open<kForageRoom) candidate.value-=2.0*(kForageRoom-open);
       }
-      // g48-3 (qfeed): she stays in her pen while no enemy can reach her (kQFeedPenCost a tile beyond
-      // it), eats only where her space holds L+4, none while paused
-      if (qpen_hold) candidate.value -= kQFeedPenCost * QPenOut(t);
-      if (QFeedWindow() && qpen_on_ && !queen_growing_ && !candidate.eaten.empty() && candidate.eaten.back() == t) {
+      // g48-3 (qfeed): she stays in her pen while no enemy can reach her (1000 a tile beyond it:
+      // below every risk and escape term), eats only where her space holds L+4, none while paused
+      if (qpen_hold) candidate.value -= 1000.0 * QPenOut(t);
+      if (((QFeedWindow() && qpen_on_ && !queen_growing_) || qpaused) && !candidate.eaten.empty() && candidate.eaten.back() == t) {
         if (qpaused) candidate.value -= 24.0;
         else if (QueenSpace(t, int(candidate.body.size()) + 4) < int(candidate.body.size()) + 4) candidate.value -= 24.0;
       }
@@ -2073,7 +2074,7 @@ bot::Action StrategyAgent::Turn(const rl::Observation& o) {
   }
   if(!IsQueen()) a=Supply14Yield(a);
 #ifdef QFEED_DBG
-  if (IsQueen() && round_ >= 280 && round_ <= 440)
+  if (IsQueen() && round_ >= 280 && round_ <= 499)
     std::fprintf(stderr, "QF r%d team%d len%d head%d,%d grow%d pen%d ps%d out%d thr%d eqdead%d units%d why=%s\n", round_, spawn_.team, length_, board_.X(head_), board_.Y(head_), int(qgrow_), int(qpen_on_), PenSpace(300), QPenOut(head_), round_ - qthreat_round_, int(EnemyQueenDeadKnown()), units_, reason_);
   if (!IsQueen() && round_ >= 280 && round_ < 430 && a.resign) std::fprintf(stderr, "QL r%d team%d id%d len%d why=%s\n", round_, spawn_.team, spawn_.id, length_, reason_);
 #endif

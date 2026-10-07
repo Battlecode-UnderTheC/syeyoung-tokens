@@ -74,15 +74,32 @@ int StrategyAgent::PenSpace(int cap) const {
   return std::min(reached, cap);
 }
 
-// g48-3: the queen's state each turn: her pen (refreshed while she patrols a ring), her threat
-// clock (an enemy head able to reach her within its reach + 2), and whether she may grow: her pen
-// must reach her body plus as many free tiles again + 4 (iteration 3: with L+1, arena ring-field-4's
-// queens coiled in full pens, boxed-split 17 -> 15 -> 9 and strayed up to 16 tiles from r300)
+// g48-3: the queen's state each turn: her pen, her threat clock (an enemy head able to reach her
+// within its reach + 2), and whether she may grow.
+// Iteration 4: the pen is drawn once, around the first ring she patrols from kQFeedFrom -
+// kQFeedQuiet, and redrawn only when she re-rings within kQFeedQuiet rounds of a threat (a flight
+// moved her). ring-field-4: she was > 5 tiles from her r300 head in 38 of 67 games, mostly after
+// re-ringing elsewhere, which moved the pen with her.
+// From kRaceFrom (the r430 logic) she may still grow, but only while she is not threatened, the
+// enemy queen isn't known dead, and the free ground around her body holds kQFeedLateRoom x L + 4
+// tiles; otherwise she says "paused" and the conveyor holds off (ring-field-4 228416: 68 long by
+// r476 in a closed region, boxed splits down to 26).
 void StrategyAgent::QFeedUpdate() {
   qgrow_ = false;
-  if (!QFEED_MODE || round_ < kQFeedFrom - kQFeedQuiet || round_ >= kRaceFrom || queen_growing_) return;
+  qpaused_ = false;
+  if (!QFEED_MODE || round_ < kQFeedFrom - kQFeedQuiet) return;
   if (QThreat(head_, 2)) qthreat_round_ = round_;
-  if (!ring_.empty() && std::find(ring_.begin(), ring_.end(), head_) != ring_.end()) {
+  if (round_ >= kRaceFrom) {
+    if (round_ >= kQFeedLateUntil || int(body_.size()) != length_) return;
+    q_body_.Begin(board_.size());
+    for (const int32_t b : body_) if (b >= 0) q_body_.Set(b);
+    const int need = kQFeedLateRoom * length_ + 4;
+    qpaused_ = qthreat_round_ == round_ || EnemyQueenDeadKnown() || QueenSpace(head_, need) < need;
+    return;
+  }
+  if (queen_growing_) return;
+  if (!ring_.empty() && std::find(ring_.begin(), ring_.end(), head_) != ring_.end() &&
+      (!qpen_on_ || round_ - qthreat_round_ <= kQFeedQuiet)) {
     qpen_.assign(board_.size(), 0);
     for (int32_t t = 0; t < board_.size(); ++t)
       for (const int32_t r : ring_)
@@ -91,7 +108,8 @@ void StrategyAgent::QFeedUpdate() {
     qanchor_ = ring_;
   }
   if (!QFeedWindow() || !qpen_on_) return;
-  qgrow_ = round_ - qthreat_round_ > kQFeedQuiet && !EnemyQueenDeadKnown() && PenSpace(2 * length_ + 4) >= 2 * length_ + 4;
+  qgrow_ = round_ - qthreat_round_ > kQFeedQuiet && !EnemyQueenDeadKnown() && PenSpace(2 * length_ + 4) >= 2 * length_ + 4;   // body + as much free ground again + 4 (ring-field-5)
+  qpaused_ = !qgrow_;
 }
 
 int StrategyAgent::QPenOut(int32_t t) const {
@@ -131,7 +149,7 @@ bot::Action StrategyAgent::Conveyor() {
   // g48-3: she is threatened as far as we can see: no feeding (her growth pauses too)
   if (early && QThreat(target, 2)) return {};
   // ... or she says her growth is paused (her pen can't hold more, a threat, the enemy queen dead)
-  if (early)
+  if (QFEED_MODE)   // iteration 4: early and late
     if (const auto r = reports_.find(queen_id_); r != reports_.end() && r->second.paused && round_ - r->second.round <= kQFeedQuiet) return {};
   // first in line: no ally head in view is closer to her (ties: the lower id goes first)
   const int32_t mine = Torus(head_, target);
@@ -156,12 +174,7 @@ bot::Action StrategyAgent::Conveyor() {
   const int32_t need = std::max(1, (qlen + 3) / 4);
   int32_t pending = 0;
   if (in_view)
-    for (int32_t t = 0; t < board_.size(); ++t)
-      // g48-3: early, every pearl within kQueueDist (Manhattan) of her head counts, behind bodies or
-      // not (arena ring-field-4 228416 r310: a wave of stubs laid in one round, each line's pearls
-      // walled off from the free-path zone by her coil and the other feeders)
-      pending += board_.Current(t) && board_.at(t).pearl &&
-                 (early ? Torus(t, target) <= kQueueDist : zone.dist[t] > 0);
+    for (int32_t t = 0; t < board_.size(); ++t) pending += zone.dist[t] > 0 && board_.Current(t) && board_.at(t).pearl;
   const bool busy = in_view && pending >= need;
 #ifdef CONVEYOR_DBG
   std::fprintf(stderr, "CVD r%d team%d id%d len%d mine%d first%d busy%d view%d zd%d\n", round_, spawn_.team, spawn_.id, length_, mine, int(first), int(busy), int(in_view), zone.dist[head_]);
