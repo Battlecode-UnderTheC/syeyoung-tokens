@@ -38,3 +38,24 @@ champion concentration only at r400/430.
   20-26). Longest-decided 7-4. Queen died 47-50% v 44%.
 - Fresh mapgen (seed 46303, 44 maps, 11 families x 8 games): 43-0-45; every family 3-5 to 5-3.
 - Iteration 1 (queen also fed from r300 out of her ring): 12-22 / 13-21, queen died 62-65%.
+
+## Arena verdict, ring-sprint-26 (commit 1363b49)
+- vs parent ring-sprint-21: 50-0-62 (44.6%, within noise); server maps 28-40. Decided by elimination
+  26-27, longer queen 11-23, longest 13-12. vs ring-qforage-1 51-61, ring-contest-4 67-45,
+  ring-sched-17 66-46. All games 234-214.
+- CPU: p99 25.8M, max 61.7M.
+- Schooltime 3-1 v parent (longest 65-24, 79-30, 69-17; loss 21-31). Our queen at 3 throughout;
+  the champion grows from r320 (e.g. 217356: 20 at r320 -> 49 at r340 -> 60 at r360).
+- Both queens dead (21 games): 10-11, longest r400 14.5 v 14.0, r500 32.4 v 29.4.
+- Only our queen dead: 0-11 (queen deaths r300+ 29 v their 24).
+
+## Fixes after the verdict (iteration 3)
+1. **Champion bleed.** 217357 (Schooltime, loss): the fed champion reached 46 at r400, then split off a
+   2-long child every round (44 -> 18 in r419-432; locally 49 -> 37 in r325-331, reason "split").
+   The fed champion no longer growth-splits from r300.
+2. **False "queen dead".** Instrumented sim (server seed 1): ~250 champion lines laid while our queen
+   was alive outside Schooltime, almost all by children born after r300 that had not heard the
+   heartbeat yet. A dragon now counts the queen alive for its first kHeartbeatGrace = 20 rounds:
+   42 such lines remain.
+- Local after the fixes: server seed 1 18-16, seed 2 17-17; Schooltime seeds 1-4 6-2; fresh mapgen
+  (seed 46307) 39-49 (the arena build 41-47 on the same maps); check passed.

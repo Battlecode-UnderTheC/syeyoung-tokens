@@ -2435,6 +2435,10 @@ bot::Action StrategyAgent::Decide(const rl::Observation& o) {
       !(cap_latched_ && !leader_ && length_ < kParallelGrowLen) &&
       // g40-3: no growth splits during late concentration
       !late_conc_ &&
+      // g46-3: nor the champion being fed from kConvertFrom (arena ring-sprint-26, Schooltime 217357:
+      // the fed champion grew to 46 by r400 then split off a 2-long child every round, 44 -> 18 in
+      // r419-432; locally a 49-long champion went 49 -> 37 in r325-331 by "split")
+      !(CONVERT_MODE && die_near_ && round_ >= kConvertFrom && late_champ_ == spawn_.id) &&
       GrowthSplit() >= 0) {
     if (rush_state_ == 1) rush_split_ = true;
     if (founder_here) {
@@ -2676,9 +2680,14 @@ void StrategyAgent::UpdateLateChampion() {
 #ifdef CONVERT_DBG
     if (round_ == 350) std::fprintf(stderr, "CVH team%d me%d age%d ring%d\n", spawn_.team, spawn_.id, round_ - queen_alive_heard_, round_ - ring_seen_);
 #endif
-    if (round_ - queen_alive_heard_ <= kQueenAliveFresh) {
+    // a dragon born lately that has heard nothing yet counts her alive for its first kHeartbeatGrace
+    // rounds: the heartbeat reaches it from its neighbours within a few rounds. (ring-sprint-26: on
+    // server maps other than Schooltime, ~250 champion lines a 17-map seed were laid while our queen
+    // lived, nearly all by children born after r300 that had not heard yet; with the grace, 42.)
+    const int32_t heard = std::max(queen_alive_heard_, born_ - kQueenAliveFresh + kHeartbeatGrace);
+    if (round_ - heard <= kQueenAliveFresh) {
       const auto r = reports_.find(queen_id_);
-      const bool reported_dead = r != reports_.end() && r->second.length == 0 && r->second.round >= queen_alive_heard_;
+      const bool reported_dead = r != reports_.end() && r->second.length == 0 && r->second.round >= heard;
       if (!reported_dead) { late_champ_ = -1; return; }
     }
   } else

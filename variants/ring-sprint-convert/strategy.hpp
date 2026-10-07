@@ -36,7 +36,7 @@
 #define CONVERT_MODE 1
 #endif
 inline constexpr int kConvertFrom = 300, kConvertLines = 3;
-inline constexpr int kConvertGuards = 3, kConvertEnemyAge = 30, kWalledCap = 200;
+inline constexpr int kConvertGuards = 3, kConvertEnemyAge = 30, kWalledCap = 200, kHeartbeatGrace = 20;
 // g40-4 (ring-qrace-1): from kRaceFrom (the round our queen leaves her ring and starts to grow:
 // ring4 exit at 430) while the enemy queen was seen alive within kRaceFresh rounds, workers walk to
 // our queen and resign within kRaceReach of her head, so the queen-length tiebreak gets their mass.
