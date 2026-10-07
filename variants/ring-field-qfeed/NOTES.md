@@ -116,3 +116,41 @@
   - Queen deaths in r300-429 are about the parent's (19 v 17-18), not lower.
   - A big queen after r430 coils and boxed-splits (228416: 68 -> 26). The r430+ harvest isn't built
     for a 30-60-long queen.
+
+## Iteration 4 (ring-field-9, commit 280f18d onward; the code here now)
+- **Base:** ring-field-4's code (f75ef65), as the coordinator asked. Three changes:
+  1. **Fixed pen:** drawn once, around the first ring she patrols from r280. It is redrawn only when she
+     re-rings within 20 rounds of a threat (a flight moved her).
+  2. **In-pen growth:** needs 2L+4 tiles of pen (as ring-field-5).
+  3. **Late room gate (r430-497):** she eats only while the free ground around her body (QueenSpace with
+     her body blocked) holds L+4, she is not threatened, and the enemy queen isn't known dead.
+     Otherwise she is paused: no food pull, each pearl costs 24, she broadcasts paused and the
+     conveyor holds off. At r498-499 she eats freely. The paused check in the conveyor now applies
+     at every round, not only early.
+- **Local (sim vs ring-field-1):**
+  - Server s1 23-11, s2 20-14. Queen deaths 35% / 44% v 47% / 41%; queen-decided 20-7.
+  - Queen maps (stronghold, portals, maze, slithery, trauma), s3-4: 13-7.
+  - Fresh mapgen (seed 48391), per family: anti-centre 8-8, crowded 8-8, maze 9-7, mixed 6-10,
+    off-axis 8-8, open 5-11, rich-near-home 9-7, ring 5-11, rooms 8-8, sealed-spawn 9-7, sparse 8-8
+    (83-93).
+  - Rechecked on seeds 3-5: open 11-13, ring 11-13, mixed 11-13. Mostly elimination-decided games.
+  - Duel (server, random:2): 36-32. Queen length at the end 12.5 v 11.0.
+- **Verdict ring-field-9:** 61-0-59 vs parent, "BEATS parent" (within noise).
+  - By suite: server 39-37, custom 17-17, official 5-5.
+  - Decided by elimination 30-27, longer queen 19-17, longest 10-15, total 2-0.
+  - vs ring-qforage-1 61-57, ring-sprint-21 66-52, spar-field-2 66-52. CPU p99 24.7M, max 42.7M.
+- **Targeted** (120 games vs parent, queen alive at r300 in 75 v 75):
+  - Queen length r400 / r430 / r460 / r490 / end: 9.9 / 10.1 / 21.5 / 27.8 / 19.5 v 3.1 / 3.3 / 12.7 / 23.3 / 15.5.
+  - **Late lead kept:**
+    - 21 queens reached 30+ after r430: 17 of those games won, 3 queens died, and no survivor lost 10+
+      from her peak (the parent had 2 of 13).
+    - Surviving queens end 0.6 below their r430+ peak.
+    - 231030 (Stronghold, film): 24 -> 41 -> 56, paused at 56 in r460-472 when the ground ran short,
+      64 at r484, won 76-65. ring-field-4's 228416 collapsed 68 -> 26 on the same map.
+  - **Not fixed:**
+    - Drift more than 5 tiles from her r300 head in 36 of 75 (parent 11).
+    - Deaths r300-429 are 28 v 22: lunges 20 v 17, mostly at length 2-5, and "no valid move" at
+      length 3, 7 v 2.
+    - Big drifted queens lunged: 231244 (32, 9 tiles out), 231192 (28, 12 out), 231171 (24, 10 out).
+    - The pen hold is off whenever an enemy can reach her (flight), and the room rule (3L) still
+      pulls a grown queen out. A fixed pen didn't change the drift count.
