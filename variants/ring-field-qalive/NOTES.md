@@ -238,3 +238,19 @@ sealed 8-8, sparse 7-9. Queen at end 1.8 v 1.1, died 69% v 71%; feed-champion de
 Duels vs ring-field-3 (eph-dbe30127, random:2): server 34-0-34 (elim 13-11, queen 14-19, longest 5-3,
 total 2-1; 3+ 21-19, <=2 13-15), queen length@end 9.6 v 12.2, alive 55.9% both; official 8-2-10.
 CPU max 32-42M.
+
+Arena verdict ring-field-10 vs ring-field-3: 52-0-60 (46.4%, noise; "loses to parent"). Server 35-33,
+official 3-7, custom 14-20. Decided by: elimination 28-26, queen 18-18, longest 5-15, total 1-1.
+vs ring-qforage-1 57-55, ring-sprint-21 58-54, spar-field-2 64-48. CPU p99 24.7M, max 41.6M.
+Eval P(win) r100/200/300/400/450: .50/.50/.50/.48/.50 (identical before r360, as expected).
+Queen metrics (112 games): queen alive past r380 63 v 64 games; in those, queen length r450 5.3 v 5.6,
+r500 15.0 v 14.2; alive at end 52 v 49; deaths r380-499 11 v 15.
+Behaviour (local repro of arena seeds, australia seed 5823891923403082162, which reproduces 231666
+exactly): parent with a live queen (231687 mirror): 20 "feed champion" deaths r369-403 while she
+lives; draft (231666): 3 by r395, queen alive to r490 and grown 3 -> 34, then killed by an enemy
+queen12 head-on at r490 (lost on longest 19 v 36).
+Cost: the longest tiebreak went 5-15. (a) both queens alive and tied (231696 fixed-split: queens 2 v 2,
+longest 17 v 34): the parent's "bug" concentrated into a non-queen champion while the queen lived,
+which wins tied-queen games; (b) the queen dies late (231720 big_empty: died ~r435 at length 4,
+longest 35 v 45 with total 684 v 521): a length-3/4 queen's death is never obit-reported
+(obit_min_length 5) so the team holds her alive up to 80 rounds and concentrates late.
