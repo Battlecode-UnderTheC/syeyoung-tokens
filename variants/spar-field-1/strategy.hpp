@@ -873,7 +873,7 @@ class StrategyAgent : public bot::Agent {
   bool SparTurn(const rl::Observation& o, bot::Action* out);
   bool spar_init_ = false, spar_done_ = false;
   double spar_hx_ = 0, spar_hy_ = 0;   // the committed heading (unit vector, x east, y south)
-  int32_t spar_stuck_ = 0;
+  int32_t spar_stuck_ = 0, spar_seen_ = 0, spar_since_ = 0;
   bool Banned(int32_t t) const {
     const auto it = banned_.find(t);
     return it != banned_.end() && it->second > round_;

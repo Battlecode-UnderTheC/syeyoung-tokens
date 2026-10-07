@@ -13,10 +13,10 @@
 //  3. Food on the way: a pearl within kFoodDetour steps that is not behind us (the queen: kQueenFood,
 //     any direction). Seen beds are travel targets too (kFieldPull each within 2).
 //  4. Arrival: a bed cluster in view (kArrive live or soon-due beds within 2 of a tile within 3 of
-//     the head) with no more of our heads around it than beds: the dragon stays and the
+//     the head) with no other ally head within 3 of it: the dragon stays and the
 //     base farms it (it splits at 4, so its children carpet the field; a child born beside a
 //     crowded field walks on).
-//  5. On a 3+-dragon start the queen splits to 2 as well and walks towards the middle of the ally heads she knows
+//  5. On a 3+-dragon start the queen splits to 2 as well and walks towards the distance-weighted middle of the ally heads she knows
 //     (inside the swarm, behind its tips), taking food within reach; with no ally known she walks
 //     as a worker would. From kSparUntil she is the base's queen, her home where she stands.
 //  An enemy head whose lunge could reach our next step (at least kFight; the queen kQueenMargin
@@ -35,6 +35,7 @@ constexpr int32_t kSparUntil = 40;    // STYLE.md: aAah's swarm is in the cup an
 constexpr int32_t kSearch = 40;       // path-search depth for the travel target
 constexpr int32_t kFight = 3;         // an enemy head this near: the base's fight rules
 constexpr int32_t kPartialLen = 6;    // an enemy whose body leaves the view: at least this long
+constexpr int32_t kStall = 6;          // rounds without a new tile seen: the travel is stuck (rush.cpp's kRushStall)
 constexpr int32_t kSmallStart = 2;    // the queen's r0 unit count at or below which she keeps the base's forage
 constexpr int32_t kQueenMargin = 2;   // the queen's extra distance from any lunge reach
 constexpr int32_t kLane = 4;          // ally heads this near push the heading sideways
@@ -62,6 +63,20 @@ bool StrategyAgent::SparTurn(const rl::Observation& o, bot::Action* out) {
   // 1-2-starter maps went 2-14 when she walked out to the swarm instead)
   if (IsQueen() && round_ == 0 && units_ <= kSmallStart) spar_done_ = true;
   if (spar_done_) return false;
+  // a dragon that has seen no new tile for kStall rounds is going nowhere (sim, Devil: a child
+  // circled the dead-end corner of its spawn room r8-r30, chasing frontier behind the kelp): the
+  // base takes over
+  {
+    int32_t seen = 0;
+    for (int32_t t = 0; t < board_.size(); ++t) seen += board_.at(t).seen_round >= 0;
+    if (seen > spar_seen_) {
+      spar_seen_ = seen;
+      spar_since_ = round_;
+    } else if (round_ - spar_since_ >= kStall) {
+      spar_done_ = true;
+      return false;
+    }
+  }
   const int32_t W = board_.width(), H = board_.height();
   auto disp = [&](int32_t from, int32_t to, double* dx, double* dy) {
     int32_t x = board_.X(to) - board_.X(from), y = board_.Y(to) - board_.Y(from);
@@ -172,7 +187,7 @@ bool StrategyAgent::SparTurn(const rl::Observation& o, bot::Action* out) {
         if (c < kArrive - 1e-9) continue;
         int32_t ours = 1;
         for (const int32_t a : allies) ours += Torus(a, t) <= 3;
-        if (ours <= c + 1e-9) {   // one head per live bed: room for us (STYLE.md: singles, evenly spaced)
+        if (ours == 1) {   // no ally head at it yet: one dragon per field (STYLE.md: singles, one per column)
           spar_done_ = true;
           return false;
         }
@@ -215,15 +230,20 @@ bool StrategyAgent::SparTurn(const rl::Observation& o, bot::Action* out) {
 
   // the queen: towards the middle of the ally heads she knows, inside the swarm
   if (IsQueen() && !allies.empty()) {
-    double cx = 0, cy = 0;
+    // each ally weighted by its distance from her: the swarm's front pulls her out of the spawn
+    // (an unweighted centroid of the heads she knows, mostly fresh children beside her, kept her
+    // circling the spawn room on Devil in sim, r1-r39)
+    double cx = 0, cy = 0, wsum = 0;
     for (const int32_t a : allies) {
       double dx, dy;
       disp(head_, a, &dx, &dy);
-      cx += dx;
-      cy += dy;
+      const double w = std::max(1.0, std::hypot(dx, dy));
+      cx += w * dx;
+      cy += w * dy;
+      wsum += w;
     }
-    cx /= allies.size();
-    cy /= allies.size();
+    cx /= wsum;
+    cy /= wsum;
     int32_t best = -1;
     double best_s = std::hypot(cx, cy);   // staying put scores the current distance
     for (int32_t t = 0; t < board_.size(); ++t) {

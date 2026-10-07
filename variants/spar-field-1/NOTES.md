@@ -23,6 +23,11 @@ Until a dragon "arrives" or r40 it owns the turn; everything after is ring-sprin
 6. An enemy head whose lunge (ceil(Le/4)+Le-2 steps; a body leaving the view counts as 6 long) could
    reach our next step hands that turn to the base; the queen keeps 2 more (fresh sparse maps went
    3-13 before: L2 travellers and the L2 queen walked into lunge reach).
+7. (iteration 2, after the first arena games) a dragon that sees no new tile for 6 rounds hands over
+   to the base (a child circled the dead-end corner of the Devil spawn room r8-r30, chasing frontier
+   behind kelp); arrival needs no other ally head within 3 of the field (one dragon per field); the
+   queen aims at the distance-weighted middle of the heads she knows (the unweighted middle kept her
+   circling the spawn room).
 Debug: `-DSPAR_DBG` prints per-turn state for r<45 (plugin.cpp).
 
 ## Local (sim v ring-sprint-guard2)
@@ -37,3 +42,17 @@ Debug: `-DSPAR_DBG` prints per-turn state for r<45 (plugin.cpp).
 - Opening from replays (r40, us/them, server duel): eats 26.9/27.9, board control at r30 0.52/0.48;
   Devil eats 43.8/25.8 at r40 (bc 0.57), Islands 56/39.8 (bc 0.61), Trophy 22/21.3 (bc 0.57).
   Behind on rich home maps (around_unsw 51/102, Australia 6.5/16.8): travellers leave food for frontier.
+
+## Arena verdict, first submission (spar-field-1, iteration 1)
+- vs ring-sprint-21 60-0-52 (53.6%, beats_parent, noise); server suite 36-32; vs ring-qforage-1 59-53,
+  ring-contest-4 62-50, ring-sched-17 62-50. CPU worst p99 25.8M, max 43.4M.
+- Own games v parent (arena metrics): board control r30 0.487 v 0.455, eats r40 31.3 v 30.2; server
+  25.4 v 27.0, custom 45.3 v 38.1. Eval P(win) r100/200/300 0.535/0.516/0.508.
+- Devil (fixed server seeds) lost the opening (eats r40 16 v 26): our dragons settled on the first bed
+  columns by the spawn while the parent reached the centre; one child stalled in the spawn room corner.
+
+## Iteration 2 (local and duel)
+- Duel v ring-sprint-21 server random:2: 36-0-32; r30 board control 0.52/0.48; r40 eats 28.0/28.6;
+  Devil eats r40 35.8 v 17.8 (bc 0.56), Islands 55.3 v 39.8 (bc 0.58), Trophy 18.8 v 13.
+- Fresh mapgen 46061 seeds 1-2: 93-1-82; families 10-6, 10-6, 10-6, 8-8, 11-5, 7-9, rich-near-home 5-11
+  (re-run seeds 3-4 7-9, second set 11-13), ring 9-7, rooms 9-7, sealed 7-9, sparse 7-1-8.
