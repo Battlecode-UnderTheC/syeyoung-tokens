@@ -133,6 +133,18 @@ inline constexpr int kForageSettleUnits = 6, kForageSettleRound = 120, kForageRo
 inline constexpr int kQStarterUntil = 60, kQStarterBehindMin = 2, kQStarterBehindMax = 4;
 inline constexpr int kLeadMemory = 12;   // a lead head seen this many rounds ago still pulls (it moves 1-2 a turn)
 inline constexpr double kQStarterPull = 1.0;   // per tile beyond the band: a pearl (12) a dozen tiles off still wins
+// v2 (orchestrator, after arena ring-sprint-23): on Trophy the lead starts 13 rows from her, out of
+// her 7x7 view, so the pull never engaged (215257: she left her room west and roamed outside the
+// cup). The lead now sends its own head in a new sonar word, 0xBC, on all four directions in place
+// of its champion reports (0xA7; never over a ring word 0xBA); every non-queen ally that heard it
+// within kLeadMemory rounds relays it on two directions a turn (rotating), until r60. (One direction
+// a turn: on Trophy seeds 1-3 she heard 0-1 words in 60 rounds; with four from the lead, 1-11.)
+// The queen takes a relayed head as the lead's last seen head; her pull treats edges she hasn't
+// seen as open. The lead knows itself at r0: a map dragon (id 2 or 3, ids alternate teams) that
+// counts 2 of us. (At most 3 would also take a queen's r0 split into account, but on a 3-starter map
+// it would make id 2/3 a lead and cost 60 rounds of its champion reports; a 4-long queen that splits
+// at r0 (weakhold, trauma) gets no relay.)
+inline constexpr uint64_t kLeadMagic = 0xBC;
 // g44-10 (server-r19 S2, ring-sprint-qroom): the queen keeps room as her space shrinks. Every route
 // she considers outside the opening forage is scored on the free tiles she reaches from where it
 // ends (her own new body, every dragon's body and kelp block; an unseen edge counts as
@@ -850,6 +862,10 @@ class StrategyAgent : public bot::Agent {
   bool qstarter_ = false;
   int32_t lead_id_ = -1, lead_head_ = -1, lead_round_ = -1000;
   std::vector<uint8_t> lead_trail_;
+  // g46-2 v2: the lead's head relayed by sonar (word 0xBC), so she follows a lead out of her view
+  bool lead_self_ = false;
+  int32_t heard_lead_id_ = -1, heard_lead_tile_ = -1, heard_lead_round_ = -1000;
+  uint64_t LeadWord(int32_t id, int32_t tile, int32_t round) const;
    // the queen: we started with <= 2 dragons (her r0 unit count)
   int32_t FounderGoal(const Paths& paths, bool* here);   // *here: in the chosen region
   // g42-1 (ring-clustercall-1): the team-wide early cluster call (call.cpp). A dragon that sees a

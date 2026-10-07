@@ -531,7 +531,22 @@ bool StrategyAgent::ClaimedByOther(int32_t t) const {
   return false;
 }
 
+uint64_t StrategyAgent::LeadWord(int32_t id, int32_t tile, int32_t round) const {
+  const int32_t x = board_.X(tile), y = board_.Y(tile);
+  if (x < 0 || y < 0 || x > 63 || y > 63) return 0;
+  return (kLeadMagic << 56) | (uint64_t(spawn_.team & 1) << 55) | (uint64_t(id & 4095) << 43) |
+         (uint64_t(x) << 37) | (uint64_t(y) << 31) | uint64_t(round & 511);
+}
+
 void StrategyAgent::Decode(uint64_t w) {
+  if ((w >> 56) == kLeadMagic) {   // g46-2 v2
+    if (int32_t((w >> 55) & 1) != (spawn_.team & 1)) return;
+    const int32_t id = int32_t((w >> 43) & 4095), x = int32_t((w >> 37) & 63), y = int32_t((w >> 31) & 63),
+                  r = int32_t(w & 511);
+    if (x >= board_.width() || y >= board_.height() || r > round_ || id == spawn_.id) return;
+    if (r > heard_lead_round_) { heard_lead_id_ = id; heard_lead_tile_ = board_.Tile(x, y); heard_lead_round_ = r; }
+    return;
+  }
   if ((w >> 56) == kClaimMagic) {
     if (int32_t((w >> 55) & 1) != (spawn_.team & 1)) return;
     const int32_t id = int32_t((w >> 43) & 4095), x = int32_t((w >> 37) & 63), y = int32_t((w >> 31) & 63),
@@ -1679,7 +1694,12 @@ bot::Action StrategyAgent::QueenMove() {
     if(it!=seen_.end() && it->second.round==round_ && it->second.head>=0 && board_.Current(it->second.head) &&
        board_.at(it->second.head).occupant==lead_id_ && board_.at(it->second.head).occupant_head) {
       lead_head_=it->second.head;lead_round_=round_;lead_trail_[lead_head_]=1;
+    } else if(heard_lead_id_==lead_id_ && heard_lead_round_>lead_round_) {   // v2: relayed by sonar
+      lead_head_=heard_lead_tile_;lead_round_=heard_lead_round_;
     }
+#ifdef QSTARTER_DBG
+    if(round_<60) std::fprintf(stderr,"QL r%d team%d q%d,%d lead%d at%d,%d age%d heard%d\n",round_,spawn_.team,board_.X(head_),board_.Y(head_),lead_id_,lead_head_>=0?board_.X(lead_head_):-1,lead_head_>=0?board_.Y(lead_head_):-1,round_-lead_round_,heard_lead_round_);
+#endif
   }
   if(FOUNDER_MODE && round_==0 && units_<=2) small_start_=true;   // g43-6: the start size, known at r0
   const bool founder_home=FOUNDER_MODE && small_start_ && round_<kFounderUntil;   // g43-6: she stays home
@@ -1804,7 +1824,10 @@ bot::Action StrategyAgent::QueenMove() {
         const int32_t u=queue[qi];
         if(lead_dist[u]>=30) continue;
         for(int d=0;d<4;++d) {
-          const int32_t n=board_.Step(u,d);
+          int32_t n=board_.Step(u,d);
+          if(n==kUnknown) {   // v2: an edge she hasn't seen counts as open (the lead may be far off)
+            n=board_.Tile(board_.X(u)+dragons::kDx[d],board_.Y(u)+dragons::kDy[d]);
+          }
           if(n<0 || lead_dist[n]>=0) continue;
           lead_dist[n]=lead_dist[u]+1;queue.push_back(n);
         }
@@ -2196,6 +2219,18 @@ bot::Action StrategyAgent::Turn(const rl::Observation& o) {
     for (int d = 0; d < 4; ++d) a.sonar[d] = RingWord();
   if (QUEEN_ENDGAME >= 2 && IsQueen() && round_ >= kPantryFrom)
     for (int d = 0; d < 4; ++d) a.sonar[d] = DeliveryWord();
+  // g46-2 v2: the lead sends its head, and allies relay it, on one direction a turn (strategy.hpp kLeadMagic)
+  if (QSTARTER_MODE && !IsQueen() && round_ < kQStarterUntil) {
+    if (round_ == 0 && born_ == 0 && (spawn_.id == 2 || spawn_.id == 3) && units_ <= 2) lead_self_ = true;
+    uint64_t w = 0;
+    if (lead_self_) w = LeadWord(spawn_.id, head_, round_);
+    else if (heard_lead_id_ >= 0 && round_ - heard_lead_round_ <= kLeadMemory)
+      w = LeadWord(heard_lead_id_, heard_lead_tile_, heard_lead_round_);
+    for (int k = 0; k < (lead_self_ ? 4 : 2); ++k) {
+      const int d = (round_ + spawn_.id + k) & 3;
+      if (w && (!a.sonar[d] || (*a.sonar[d] >> 56) == kMagic)) a.sonar[d] = w;
+    }
+  }
   // g42-1: every dragon that knows the queen's ring relays the ring word on all four directions,
   // so the call rides in its spare bits 36-55 (the ring readers use bits 0-25, qgate 26-35)
   {

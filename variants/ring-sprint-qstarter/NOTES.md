@@ -72,3 +72,21 @@ submission or arena replay check. Ready to submit:
     them die beside her at r30); team 6 v 9 dragons at r58. The parent's queen parks in its room.
 - Not fixed by this change: Trophy-like starts where the lead is out of view (no lead position is
   relayed by sonar); 4-long-queen barren-home starts (weakhold) where she crowds the workers.
+
+## v2: the lead's head relayed by sonar (after ring-sprint-23)
+- Why: on Trophy (215257, 215230) the lead starts 13 rows away and never comes into her view, so
+  the follow never engaged.
+- Change: new sonar word 0xBC (team bit 55, lead id 43-54, x 37-42, y 31-36, round 0-8). The lead
+  (map dragon id 2/3 counting 2 of us at r0) sends its head on all four directions before r60 in
+  place of its champion reports 0xA7; any non-queen ally that heard it within 12 rounds relays it on
+  two rotating directions, only over a 0xA7 word or an empty slot (never over ring words 0xBA, so
+  the ring relay and the call in it are untouched). The queen takes a relayed head as the lead's last
+  seen head (no trail marks from relays); her pull BFS treats edges she hasn't seen as open.
+- 3+-starter games stay identical (devil, dilemma, portals, schooltime, default seed 1: same result,
+  totals and deaths). A 4-long queen that splits at r0 (weakhold, trauma) makes the lead count 3:
+  no relay there (left alone on purpose).
+- Reception, Trophy seeds 1-3, both seats: one direction a turn gave 0-1 words in 60 rounds; all
+  four from the lead: 1-11 distinct words (seed 1 still none). QoS 2-12, TD 5-24.
+- Local v guard2: check passed; server maps s1,2 36-32 (elim 14-10, queen 14-16); 11 1-2-starter
+  maps s1,2 26-18, queen eats by r40 3.36 v 1.91, splits <r60 2.30 v 1.41, queen dead <r100 15 v 11
+  (v1: 26-18, 3.41, 12); fresh 1-2-starter mapgen (61 maps) 66-7-49, dragons r100 29.3 v 25.4.
