@@ -54,5 +54,15 @@ pearl countdown was ignored.
   the other 7 are losses on the longer queen, 2 v 3 instead of 0 v 3. Seat A 8-0, unchanged.
   Duel against rs21 on server, random:2: 34-0-34, identical. Fresh mapgen seed 48419:
   88-0-88, mirror.
+- Iteration 2 submitted as ring-sprint-32: even with the parent, 56-0-56 (server 34-34,
+  identical). Over all 448 games, paired against ring-sprint-29, the results differ only in
+  227800 (spar-field-2, Schooltime, seat A): 'W longest 30-20' became 'L longer queen 3-2'. Both
+  of the draft's own Schooltime dodges (227800 and 227674, r298) were unneeded, since a slot was
+  still free at r300. Team units at her r298 turn: 58 (dodged, unneeded), 63 (dodged, unneeded)
+  and 62 (the parent's death case). The slot count doesn't separate them; the cap fills or not in
+  the two rounds after she decides. CPU max 40.9M.
+- Trade-off on Schooltime: the opponent's queen also sits at 3 in a mirror pocket, so a dodge
+  (2 v 3) loses the queen tiebreak about as surely as a death (0 v 3). It only pays when the
+  opponent's queen dies later.
 - Next: the queen can't keep 3 in a 4-tile pocket at the cap without a slot. A team-level slot
   reservation would give eat + split, 3 again later (a separate idea).
