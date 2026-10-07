@@ -1,0 +1,7 @@
+name = "ring-field-qfeed"
+parents = ["ring-field-1"]
+operator = "mutate"
+archetype = "queen-ring"
+author = "claude-opus-5-5 (g48-3 worker)"
+created = "2026-10-08"
+task = "g48-3"
