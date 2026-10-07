@@ -56,3 +56,16 @@ Debug: `-DSPAR_DBG` prints per-turn state for r<45 (plugin.cpp).
   Devil eats r40 35.8 v 17.8 (bc 0.56), Islands 55.3 v 39.8 (bc 0.58), Trophy 18.8 v 13.
 - Fresh mapgen 46061 seeds 1-2: 93-1-82; families 10-6, 10-6, 10-6, 8-8, 11-5, 7-9, rich-near-home 5-11
   (re-run seeds 3-4 7-9, second set 11-13), ring 9-7, rooms 9-7, sealed 7-9, sparse 7-1-8.
+
+## Arena verdict, iteration 2 (spar-field-2)
+- vs ring-sprint-21 67-0-45 (59.8%, CI 50.6-68.4, beats_parent); server 42-26, official 7-3, custom 18-16;
+  elimination 32-16, longer queen 19-17, longest 14-12. vs ring-qforage-1 57-55, ring-contest-4 69-43,
+  ring-sched-17 65-47. CPU worst p99 25.8M, max 44.8M.
+- Own games v parent: board control r30 0.480 v 0.463 (custom 0.50 v 0.44); eats r40 31.4 v 30.3
+  (server 25.2 v 27.3, custom 45.7 v 37.6). Eval P(win) r100/200/300 0.537/0.560/0.588.
+- Films: Islands 219644 — heads fanned over x 8-43 by r12 and eat 52 v 40 at r40 (bc 0.53 v 0.38);
+  Trophy 219683 (2-starter, queen keeps base forage) — queen at (19,11) in the cup r12-r30 with 4-6
+  of ours around her; Devil 219336 (fixed seed) — our 6 L2s settle on the bed columns by the spawn
+  (x 5-11) while the parent reaches x 21-26 by r30: on these seeds the opening is lost (eats 20 v 25).
+- Next: on Devil-like maps, arrival should prefer fields away from the spawn (strategist S1's "away
+  from spawn"), so the carpet reaches the central fields first.
