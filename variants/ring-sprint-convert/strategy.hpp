@@ -11,28 +11,32 @@
 #ifndef EXPLORE_HUNGER
 #define EXPLORE_HUNGER 1
 #endif
-// g46-3 (ring-sprint-convert): late conversion from kConvertFrom into ONE target at full throughput
-// (strategist g46 C #1; conveyor.cpp, UpdateLateChampion, QueenMove). Observed (s21 server set, 279
-// losses): 53 queen races lost with material level at r400 (92 v 95) but queens 2 v 22; their
-// queens eat 15-18 pearls per 100 turns in r350-450, ours 4.1, because our queen stays parked to
-// r430 and the conveyor feeds one line at a time. 18 Schooltime losses with both queens sealed at 3
-// lost on longest (22 v 54) holding 314 v 162 total: no champion while our queen is alive.
-//  - kConvertFrom: the round conversion starts. The material is there by r300-400; growing a queen
-//    to ~20 at one corpse line per turn or two needs about 100+ rounds, which r430 doesn't leave.
-//  - the target is our queen while she says so (she is out of her ring, has seen no enemy head for
-//    kConvertCalm rounds, and is not sealed off: her kelp-bounded region is closed and no ally head
-//    was seen in it for kSealedAllyAge rounds); she relays it in bit 30 of her report (lengths stay
-//    under 2048). Otherwise it is the late champion (UpdateLateChampion no longer waits for her death).
-//  - kConvertLines: feed lines laid at once (the conveyor's "busy" test allows this many turns of her
-//    sprint in pearls, and this many walkers may head for her at once).
-//  - kConvertGuards: a worker lays itself down only while at least this many of us stay alive, nor
-//    fewer than the enemy dragons it has seen in the last kConvertEnemyAge rounds.
-// Triggered by our own state and the clock only, never by sighting the enemy queen.
+// g46-3 (ring-sprint-convert): late conversion from kConvertFrom into ONE champion at full
+// throughput when our queen can't be the target (strategist g46 C #1, champion branch; conveyor.cpp,
+// UpdateLateChampion, the heartbeat in Encode/Decode). Observed (s21 server set): 18 Schooltime losses with both
+// queens sealed at 3 lost on longest (22 v 54) while we held 314 v 162 total; in 51 of 73 longest
+// losses our r400 material at 45% conversion beats their final longest. The base feeds no champion
+// while our queen is alive, and its champion concentration starts only at r430.
+//  - kConvertFrom: from here a champion is fed unless our queen was heard alive within
+//    kQueenAliveFresh rounds through the team's heartbeat (UpdateLateChampion): dead, or walled off
+//    by kelp (sonar stops at kelp, so a sealed queen is never heard, and a sighting of her across
+//    kelp doesn't count: WalledOff, a flood capped at kWalledCap tiles). Report words carry the heartbeat
+//    in bits 28-30 (lengths stay under 512). A live, reachable queen keeps the base's r430 exit and
+//    queen conveyor unchanged.
+//    Late concentration (no growth splits, food left to the champion) still starts at r430; from
+//    kConvertFrom the champion takes its harvest sprint and the conveyor feeds it.
+//    (Iteration 1 also fed a live queen from r300 by leaving her ring early: she died to head-on
+//    attacks while out, 62-65% v 35-38%, so that branch waits for queen armour.)
+//  - kConvertLines: champion feed lines laid at once (the conveyor's "busy" test allows this many
+//    turns of its sprint in pearls, and this many walkers may head for it at once).
+//  - guards: a worker lays itself down only while at least kConvertGuards of us stay, no fewer than
+//    their dragon count as it sees it, and half our count when it first converted (conveyor.cpp).
+// Triggered by our own state and the clock only, never by sighting the enemy.
 #ifndef CONVERT_MODE
 #define CONVERT_MODE 1
 #endif
-inline constexpr int kConvertFrom = 300, kConvertCalm = 20, kConvertFresh = 10, kConvertLines = 3;
-inline constexpr int kConvertGuards = 3, kConvertEnemyAge = 30, kSealedAllyAge = 40, kSealedEvery = 5;
+inline constexpr int kConvertFrom = 300, kConvertLines = 3;
+inline constexpr int kConvertGuards = 3, kConvertEnemyAge = 30, kWalledCap = 200;
 // g40-4 (ring-qrace-1): from kRaceFrom (the round our queen leaves her ring and starts to grow:
 // ring4 exit at 430) while the enemy queen was seen alive within kRaceFresh rounds, workers walk to
 // our queen and resign within kRaceReach of her head, so the queen-length tiebreak gets their mass.
@@ -584,6 +588,7 @@ class StrategyAgent : public bot::Agent {
   bool walking_to_ally_ = false;
   // gm2: whether a step from our head in direction d lands on a free tile (for the rollout judge's
   // overrides, which can't see our full body memory: gst-giant-1 failed check on self deaths)
+  bool StepKnownOpen(int d) const { return d >= 0 && d < 4 && board_.Step(head_, d) >= 0; }   // g46-3
   bool FreeStep(int d) const { return Classify(board_.Step(head_, d)) == Cell::kFree; }
   // g43-7: step d is in an untradeable enemy's lunge reach while another step today's rule allows is not
   bool LungeAvoid(int d) const;
@@ -639,7 +644,6 @@ class StrategyAgent : public bot::Agent {
   struct Report {
     int32_t id = -1, tile = -1, length = 0, round = -1;
     bool lower = false;   // the length is a lower bound (an ally seen only in part)
-    bool convert = false; // g46-3: the queen says she is the conversion target (bit 30)
   };
   uint64_t Encode(const Report& r) const;
   void Decode(uint64_t word);
@@ -791,13 +795,17 @@ class StrategyAgent : public bot::Agent {
   int32_t late_champ_ = -1;    // g40-3: the agreed late champion (sticky until it dies), -1: none
   bool late_conc_ = false;     // g40-3: concentrating into late_champ_ this turn
   bool die_near_ = false;     // g42-8: the team agrees on late_champ_ and doomed stubs die beside it (from kDieNearFrom)
-  // g46-3 (convert): the queen's last sighting of an enemy head, whether her region looks sealed,
-  // and whether she is the conversion target this turn
-  int32_t queen_threat_seen_ = -1000, sealed_checked_ = -1000;
-  bool queen_sealed_ = false, convert_me_ = false;
+  // g46-3: the last round this dragon knows our queen was alive (directly, or relayed: report bits
+  // 28-30 carry the age in tens of rounds, 7 none, and every hop adds 10, so a dead queen's echo dies out)
+  int32_t queen_alive_heard_ = -1000;
+  bool WalledOff(int32_t t) const;
+  mutable Scratch wo_dist_;
+  mutable std::vector<int32_t> wo_queue_;
+  uint64_t QueenHeartbeat() const {
+    const int32_t age = IsQueen() ? 0 : round_ - queen_alive_heard_;
+    return age >= 0 && age < 70 ? uint64_t(age / 10) : 7;
+  }
   int32_t convert_units_ = -1;   // our dragon count when this dragon first saw conversion (conveyor.cpp)
-  void UpdateConvertQueen();
-  bool QueenIsTarget() const;   // a worker: the queen's fresh report says she is the target
   bool rescue_committed_ = false;
   // gst-merge-1 (from gst-hunter-1): hot beds and farmer claims
   std::vector<int32_t> cd_last_, cd_round_;

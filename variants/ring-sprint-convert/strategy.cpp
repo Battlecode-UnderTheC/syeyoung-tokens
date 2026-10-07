@@ -499,7 +499,7 @@ static constexpr uint64_t kMagic = 0xA7;
 uint64_t StrategyAgent::Encode(const Report& r) const {
   const uint64_t x = board_.X(r.tile) & 63, y = board_.Y(r.tile) & 63;
   return (kMagic << 56) | (uint64_t(spawn_.team & 1) << 55) | (uint64_t(r.id & 4095) << 43) | (x << 37) | (y << 31) |
-         (uint64_t(std::min(r.length, 2047)) << 19) | (uint64_t(r.convert ? 1 : 0) << 30) | (uint64_t(r.round & 511) << 10) | (uint64_t(sym_.Usable()) << 1) | uint64_t(r.lower ? 1 : 0) | (uint64_t(EnemyQueenField(r.round)) << 4);
+         (uint64_t(std::min(r.length, 511)) << 19) | (uint64_t(QueenHeartbeat()) << 28) | (uint64_t(r.round & 511) << 10) | (uint64_t(sym_.Usable()) << 1) | uint64_t(r.lower ? 1 : 0) | (uint64_t(EnemyQueenField(r.round)) << 4);
 }
 
 // ---- gst-merge-1 (from gst-hunter-1): hot beds -----------------------------------------------------
@@ -548,8 +548,10 @@ void StrategyAgent::Decode(uint64_t w) {
   const int32_t x = int32_t((w >> 37) & 63), y = int32_t((w >> 31) & 63);
   if (x >= board_.width() || y >= board_.height()) return;
   r.tile = board_.Tile(x, y);
-  r.length = int32_t((w >> 19) & 2047);
-  r.convert = ((w >> 30) & 1) != 0;   // g46-3
+  r.length = int32_t((w >> 19) & 511);
+  // g46-3: the sender heard our queen alive (bucket b: 10b to 10b+9 rounds ago); one hop ages it by 10
+  if (const int32_t b = int32_t((w >> 28) & 7); b < 7) queen_alive_heard_ = std::max(queen_alive_heard_, round_ - 10 * (b + 1));
+  if (r.id <= 1 && r.length > 0) queen_alive_heard_ = std::max(queen_alive_heard_, std::min(r.round, round_));
   r.round = int32_t((w >> 10) & 511);
   r.lower = (w & 1) != 0;
   if (r.round > round_) return;
@@ -573,7 +575,6 @@ void StrategyAgent::Note(const Report& r) {
       have.tile = r.tile;   // it is still at least as long as we knew
       have.round = r.round;
       have.lower = true;
-      have.convert = r.convert;
     } else {
       have = r;
     }
@@ -581,7 +582,7 @@ void StrategyAgent::Note(const Report& r) {
 }
 
 StrategyAgent::Report StrategyAgent::Champion() const {
-  if (IsQueen()) return Report{spawn_.id, head_, length_, round_, false, convert_me_};
+  if (IsQueen()) return Report{spawn_.id, head_, length_, round_, false};
   if (die_near_ && late_champ_ >= 0)
     if (const auto it = reports_.find(late_champ_); it != reports_.end()) return it->second;
   if (queen_id_ >= 0) {
@@ -764,7 +765,7 @@ StrategyAgent::Goal StrategyAgent::ChooseGoal(const Paths& paths) const {
   // ms6 "reserved ground": in the feeding phase the feeders' remains pile up around the champion,
   // and any other ally that eats them only has to die again later (halving them once more). So
   // every dragon but the champion leaves the pearls within kReserve of the champion's head alone.
-  if (kReserve > 0 && (round_ >= p_.feed_from_round || (CONVERT_MODE && round_ >= kConvertFrom))) {   // g46-3
+  if (kReserve > 0 && (round_ >= p_.feed_from_round || (CONVERT_MODE && die_near_ && round_ >= kConvertFrom))) {   // g46-3
     const Report champ = Champion();
     if (champ.id >= 0 && champ.id != spawn_.id && round_ - champ.round <= kReserveFresh) {
       int32_t c = champ.tile;
@@ -1656,13 +1657,6 @@ int StrategyAgent::QueenSpace(int32_t t, int cap) const {
 bot::Action StrategyAgent::QueenMove() {
   if (queen_home_ < 0) queen_home_ = head_;
   queen_id_ = spawn_.id;
-  // g46-3: whether she may be the conversion target; she is one only once out of her ring
-  UpdateConvertQueen();
-  const bool convert_want = convert_me_;
-  convert_me_ = convert_me_ && queen_growing_;
-#ifdef CONVERT_DBG
-  if (round_ >= 290 && round_ % 10 == 0) std::fprintf(stderr, "CVQ r%d team%d len%d growing%d want%d sealed%d threat%d ring%d\n", round_, spawn_.team, length_, int(queen_growing_), int(convert_want), int(queen_sealed_), round_ - queen_threat_seen_, int(ring_.size()));
-#endif
   // Latch only the real initial population, never a late-game collapse.
   // Before R430 the existing growth flag can only be set by this policy.
   if(EARLY15_MODE && round_==0 && units_<=((EARLY15_MODE>=4 && EARLY15_MODE!=8) ? 1 : 2)) {
@@ -1678,9 +1672,7 @@ bot::Action StrategyAgent::QueenMove() {
   if(queen_forage_ && !queen_growing_) queen_forage_=false;
   if(FOUNDER_MODE && round_==0 && units_<=2) small_start_=true;   // g43-6: the start size, known at r0
   const bool founder_home=FOUNDER_MODE && small_start_ && round_<kFounderUntil;   // g43-6: she stays home
-  // g46-3: the opening's roaming ends by kConvertFrom (her conversion exit must not read as roaming: its
-  // settle rule would park her again)
-  bool early_roaming=EARLY15_MODE && queen_growing_ && round_<(CONVERT_MODE ? kConvertFrom : 430);
+  bool early_roaming=EARLY15_MODE && queen_growing_ && round_<430;
   if(queen_forage_ && early_roaming && (units_>=kForageSettleUnits || round_>=kForageSettleRound)) {
     // Settle into the ring: split off a worker when that is safe, else just stop roaming.
     if(length_>=4 && FreeSlots()>0 && int(body_.size())==length_ && SplitSafe(length_-2)) {
@@ -1712,12 +1704,6 @@ bot::Action StrategyAgent::QueenMove() {
 #ifdef QGATE_DBG
   if (round_ == 430) std::fprintf(stderr, "QGATE team%d race%d seen%d dead%d growing%d len%d\n", spawn_.team, int(EnemyQueenRace()), enemy_queen_seen_, enemy_queen_dead_, int(queen_growing_), length_);
 #endif
-  // g46-3: from kConvertFrom she leaves her ring as soon as she may be the conversion target
-  if (CONVERT_MODE && convert_want && !queen_growing_) {
-    auto exit = Ring4Exit();
-    convert_me_ = queen_growing_;   // still parked: not a target yet
-    if (!exit.steps.empty()) return Because("convert: leave ring", exit);
-  }
   if (RING4_STAGE >= 1 && round_ >= 430 && !queen_growing_ && EnemyQueenRace()) {   // g42-4 gate
     auto exit = Ring4Exit();
     if (!exit.steps.empty()) return exit;
@@ -1760,7 +1746,7 @@ bot::Action StrategyAgent::QueenMove() {
       int(body_.size())==length_ && OpenRoom(head_,std::vector<int32_t>(body_.begin(),body_.end()),kForageRoom)>=kForageRoom &&
       SplitSafe(length_-2))
     return Because("founder: queen split at 4",bot::Action::Split(length_-2));
-  if (QUEEN_SHORT && round_ < kPantryFrom && length_ >= 8 && FreeSlots() > 1 && !convert_me_ &&
+  if (QUEEN_SHORT && round_ < kPantryFrom && length_ >= 8 && FreeSlots() > 1 &&
       !threat[head_] && static_cast<int>(body_.size()) == length_ && SplitSafe(length_ - 6))
     return Because("queen: shed to six", bot::Action::Split(length_ - 6));
 
@@ -2188,6 +2174,18 @@ bot::Action StrategyAgent::Decide(const rl::Observation& o) {
   for (const uint64_t w : o.inbox)
     if ((w >> 56) == 0xBA && int32_t((w >> 25) & 1) == (spawn_.team & 1) && ((w >> 35) & 1) && int32_t((w >> 26) & 511) <= round_)
       enemy_queen_heard_ = std::max(enemy_queen_heard_, int32_t((w >> 26) & 511));
+  // g46-3: our queen's ring word (her own or relayed within 12 rounds of her stamp) says she is alive;
+  // so does seeing her
+  for (const uint64_t w : o.inbox)
+    if ((w >> 56) == 0xBA && int32_t((w >> 25) & 1) == (spawn_.team & 1))
+      if (const int32_t age = (round_ - int32_t((w >> 16) & 511)) & 511; age <= 12) queen_alive_heard_ = std::max(queen_alive_heard_, round_ - age);
+  // (a sighting counts only if she is not walled off from us: vision passes kelp, sonar doesn't;
+  // traced on Schooltime: workers outside her 4-tile kelp room saw her and kept the team from
+  // converting while she sat at 3)
+  for (int q = 0; q < 2; ++q)
+    if (const auto s = seen_.find(q); s != seen_.end() && s->second.team == spawn_.team && s->second.round == round_ && s->second.length > 0 &&
+        s->second.head >= 0 && !WalledOff(s->second.head))
+      queen_alive_heard_ = round_;
   // g40-4: the enemy queen (dragon 0 or 1 of the other team) in view this turn
   for (int q = 0; q < 2; ++q)
     if (const auto s = seen_.find(q); s != seen_.end() && s->second.team != spawn_.team && s->second.round == round_ && s->second.length > 0)
@@ -2392,7 +2390,10 @@ bot::Action StrategyAgent::Decide(const rl::Observation& o) {
     }
 
   // g42-3: the late champion's harvest sprint
-  if (late_conc_ && champ.id == spawn_.id) {
+  // g46-3: from kConvertFrom the fed champion sprints for its feed lines (the rest of late
+  // concentration, no growth splits, still starts at kLateConcFrom: from r300 it shrank the team from
+  // 56 to 6 dragons on Schooltime as churn went unreplaced)
+  if ((late_conc_ || (CONVERT_MODE && die_near_ && round_ >= kConvertFrom)) && champ.id == spawn_.id) {
     const bot::Action h = ChampionHarvest();
     if (!h.steps.empty()) return h;
   }
@@ -2665,10 +2666,21 @@ void StrategyAgent::UpdateLateChampion() {
   late_conc_ = false;
   die_near_ = false;
   if (IsQueen() || round_ < (CONVERT_MODE ? kConvertFrom : kDieNearFrom)) { late_champ_ = -1; return; }
-  // g46-3: from kConvertFrom the queen is the one target only while she says so (out, calm, not
-  // sealed); otherwise the champion is, even while she is alive
   if (CONVERT_MODE) {
-    if (QueenIsTarget()) { late_champ_ = -1; return; }
+    // g46-3: from kConvertFrom, a champion unless our queen was heard alive within kQueenAliveFresh
+    // rounds through the team's heartbeat (report bits 28-30, ring words, sightings). A queen walled
+    // off by kelp is never heard (sonar stops at kelp; traced on Schooltime: both queens in 4-tile
+    // kelp rooms) and a dead one stops, so both make the champion the target. The base's own test
+    // (her report or a sighting, from r400) missed parked queens: a ring queen sends only ring words,
+    // which far workers never hear (traced on autarky: no worker had a report of her at r300).
+#ifdef CONVERT_DBG
+    if (round_ == 350) std::fprintf(stderr, "CVH team%d me%d age%d ring%d\n", spawn_.team, spawn_.id, round_ - queen_alive_heard_, round_ - ring_seen_);
+#endif
+    if (round_ - queen_alive_heard_ <= kQueenAliveFresh) {
+      const auto r = reports_.find(queen_id_);
+      const bool reported_dead = r != reports_.end() && r->second.length == 0 && r->second.round >= queen_alive_heard_;
+      if (!reported_dead) { late_champ_ = -1; return; }
+    }
   } else
   // never feed a champion while our queen can still grow
   for (int q = 0; q < 2; ++q) {
@@ -2701,7 +2713,13 @@ void StrategyAgent::UpdateLateChampion() {
     }
   }
   die_near_ = late_champ_ >= 0;
-  late_conc_ = die_near_ && round_ >= (CONVERT_MODE ? kConvertFrom : kLateConcFrom);
+  late_conc_ = die_near_ && round_ >= kLateConcFrom;
+#ifdef CONVERT_DBG
+  if (die_near_ && round_ % 10 == 0) {
+    const auto r = reports_.find(queen_id_);
+    std::fprintf(stderr, "CVC r%d team%d me%d champ%d qage%d qlen%d sealed%d\n", round_, spawn_.team, spawn_.id, late_champ_, r == reports_.end() ? -1 : round_ - r->second.round, r == reports_.end() ? -1 : r->second.length, 0);
+  }
+#endif
 }
 
 // ms6 delivery: a worker far from the champion leaves early enough to arrive before the end.
@@ -2773,57 +2791,28 @@ bot::Action StrategyAgent::QueenRace(const Report& champ) {
 }  // namespace gm2
 
 
-namespace gm2 {
-// g46-3 (convert): the queen decides each turn whether she is the conversion target (see kConvertFrom).
-void StrategyAgent::UpdateConvertQueen() {
-  convert_me_ = false;
-  // a threat: an enemy head that can reach a tile beside her head within its next turn's free
-  // steps plus one (ceil(L/4) + 2 tiles away, one more for a head seen only in part, whose length is
-  // a lower bound). Not every head in view: out of her ring, 1-2-long enemy heads 3-6 tiles off were
-  // in view nearly every round on trauma and maze (traced), and a 2-long dragon covers one tile a turn.
-  for (const auto& [id, e] : seen_)
-    if (e.team != spawn_.team && e.round == round_ && e.head >= 0 &&
-        Torus(e.head, head_) <= (e.length + 3) / 4 + 2 + (e.partial ? 1 : 0))
-      queen_threat_seen_ = round_;
-  if (!CONVERT_MODE || round_ < kConvertFrom || round_ >= 499) return;
-  // sealed: her kelp-bounded region (dragons ignored) is closed in memory, and no ally head was seen
-  // in it lately, so no feeder from outside can reach her (Schooltime's walled bed room: both queens
-  // sat at 3 while the team held twice the enemy's length outside)
-  if (round_ - sealed_checked_ >= kSealedEvery) {
-    sealed_checked_ = round_;
-    q_dist_.Begin(board_.size());
-    q_queue_.assign(1, head_);
-    q_dist_.Set(head_);
-    bool open = false;
-    for (size_t qi = 0; qi < q_queue_.size() && !open; ++qi) {
-      ++work_;
-      for (int d = 0; d < 4; ++d) {
-        const int32_t n = board_.Step(q_queue_[qi], d);
-        if (n == kUnknown) { open = true; break; }
-        if (n < 0 || q_dist_.Has(n)) continue;
-        q_dist_.Set(n);
-        q_queue_.push_back(n);
-      }
-    }
-    bool ally = false;
-    if (!open)
-      for (const auto& [id, w] : seen_)
-        if (id != spawn_.id && w.team == spawn_.team && w.head >= 0 && round_ - w.round <= kSealedAllyAge && q_dist_.Has(w.head))
-          ally = true;
-    queen_sealed_ = !open && !ally;
-  }
-  const bool enemy_queen_dead = enemy_queen_dead_ >= 0 && enemy_queen_dead_ >= EnemyQueenKnown();
-  // she may be the target while not sealed off (the team can reach her) and the enemy queen is not
-  // known dead (then she already wins the queen tiebreak by surviving); she leaves her ring for it only
-  // after kConvertCalm rounds with no threat (QueenMove), and once out she stays the target, threats or
-  // not: a flag that flickered with every passing head sent the team's material to a champion instead
-  // (traced on trauma and maze: a threat within 10 rounds nearly always once she is out)
-  convert_me_ = !queen_sealed_ && !enemy_queen_dead && (queen_growing_ || round_ - queen_threat_seen_ >= kConvertCalm);
-}
 
-bool StrategyAgent::QueenIsTarget() const {
-  if (!CONVERT_MODE || round_ < kConvertFrom || queen_id_ < 0) return false;
-  const auto q = reports_.find(queen_id_);
-  return q != reports_.end() && q->second.length > 0 && q->second.convert && round_ - q->second.round <= kConvertFresh;
+namespace gm2 {
+// g46-3: whether tile t lies in a region closed by kelp that our head is not in: a flood over known
+// open edges from t (dragons ignored) ends without reaching us. Unseen edges count as closed: from
+// outside a kelp room the edges at the far end of our view are unseen (traced on Schooltime: every
+// flood from the queen's 2x2 room stopped at an unseen edge). A worker that sees her in open ground
+// shares known ground with her, so the flood reaches it. Capped at kWalledCap tiles (counts as open).
+bool StrategyAgent::WalledOff(int32_t t) const {
+  wo_dist_.Begin(board_.size());
+  wo_queue_.assign(1, t);
+  wo_dist_.Set(t);
+  for (size_t qi = 0; qi < wo_queue_.size(); ++qi) {
+    ++work_;
+    for (int d = 0; d < 4; ++d) {
+      const int32_t n = board_.Step(wo_queue_[qi], d);
+      if (n == head_) return false;
+      if (n < 0 || wo_dist_.Has(n)) continue;
+      wo_dist_.Set(n);
+      wo_queue_.push_back(n);
+      if (static_cast<int32_t>(wo_queue_.size()) >= kWalledCap) return false;
+    }
+  }
+  return true;
 }
 }  // namespace gm2

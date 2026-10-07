@@ -118,7 +118,8 @@ class JudgedAgent : public bot::Agent {
     const bot::Action b = search_->Turn(o);   // sees every observation from turn 1
     if (o.round >= gstsearch8::kLateRound && !over && !feeding && !trapped && !farming && !bed_wait && !gst_.WalkingToAlly() &&
         a.kind == bot::Action::kMove && !a.resign && a.steps.size() == 1 && b.kind == bot::Action::kMove &&
-        !b.resign && b.steps.size() == 1) {
+        !b.resign && b.steps.size() == 1 &&
+        gst_.StepKnownOpen(b.steps[0])) {   // g46-3: never a lookahead step into kelp or an unseen edge (check: schooltime r362)
       a.steps = b.steps;
       why_ = "late: lookahead step";
     }

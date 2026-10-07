@@ -1,48 +1,40 @@
-# ring-sprint-convert (g46-3)
+# ring-sprint-convert (g46-3), iteration 2: champion branch only
 
 - **Line:** ring-sprint. **Parent:** ring-sprint-guard2 (arena ring-sprint-21).
-- **The one change:** late conversion from r300 into ONE target at full throughput (strategist g46 C #1).
+- **The one change:** late conversion from r300 into ONE champion at full throughput when our queen
+  can't be the target (strategist g46 C #1, champion branch; B #2). The queen-target branch waits
+  for queen armour (separate worker) and can be ported back later.
 
 ## Idea
-s21 server losses: 53 queen races lost with material level at r400 (92 v 95) but queens 2 v 22;
-18 Schooltime losses with both queens sealed at 3, lost on longest (22 v 54) while holding 314 v 162.
-Our queen stays in her ring until r430 and the conveyor lays one line at a time; no champion is fed
-while our queen is alive.
+s21 server losses: 18 Schooltime losses with both queens sealed at 3, lost on longest (22 v 54)
+while holding 314 v 162 total; in 51 of 73 longest losses our r400 material at 45% conversion beats
+their final longest. The parent feeds no champion while our queen is (thought) alive, and starts
+champion concentration only at r400/430.
 
-## Change (strategy.hpp "g46-3" block, conveyor.cpp, UpdateLateChampion, QueenMove, UpdateConvertQueen)
-- From kConvertFrom = 300 the queen leaves her ring once she has seen no threatening enemy head
-  (one that reaches a tile beside her head within ceil(L/4)+2, +1 if seen in part) for 20 rounds.
-- She is the target while out of her ring, not sealed (kelp-closed region in memory with no ally head
-  seen in it for 40 rounds) and the enemy queen is not known dead. She relays this in bit 30 of her
-  report word (length field cut to 11 bits). Otherwise the target is the late champion:
-  `UpdateLateChampion` no longer returns early while our queen is alive, and late concentration
-  (champion harvest, no growth splits, reserved ground) starts at r300.
-- The conveyor feeds the target from r300 with kConvertLines = 3 lines at once (3 walkers in line,
-  "busy" at 3 sprint-turns of pearls), with no enemy-queen sighting gate.
-- Guards: a worker lays itself only while units-1 >= max(3, their count as it sees it, half our count
-  when conversion began).
-- Small fixes it needs: the queen's opening "roaming" ends at r300 (its settle rule re-parked her),
-  no "shed to six" split while she is the target, reserved ground from r300.
+## Change
+- **Target (UpdateLateChampion):** from kConvertFrom = 300, a champion unless our queen was heard
+  alive within kQueenAliveFresh (80) rounds. "Heard alive" is a team heartbeat: her reports, her ring
+  words (stamp within 12), sightings of her that are not walled off from us, and a relay in report
+  word bits 28-30 (age in tens of rounds, +10 per hop so a dead queen's echo dies; lengths capped at
+  511). This replaces the parent's per-worker test, which missed parked queens (a ring queen sends
+  only ring words; on autarky no worker had a report of her at r300).
+- **Sealed:** sonar stops at kelp, so a sealed queen is never heard; a sighting across kelp doesn't
+  count (`WalledOff`: flood over known open edges from her head, unseen edges closed, must reach our
+  head within 200 tiles). Traced on Schooltime: workers saw her through her 2x2 kelp room and kept
+  the team from converting.
+- **Feeding (conveyor.cpp):** while a champion is the target from r300, 3 lines at once (3 walkers,
+  "busy" at 3 sprint-turns of pearls); guard cap: lay only while units-1 >= max(3, their count as seen,
+  half our count at first conversion). The champion takes its harvest sprint from r300; the rest of
+  late concentration (no growth splits) stays at r430 (from r300 it shrank Schooltime B 56 -> 6
+  dragons). Reserved ground around the champion from r300.
+- **Queen:** unchanged (r430 ring exit, conveyor to her). "queen: escape split" no longer fires (0).
+- **Lookahead safety (plugin.cpp):** the late lookahead step is taken only onto a known open edge.
+  `check` failed on schooltime r362 (worker stepped N into kelp via "late: lookahead step", an
+  existing bug exposed by the new trajectory).
 
-## Local (sim, vs ring-sprint-guard2)
-- Server maps seed 1: 12-0-22; seed 2: 13-0-21. Queen alive at end 9.7/6.2 v 10.6/12.7; queen died
-  62-65% v 35-38%. Games ending before r300 are identical (mirror pairs).
-- Fresh mapgen (all families, seed 46301, 44 maps, seed 1): 36-0-52; died 65% v 57%.
+## Local (sim vs ring-sprint-guard2)
 - check maps/official: passed.
-- Iterations: (1) any enemy head in view as threat + champion whenever not calm: 9-25, the flag
-  flickered and the material went to champions; (2) reach-based threat, sticky once out: 14-20;
-  (3) + guard cap (their count / half of ours): 12-22.
-
-## What the traces show
-- The conversion works mechanically: queens reach 24-77 by r350-380 (autarky 3->24 r300-355; maze
-  4->77 by r380 with enemy queen at 3; portals/trauma won 33-42 v 19-31).
-- But every queen death after r300 (autarky r337, maze r409, unsw r383, islands r309, slithery r469,
-  australia r307; seed 1) is "queen12: direct attack" by the parent's workers: any enemy head that
-  sees her and has a <= 12-step path kills her head-on, whatever her length. 130-200 rounds out of
-  the ring instead of 70 is too long without queen armour (strategist C #3).
-- Without the guard cap 46 dragons became 8 in 20 rounds (corpses feed half their length).
-- A giant queen (77 on maze) boxed herself and shed 2 per turn by "queen: escape split" from r421.
-
-## Arena
-Not submitted: `tokenz ephemeral` was blocked by the permission system, and the local result is a
-clear loss vs the parent anyway.
+- Server maps: seed 1 16-0-18, seed 2 18-0-16 (34-34). Schooltime 3-1 (longest 53-34, 72-29, 51-26,
+  20-26). Longest-decided 7-4. Queen died 47-50% v 44%.
+- Fresh mapgen (seed 46303, 44 maps, 11 families x 8 games): 43-0-45; every family 3-5 to 5-3.
+- Iteration 1 (queen also fed from r300 out of her ring): 12-22 / 13-21, queen died 62-65%.

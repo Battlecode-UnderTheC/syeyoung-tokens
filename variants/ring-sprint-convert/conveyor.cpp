@@ -38,16 +38,11 @@
 namespace gm2 {
 
 bot::Action StrategyAgent::Conveyor() {
-  // g46-3 (convert): from kConvertFrom the conveyor feeds the one target (the queen while her report
-  // says so, else the late champion), several lines at once, keeping a few guards alive
-  const bool convert = CONVERT_MODE && round_ >= kConvertFrom;
-  int32_t tid = queen_id_;
-  if (convert) {
-    if (QueenIsTarget()) tid = queen_id_;
-    else if (die_near_ && late_champ_ >= 0) tid = late_champ_;
-    else return {};
-    if (tid == spawn_.id) return {};
-  }
+  // g46-3 (convert): from kConvertFrom, when the team has a late champion (our queen dead or sealed
+  // off, see UpdateLateChampion), the conveyor feeds it, several lines at once, keeping guards alive
+  const bool convert = CONVERT_MODE && round_ >= kConvertFrom && die_near_ && late_champ_ >= 0;
+  const int32_t tid = convert ? late_champ_ : queen_id_;
+  if (tid == spawn_.id) return {};
   if ((!convert && (round_ < kRaceFrom || !EnemyQueenRace())) || round_ >= 499 || length_ < kFeedMin) return {};
   if (int(body_.size()) != length_) return {};   // our own body must be fully known to lay it
   const int32_t lines = convert ? kConvertLines : 1;
