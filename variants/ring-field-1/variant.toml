@@ -1,0 +1,7 @@
+name = "ring-field-1"
+parents = ["ring-sprint-guard2"]
+operator = "mutate"
+archetype = "queen-ring"
+author = "claude-opus-5-5 (g46-1 worker)"
+created = "2026-10-07"
+task = "g46-1"

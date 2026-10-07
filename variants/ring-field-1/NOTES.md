@@ -1,0 +1,84 @@
+# ring-field-1 (g46-1)
+
+- **Line:** ring-field (arena draft `ring-field-1`, parent ring-sprint-21 = variants/ring-sprint-guard2).
+- **Brief:** league/briefs/g46-1.md: strategist g46 A S1 / B #1, the committed field-first opening.
+
+## Idea
+Server losses open between r20 and r40 (eaten 8.5 v 14.4 at r30). Local play is the same; the
+difference is where the heads stand (starters 7.1 v 10.7 tiles from spawn at r20). Earlier fixes were
+ChooseGoal score terms that nearby home food outbid, so this mode owns the goal outright.
+
+## Change (field.cpp, plus hooks in strategy.cpp Decide step 5 and the header)
+- **Who:** every non-queen dragon alive in round 0: the starters and the children they split off in
+  r0. Excluded: the queen's own r0 child (its tail touches hers), and a dragon that already sees 4
+  live or soon-due beds at spawn.
+- **Heading:** its facing at r0. A starter faces into the board; an r0 child faces the other way
+  along the same line. Each turn it takes the reachable frontier with the most progress along the
+  heading per step of known path, then the most unseen ground. Unknown portal edges count as
+  frontier. Frontier an ally head is nearer to scores x0.25. The heading is held, never re-scored.
+- **On the way:** it eats a pearl in view only if it costs at most 2 extra steps (one step off the
+  path). FreeSprint takes the free extra steps at length 5+.
+- **Arrive:** 4 pearls lying in view, less one per ally head there, or 2 after crossing a portal.
+  The normal agent then takes over, splits there, and its cluster call tells the team.
+- **Exit:** on arrival, at r35, or when no frontier makes progress on the heading. In that last case
+  it first walks to a fresh cluster call if one exists. Kept off for a dragon that saw no new tile
+  for 6 rounds.
+- Children of splits made on the way are ordinary agents and farm where they are born.
+- Replaces the g40-5 two-explorer rush (`rush_state_` 1 never set) and, for mode dragons, the founder.
+- `FIELD_MODE 0` gives the parent's behaviour exactly (checked on around_unsw: identical games).
+- `FIELD_DBG` prints mode transitions and per-turn reasons before r45.
+
+### Iterations (local, sim)
+1. Heading re-weighed each turn: a Devil starter stopped in a slow-bed lane 4 tiles short of the
+   centre (arrival counted soon-due slow beds), then swung north up a lane.
+   - Arrival changed to count pearls lying in view.
+   - The heading is now held (it starts as the dragon's facing).
+2. A second heading (by unseen ground) only made the r0 children facing the board-edge kelp tour
+   their spawn room until r35. They now exit at once and farm home.
+3. Spawn threshold: 3 beds (the brief's number) fired by chance on Trophy's slow beds (gap up to
+   1000), so it is 4.
+4. Tried and dropped: an exit after 15 rounds without eating (around_unsw 72 v 98 total at r50,
+   worse than without it).
+
+## Local
+- `check ring-field-1 maps/official`: passed.
+- devil+trophy, seeds 1-2 v ring-sprint-guard2: 7-1. The mode fires for every non-queen starter and
+  its r0 child.
+  - Devil: starters reach the central field (12,8)/(12,9) by r10-12.
+  - Trophy: the starter crosses the bottom portal into the cup at r10.
+- Server maps seed 7: 14-20 (opening totals equal to the base).
+- Fresh mapgen (seed 46101, 44 maps, seeds 1-2): 92-84 overall. Per family: anti-centre 8-8,
+  crowded 9-7, maze 8-8, mixed 9-7, off-axis 11-5, open 9-7, rich-near-home 7-9, ring 9-7,
+  rooms 7-9, sealed-spawn 4-12, sparse 11-5.
+- **Sealed-spawn is a clear loss** (4-12; seeds 3-5: 7-17).
+  - At r50: 92 v 108 total. Base self-play is 100 v 100, so we eat less and the opponent eats more.
+  - These are sparse maps with no 4-pearl field. Mode dragons walk to r35 eating only pearls on
+    their path, and the queen is left alone.
+  - Tried, no help: an exit at r20 (9-15), arrival at 3 pearls (9-15). Not in the submitted code.
+  - Bug found after submitting: rush.cpp's g40-5 explorer is off for every dragon, including those
+    the mode leaves out (spawn field, the queen's child). The arena draft has it. Restoring it for
+    non-mode dragons changed sealed-spawn by nothing (7-17), so the committed code equals the draft.
+
+## Arena
+- **Light duels vs ring-sprint-21 (eph-b60dded6):**
+  - server: 29-39 (devil 4-0, trophy 4-0, around_unsw 0-4, slithery 0-4);
+  - official: 8-12;
+  - board control@200 .55 v .43.
+- **Verdict:** 55-0-57 vs parent (49.1%, noise): server 33-35, custom 17-17, official 5-5.
+  - Against the others: ring-qforage-1 52-1-59, ring-contest-4 62-50, ring-sched-17 71-41.
+  - CPU p99 25.8M, max 41.9M.
+- **By map (all opponents):** devil 16-0, trophy 12-4, schooltime 13-3; weakhold 3-13,
+  tower_defense 4-12, custom fixed-edges 0-8, fixed-portal-larder 1-7, fixed-honeypot 1-7.
+- **Targeted situation, measured on the draft's own Devil/Trophy games (32 games, all opponents):**
+  - startdir r20 (mean head distance from own spawn): devil 9.9 v 6.7, trophy 10.6 v 9.6;
+  - bedprox (beds within 3 of a head): devil r40 9.7 v 7.0, trophy r40 12.3 v 8.2;
+  - eaten by r30: devil 21.0 v 11.2, trophy 13.2 v 10.1;
+  - dragons at r40: devil 17.6 v 10.2, trophy 12.2 v 7.8;
+  - board control r30: devil .57, trophy .46 (r20 .56).
+- **Eval vs parent:** P(win) r100 .544, r200 .466, r300 .443. The opening edge fades, and losses are
+  mostly longer-queen games on maps outside the target.
+- **Cross-lineage duel** (server, random:2): ring-field-1 v cs-queen-split-tail-risk-v1-7 53-15.
+- **Next:** the mode costs where no dense field exists (sealed-spawn/sparse, weakhold, tower_defense).
+  It needs a "no field on this heading" test better than r35, e.g. comparing pearls in view with
+  the density already seen. Also judge it against the g46-6 field-style sparring bot, since the
+  arena pool never contests the fields.
