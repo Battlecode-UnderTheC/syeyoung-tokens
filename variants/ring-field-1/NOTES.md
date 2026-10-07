@@ -154,3 +154,34 @@ old rush restored for dragons the mode leaves out.
 - Next: these are open or sparse maps with food scattered round the spawns. Sending every non-queen
   r0 dragon out leaves the home food and the queen's surroundings to the opponent. A candidate is
   keeping one r0 dragon per spawn group at home when its spawn view holds fast beds.
+
+## Draft 3 (g47-1, arena ring-field-3): the home keeper
+- **Change:** a round-0 child (its tail touches its parent's) whose spawn view holds 2+ live or
+  soon-due beds stays home while its parent walks. FIELD_KEEPER / FIELD_HOMEFOOD.
+  `FIELD_UNTIL` is a macro for ablations.
+- **Films** (render.py --film, ring-field-2 v parent, arena):
+  - Devil 218024: cyan 3 and 5 are on the central field at r16-24; 20 v 11 dragons at r40.
+  - Trophy 218220: cyan 3 crosses the bottom portal into the cup by r8-16; 14 v 9 at r40.
+  - Edges 217918: cyan 8 sat in the empty middle r0-24. Orange held the food band on the wrap
+    edges, and from r48 grew 17 -> 34 -> 56 dragons (r48/r80/r112) while we stayed at 10.
+  - Honeypot 217945: the food is scattered round the outside and both sides stay small.
+  - Pen 217904: no pearls at all before r40 (beds of gap 3849), 5 v 5 dragons all opening.
+- **Local, v ring-sprint-guard2 over 12 seeds (24 games per map):**
+
+  | Variant | Edges | Honeypot | Pen | Devil+Trophy |
+  |---|---|---|---|---|
+  | keeper, 2 beds (submitted) | 6-18 | 6-18 | 8-16 | 42-6 |
+  | keeper, 1 bed | 6-18 | 6-18 | 8-16 | 42-6 |
+  | no keeper (draft 2) | 6-18 | 6-18 | 8-16 | 42-6 |
+  | lowest-id group keeper | 4-20 | 6-18 | 8-16 | 39-9 |
+
+  The 1-bed keeper fires 70 times over the 24 edges games and the 2-bed keeper about 2 per game.
+  Neither changes a single result.
+- **Ablation on how long the mode lasts:**
+  - mode ends at r0 (`FIELD_UNTIL` 0, so it never moves anyone): edges 12-12, honeypot 12-12
+    (parity);
+  - mode ends after r0's move (1): edges 9-15, honeypot 6-18, pen 10-13;
+  - ends at r6: edges 7-17, honeypot 6-18.
+  - One different first move already gives the full loss on honeypot. On these sparse maps
+    the sim result follows chaotic divergence from the first move, not the walk. In sim, these
+    maps can't confirm or reject a fix against the parent.

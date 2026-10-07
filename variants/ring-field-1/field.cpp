@@ -31,12 +31,21 @@
 namespace gm2 {
 using namespace strat;
 
+#ifndef FIELD_KEEPER
+#define FIELD_KEEPER 1
+#endif
+#ifndef FIELD_HOMEFOOD
+#define FIELD_HOMEFOOD 2.0
+#endif
 #ifndef FIELD_BARREN
 #define FIELD_BARREN 1
 #endif
 namespace {
 // the opening: strategist A's gap opens r20-r40; past r35 the scheduler owns the board again
-constexpr int32_t kFieldUntil = 35;
+#ifndef FIELD_UNTIL
+#define FIELD_UNTIL 35
+#endif
+constexpr int32_t kFieldUntil = FIELD_UNTIL;
 // a field: 4 pearls lying in view feed the arriving dragon and the child it splits off there (a
 // 2-long dragon needs 2 pearls to reach its growth split at 4). Pearls lying now, not soon-due beds:
 // a lane of slow beds always has a few due within 30 rounds by chance, and arriving there stopped
@@ -54,6 +63,7 @@ constexpr double kFieldGated = 2.0;
 constexpr int32_t kWindowTiles = (2 * 3 + 1) * (2 * 3 + 1);   // one 7x7 window
 constexpr int32_t kBarrenTiles = 2 * kWindowTiles;              // two windows of new ground
 constexpr int32_t kBarrenRound = 12;
+constexpr double kHomeFood = FIELD_HOMEFOOD;
 constexpr int32_t kStall = 6;          // rounds without a new tile seen: the frontier is shut (rush.cpp)
 constexpr int32_t kView = 3;           // the 7x7 window's half-width
 constexpr int32_t kDetour = 2;         // a pearl at most one step off the path: 2 extra steps
@@ -136,6 +146,21 @@ void StrategyAgent::UpdateField(const rl::Observation& o) {
       field_why_ = "spawn field";
       return;
     }
+    // g47-1: the home keeper. A round-0 child (its tail touches its parent's: docs/game.md, SPLIT)
+    // whose spawn view holds kHomeFood live or soon-due beds stays and farms home while its parent
+    // goes out, so each spawn group that has food keeps one farmer by it. Arena ring-field-2 lost
+    // fixed-edges 0-8 and fixed-honeypot 0-8 (the parent: 77% and 81%): every non-queen r0 dragon
+    // walked into the empty middle while the food lay round the spawns (sim, edges: total length
+    // 31 v 53 at r50). kHomeFood 2: the pearls a 2-long child needs to reach its growth split at 4.
+    if (FIELD_KEEPER && mine >= 0 && FieldBedsInView(false) >= kHomeFood - 1e-9)
+      for (const auto& [id, t] : tails) {
+        if (id == spawn_.id || id <= 1) continue;
+        for (int d = 0; d < 4; ++d)
+          if (board_.Step(mine, d) == t) {
+            field_why_ = "home keeper";
+            return;
+          }
+      }
     field_ = 1;
     field_spawn_ = head_;
     // the first heading is the way we face: a starter faces into the board, and a round-0 child
