@@ -1,6 +1,7 @@
 #include "strategy.hpp"
 #include <algorithm>
 #include <set>
+#include <cstdio>
 namespace gm2 {
 #ifndef RING_SIZE
 #define RING_SIZE 6
@@ -218,8 +219,53 @@ bot::Action StrategyAgent::CourierMove() {
  for(int t:body_)if(distance(t)<=1||std::find(ring_.begin(),ring_.end(),t)!=ring_.end())return bot::Action{};
  rescue_committed_=true;return Because("delivery: selected outside donor",bot::Action::Resign());
 }
+// g45-2 (iteration 2): a worker never takes the queen's last free exit. ring-qforage-1's arena
+// games: an ally head (allies act after her, in id order) filled the only free tile beside her head
+// in ~7 situations v 2 for the parent (199077 around_unsw r1-8, 198837/198978 fixed-wrap-food,
+// 198972 islands), and she died with no valid move. The queen must be in view this turn; the test
+// is the worker's whole resulting body against the free tiles beside her head.
+bot::Action StrategyAgent::KeepQueenExit(const bot::Action& a,const bot::Action& fallback) {
+ if(a.resign||a.kind!=bot::Action::kMove||a.steps.empty()||int(ring4_observed_body_.size())!=length_)return a;
+ int qhead=-1;
+ for(int q=0;q<2;++q){auto s=seen_.find(q);
+  if(s!=seen_.end()&&s->second.team==spawn_.team&&s->second.round==round_&&s->second.head>=0&&
+     board_.Current(s->second.head)&&board_.at(s->second.head).occupant==q&&board_.at(s->second.head).occupant_head)qhead=s->second.head;}
+ if(qhead<0)return a;
+ const std::vector<int> start(ring4_observed_body_.begin(),ring4_observed_body_.end());
+ // the body after the action (-1 body: the action isn't a legal-looking path, don't judge it)
+ auto after=[&](const bot::Action& action){
+  std::vector<int> b=start,eaten;const int free=(length_+3)/4;
+  for(size_t i=0;i<action.steps.size();++i){int t=board_.Step(b.front(),action.steps[i]);if(t<0)return std::vector<int>{};
+   bool pay=int(i)>=free;b.insert(b.begin(),t);
+   if(board_.at(t).pearl&&std::find(eaten.begin(),eaten.end(),t)==eaten.end())eaten.push_back(t);else b.pop_back();
+   if(pay&&b.size()>2)b.pop_back();}
+  return b;};
+ auto exits=[&](const std::vector<int>& body){int n=0;
+  for(int d=0;d<4;++d){int t=board_.Step(qhead,d);
+   if(t<0||!board_.Current(t)||std::find(body.begin(),body.end(),t)!=body.end())continue;
+   if(board_.at(t).occupant>=0&&board_.at(t).occupant!=spawn_.id)continue;
+   ++n;}
+  return n;};
+ const int before=exits(start);
+ if(before==0)return a;
+ auto takes=[&](const bot::Action& action){
+  if(action.resign||action.kind!=bot::Action::kMove||action.steps.empty())return false;
+  const auto b=after(action);return !b.empty()&&exits(b)==0;};
+ if(!takes(a))return a;
+#ifdef QF_DBG
+ std::fprintf(stderr,"QX r%d id%d before%d\n",round_,spawn_.id,before);
+#endif
+ if(!takes(fallback)&&!fallback.resign&&(fallback.kind!=bot::Action::kMove||!fallback.steps.empty()))
+  return Because("qforage: keep queen exit",fallback);
+ for(int d=0;d<4;++d){int t=board_.Step(head_,d);if(t<0||Classify(t)!=Cell::kFree)continue;
+  auto step=bot::Action::Move(d);step.sonar=a.sonar;if(takes(step))continue;
+  auto b=after(step);std::vector<int32_t> b32(b.begin(),b.end());
+  if(!b.empty()&&EscapeLevel(b32,EscapeCap(int(b32.size())))>0)return Because("qforage: keep queen exit",step);}
+ return a;
+}
 bot::Action StrategyAgent::ProtectQueenAction(bot::Action a,const bot::Action& fallback) {
  if(IsQueen())return a;
+ if(QFORAGE_MODE>=2) a=KeepQueenExit(a,fallback);
  auto safe=[&](const bot::Action& action){
   if(action.resign)return true;
   auto inside=[&](int t){return round_-ring_seen_<=12&&std::find(ring_.begin(),ring_.end(),t)!=ring_.end();};

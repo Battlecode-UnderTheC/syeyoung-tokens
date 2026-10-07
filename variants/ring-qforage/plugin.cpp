@@ -46,6 +46,9 @@ class JudgedAgent : public bot::Agent {
     judge_.Observe(o);
     bot::Action a = gst_.Turn(o);
     why_ = gst_.reason();
+#ifdef QF_DBG
+    if (gst_.IsQueen() && o.round <= 200) std::fprintf(stderr, "QF r%d team%d len%d units%d head%d,%d why=%s\n", int(o.round), int(o.spawn.team), int(o.length), int(o.unit_count), int(o.head_x()), int(o.head_y()), why_);
+#endif
     if (gst_.IsQueen()) return a;
     if(RING12_ATTACK_MODE && !gst_.RescueCommitted()) {
       bot::Action attack;

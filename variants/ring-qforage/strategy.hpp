@@ -122,9 +122,20 @@ inline constexpr int kForageSettleUnits = 6, kForageSettleRound = 120, kForageRo
 // the team has kQForageGrowth times its starting count (2 starters: 6, the existing settle) or at
 // kForageSettleRound. 1-2-dragon starts are unchanged.
 #ifndef QFORAGE_MODE
-#define QFORAGE_MODE 1
+#define QFORAGE_MODE 2
 #endif
 inline constexpr int kQForageGrowth = 3;
+// g45-2 (iteration 2, QFORAGE_MODE 2): the queen plays safe, so on these starts she doesn't forage
+// into 2-wide lanes, walled corners or maze pockets either, not only 1-wide corridors. A tile is open
+// ground when at least kOpenNear tiles lie within 2 steps of it (kelp, the edge and other dragons
+// block). 9 = a tile beside one straight wall (13 in open ground, 8 in a 2-wide lane, 6 in a corner,
+// 5 in a corridor): one whole side of her must be open.
+inline constexpr int kOpenNear = 9;
+// g45-2 (iteration 2): she parks near home. ring-qforage-1 built her ring wherever the opening ended
+// (9.6 tiles from home at r120 v 3.9 for the parent; deaths 9.6 v 5.6 from home). On these starts
+// she forages under the same home pull as the parked queen (0.6 a tile beyond 6 tiles), so the
+// opening, and so the ring, stays near home. (Walking home after the opening was tried: it exposed
+// her on the way, e.g. devil seed 7, dead at r44 walking home.)
 #ifndef SUPPLY14_MODE
 #define SUPPLY14_MODE 1
 #endif
@@ -532,6 +543,7 @@ class StrategyAgent : public bot::Agent {
 #endif
   bool RescueCommitted() const { return rescue_committed_; }
   bot::Action ProtectQueenAction(bot::Action a, const bot::Action& fallback);
+  bot::Action KeepQueenExit(const bot::Action& a, const bot::Action& fallback);   // g45-2
 
   bool walking_to_ally_ = false;
   // gm2: whether a step from our head in direction d lands on a free tile (for the rollout judge's
@@ -581,6 +593,7 @@ class StrategyAgent : public bot::Agent {
   bot::Action QueenMove();
   bool Corridor(int32_t t) const;
   int OpenRoom(int32_t t, const std::vector<int32_t>& body, int cap) const;
+  int OpenNear(int32_t t) const;   // g45-2: tiles within 2 steps of t
   bool BoxedBy(int32_t from, const std::vector<int32_t>& body) const;   // g43-6
   bot::Action RingQueen();
   bot::Action RingWorker(bot::Action normal, const rl::Observation& o);
@@ -776,6 +789,7 @@ class StrategyAgent : public bot::Agent {
   int8_t founder_ = 0;
   bool small_start_ = false;
   int forage_settle_units_ = kForageSettleUnits;   // g45-2
+  bool qforage_start_ = false;   // g45-2: a start of 3+ dragons (r0)
    // the queen: we started with <= 2 dragons (her r0 unit count)
   int32_t FounderGoal(const Paths& paths, bool* here);   // *here: in the chosen region
   // g42-1 (ring-clustercall-1): the team-wide early cluster call (call.cpp). A dragon that sees a

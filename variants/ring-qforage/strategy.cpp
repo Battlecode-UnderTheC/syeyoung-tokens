@@ -1418,6 +1418,25 @@ bool StrategyAgent::Corridor(int32_t t) const {
   return kelp>=2;
 }
 
+// g45-2: tiles within 2 steps of t, t included (kelp, the edge and other dragons' segments block;
+// this dragon's own segments and unseen tiles count as open). See kOpenNear.
+int StrategyAgent::OpenNear(int32_t t) const {
+  int32_t ring1[4];int n1=0,reached=1;
+  auto open=[&](int32_t to){
+    if(to==kUnknown) return true;
+    if(to<0) return false;
+    return !(board_.Current(to) && board_.at(to).occupant>=0 && board_.at(to).occupant!=spawn_.id);
+  };
+  for(int d=0;d<4;++d){const int32_t to=board_.Step(t,d);if(open(to)){++reached;if(to>=0)ring1[n1++]=to;}}
+  int32_t ring2[12];int n2=0;
+  for(int i=0;i<n1;++i)for(int d=0;d<4;++d){const int32_t to=board_.Step(ring1[i],d);
+    if(to==t||!open(to))continue;
+    if(to<0){++reached;continue;}
+    bool dup=false;for(int j=0;j<n1;++j)dup|=ring1[j]==to;for(int j=0;j<n2;++j)dup|=ring2[j]==to;
+    if(dup)continue;ring2[n2++]=to;++reached;}
+  return reached;
+}
+
 // Tiles reachable from t without crossing the given body or any occupied tile, up to cap.
 // An unseen edge counts as open ground.
 int StrategyAgent::OpenRoom(int32_t t, const std::vector<int32_t>& body, int cap) const {
@@ -1480,7 +1499,7 @@ bot::Action StrategyAgent::QueenMove() {
   }
   // g45-2: a start of 3+ dragons: she forages too (see QFORAGE_MODE), settling at 3x the start.
   if(QFORAGE_MODE && round_==0 && units_>=3) {
-    queen_forage_=true;queen_growing_=true;ring_.clear();
+    queen_forage_=true;queen_growing_=true;ring_.clear();qforage_start_=true;
     forage_settle_units_=std::max(kForageSettleUnits,kQForageGrowth*units_);
   }
   if(queen_forage_ && !queen_growing_) queen_forage_=false;
@@ -1550,6 +1569,7 @@ bot::Action StrategyAgent::QueenMove() {
   if(EARLY15_MODE>=6 && early_roaming && (EARLY15_MODE!=6 || units_<=1 || queen_forage_) &&
       length_>=4 && FreeSlots()>0 && !threat[head_] &&
       !(queen_forage_ && Corridor(head_)) &&
+      !(QFORAGE_MODE>=2 && queen_forage_ && qforage_start_ && OpenNear(head_)<kOpenNear) &&
       int(body_.size())==length_ &&
       // g45-2: on a 3+-dragon start, only in open ground (the founder rule's room test)
       !(QFORAGE_MODE && queen_forage_ && !small_start_ &&
@@ -1692,11 +1712,13 @@ bot::Action StrategyAgent::QueenMove() {
         - (escape == 0 && !(QUEEN_ENDGAME && round_ == 499) ? (QUEEN_ENDGAME ? 1000000 : 1000) : 0)
         - (liberties == 0 && !(QUEEN_ENDGAME && round_ == 499) ? (QUEEN_ENDGAME ? 1000000 : 1000) : 0)
         - (threat[t] ? 100 : 0)
-        - ((EARLY15_MODE==3 || (queen_forage_ && !(FOUNDER_HOME && founder_home))) && early_roaming ? 0.0 : (round_ < kPantryFrom ? 0.6 : 0.1)) * std::max(0, distance(t, queen_home_) - 6)
+        // g45-2 (iteration 2): on a 3+-dragon start she forages under the parked queen's home pull
+        - ((EARLY15_MODE==3 || (queen_forage_ && !(FOUNDER_HOME && founder_home) && !(QFORAGE_MODE>=2 && qforage_start_))) && early_roaming ? 0.0 : (round_ < kPantryFrom ? 0.6 : 0.1)) * std::max(0, distance(t, queen_home_) - 6)
         - 0.03 * candidate.steps.size();
       if(queen_forage_ && early_roaming) {
         // The queen plays safe while foraging: no corridor tiles on the way, no low-room endpoints.
         if(Corridor(t)) candidate.corridor=true;
+        if(QFORAGE_MODE>=2 && qforage_start_ && OpenNear(t)<kOpenNear) candidate.corridor=true;
         if(candidate.corridor) candidate.value-=20.0;
         const int open=OpenRoom(t,candidate.body,kForageRoom);
         if(open<kForageRoom) candidate.value-=2.0*(kForageRoom-open);
