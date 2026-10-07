@@ -90,3 +90,24 @@ submission or arena replay check. Ready to submit:
 - Local v guard2: check passed; server maps s1,2 36-32 (elim 14-10, queen 14-16); 11 1-2-starter
   maps s1,2 26-18, queen eats by r40 3.36 v 1.91, splits <r60 2.30 v 1.41, queen dead <r100 15 v 11
   (v1: 26-18, 3.41, 12); fresh 1-2-starter mapgen (61 maps) 66-7-49, dragons r100 29.3 v 25.4.
+
+## Arena: ring-sprint-25 (v2, commit b45a49a): loses to parent 54-0-58 (within noise; not ready)
+- Decided by: elimination 24-26, longer queen 19-18, longest 11-14. vs ring-qforage-1 54-58,
+  ring-contest-4 56-56, ring-sched-17 69-43. CPU p99 24.0M, max 44.4M.
+- 3+-starter games mirror-identical (eval exactly .500; server 20-20, custom 17-17, official 1-1).
+  1-2-starter games 16-20 (server 13-15, official 3-5); eval P(win) r60/100/200/300
+  .454/.545/.488/.432.
+- 1-2-starter games, our queen v the parent's in the same games (36): eats by r40 2.47 v 1.42 (>=2 in
+  20 v 12); descendants at r60 4.86 v 5.22; queen dead before r100 7 v 6. Trophy 2.0 v 2.0 eats,
+  descendants 7.25 v 6.5; QoS 0.75 v 1.25 eats, 1.0 v 2.25 descendants; maze 5 v 0; stronghold 8 v 0.
+- The relay works: 74-204 0xBC pings per game before r60; the queen received them on Trophy 216671
+  at r17-30 and 216660 at r3-4 and r56-57, on QoS at r2-r54.
+- Trophy films (216671, 216660): r0-25 her path is the same as v1's (215257): out of her room's
+  west exit, then down the left edge toward the lead in the bottom-left field. She is not in the
+  cup by r20-25: the lead itself explores the open bottom field, never the cup, so following it
+  cannot put her there.
+- Queen deaths before r100: weakhold 216710 and 216742 r31 (same spot (30,2)): she followed the lead
+  north into the crowd of our workers along the top bed strip, stepped into a 1-tile notch and an ally
+  closed it (resign, room 0, enemy 14 away): ally boxing, not a pearl pocket. Colosseum 216477 r49
+  resign with an enemy head 2 away, 216481 r75 lunge; arena r17 lunge; QoS 216584 r59 lunge; stripes
+  216564 r48 lunge. No queen death in a pearl pocket.
