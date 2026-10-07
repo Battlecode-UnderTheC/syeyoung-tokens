@@ -1803,8 +1803,20 @@ bot::Action StrategyAgent::QueenMove() {
   // move. A route is trapped when, from where it leaves her, no next step keeps a legal move after
   // it, counting that step's growth if a pearl is on that tile now or its observed bed countdown
   // brings one before her next turn. Unseen tiles and other dragons' bodies count as open (they may
-  // move), so this only fires where kelp and her own body decide. A split at 4+ with a free slot
-  // also counts as a move.
+  // move), so this only fires where kelp and her own body decide. A split at 4+ counts as a way
+  // out only if a slot will still be free at her next turn: she acts first in the round (id 0/1),
+  // so the rest of the team can fill the slots she sees before she acts again (arena
+  // duel-b26b7005 game 1, same map and seed as 213334: below the cap at her r298 turn, 64 at
+  // r299, the forced eat killed her the same way). She counts the split only if the free slots
+  // exceed the largest one-round rise in the team's units over her last 10 turns (the tempo at
+  // which the team has just been filling slots).
+  if (q_units_seen_.empty() || q_units_seen_.back().first != round_) q_units_seen_.push_back({round_, units_});
+  while (q_units_seen_.size() > 11) q_units_seen_.erase(q_units_seen_.begin());
+  int units_rise = 1;
+  for (size_t i = 1; i < q_units_seen_.size(); ++i)
+    if (q_units_seen_[i].first == q_units_seen_[i - 1].first + 1)
+      units_rise = std::max(units_rise, q_units_seen_[i].second - q_units_seen_[i - 1].second);
+  const bool split_credit = FreeSlots() > units_rise;
   auto trapped_after = [&](const std::vector<int32_t>& b, const std::vector<int>& eaten) {
     if (round_ >= 499 || b.empty()) return false;
     auto in = [](const std::vector<int32_t>& v, int32_t t) { return std::find(v.begin(), v.end(), t) != v.end(); };
@@ -1813,8 +1825,7 @@ bot::Action StrategyAgent::QueenMove() {
       if (n < 0 || in(body, n)) return false;
       return true;   // other dragons' tiles and unseen tiles: not a proof of death
     };
-    const int slots = FreeSlots();
-    if (int(b.size()) >= 4 && slots > 0) return false;   // she can split next turn
+    if (int(b.size()) >= 4 && split_credit) return false;   // she can split next turn
     for (int d = 0; d < 4; ++d) {
       const int32_t n = board_.Step(b.front(), d);
       if (!open(n, b)) continue;
@@ -1825,7 +1836,7 @@ bot::Action StrategyAgent::QueenMove() {
       std::vector<int32_t> nb = b;
       nb.insert(nb.begin(), n);
       if (!grows) nb.pop_back();
-      if (int(nb.size()) >= 4 && slots > 0) return false;
+      if (int(nb.size()) >= 4 && split_credit) return false;
       for (int e = 0; e < 4; ++e) if (open(board_.Step(n, e), nb)) return false;
     }
     return true;

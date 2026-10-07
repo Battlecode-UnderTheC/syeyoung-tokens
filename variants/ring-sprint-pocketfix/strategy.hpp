@@ -690,6 +690,7 @@ class StrategyAgent : public bot::Agent {
   mutable std::vector<int32_t> lunge_queue_;
   mutable std::vector<int32_t> esc_queue_, q_queue_, sched_queue_;
   mutable Scratch qs_dist_;   // g44-10 QueenSpace
+  std::vector<std::pair<int,int>> q_units_seen_;   // g48-4: (round, team units) at the queen's last turns
   mutable std::vector<int32_t> qs_queue_;
   // QueenContinuation's states: the base body plus up to four new head tiles (ring.cpp)
   struct ContState { int added[4]; int k = 0; int size = 0; int ate[4]; int ne = 0; int first = -1; };

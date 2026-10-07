@@ -21,8 +21,12 @@ pearl countdown was ignored.
 - `trapped_after(body, eaten)`: from where the route leaves her, is there a next step n after
   which she still has a legal move? n's growth counts if n has a pearl now or its observed bed
   countdown is <= 1, which means it spawns before her next turn. Unseen tiles and other
-  dragons' tiles count as open, so only kelp and her own body can prove a trap. Length 4+ with
-  a free slot is never trapped, because she can split. Off at r499.
+  dragons' tiles count as open, so only kelp and her own body can prove a trap. Off at r499.
+- The split credit (iteration 2): a split at 4+ counts as a way out only if her free slots
+  exceed the largest one-round rise in team units over her last 10 turns. She acts first in the
+  round (id 0/1), so the slots she sees can be filled before her next turn. Iteration 1
+  (ring-sprint-29) trusted the slots she saw, and the queen still died at r300 in
+  duel-b26b7005 game 1.
 - A trapped route costs 2e6, more than the 1e6 space and escape penalties.
 - If the best route is still trapped after the free-step depths, the beam runs up to 2 more,
   paid, steps (once). In the Schooltime pocket that means N+W at r298: she stands on the due
@@ -40,5 +44,15 @@ pearl countdown was ignored.
   84-8-84, identical mirror play.
 
 ## Arena
-- Duels against ring-sprint-21: server 34-0-34 and official 10-0-10, with identical metrics.
-  The change doesn't fire in these games.
+- Iteration 1, ring-sprint-29: even with the parent, 56-0-56 (server 34-34), identical play. It
+  never fired: none of its 16 Schooltime games had the trap (no queen deaths on either side).
+  Targeted duels on the bug seed (12385104951354685771) against the 8 bug opponents: our queen
+  as B still died at r300 in all 8 (slots seen free, then filled).
+- Iteration 2 (split credit from the unit tempo): the same 8 targeted duels. As B the queen was
+  alive at the end 8/8 (parent 0/8). She dodged at r298 with a 2-step 'NW' onto the bed, 3 -> 2
+  (film of duel-2e5d223a game 1). Record as B 1-7 (parent 0-8): crossover-1 is now a win, and
+  the other 7 are losses on the longer queen, 2 v 3 instead of 0 v 3. Seat A 8-0, unchanged.
+  Duel against rs21 on server, random:2: 34-0-34, identical. Fresh mapgen seed 48419:
+  88-0-88, mirror.
+- Next: the queen can't keep 3 in a 4-tile pocket at the cap without a slot. A team-level slot
+  reservation would give eat + split, 3 again later (a separate idea).
