@@ -91,27 +91,39 @@ This setup assumes the Mac:
 
 A cloud session needs the arena reachable over Tailscale, the `tokenz` client, and credentials provided by the user. Without them it can analyse code and plan, but not submit, duel or deploy.
 
-## Cloud session state (2026-10-06, after the Mac hit its weekly limit)
-**Setup a cloud container needs** (lost on restart; the user supplies the Tailscale auth key and the files):
-- Full network access; Tailscale installed from pkgs.tailscale.com, `tailscaled` with state in /var/lib/tailscale, `tailscale up --auth-key=<key from the user>`. The device is tagged, so pass `--owner cyoung06@github` to every `tokenz` ephemeral/duel/submit.
-- `export NO_PROXY="$NO_PROXY,.ts.net" no_proxy="$no_proxy,.ts.net"` at the TOP of ~/.bashrc (above the non-interactive return), and ~/.local/bin on PATH.
-- `tokenz`: `curl -fsSL https://tokenz-arena.lonk-kelvin.ts.net/tokenz.py -o ~/.local/bin/tokenz && chmod +x ~/.local/bin/tokenz`.
-- League folder: a text-only copy (md/py/sh/toml/json/txt under 5 MB, no maps/holdout) unpacked to /home/user/syeyoung-tokens.league. bcweb credentials in ~/.unswbc-web/credentials (0600).
-- sim/check build on Linux after commit 2cd97cf (judge RNG padded to std::mt19937's size).
-- Use default permission mode: in auto mode a safety check blocked Bash, SendMessage and the workers' `tokenz ephemeral`/mapgen calls.
+## State at stop (2026-10-07, cloud session stopped by the weekly usage limit) — READ THIS FIRST
+The sections above ("Current state", "g44 workers running") are out of date; this section replaces them. Round notes: `league/generations/g44.md` (closed in substance) and `g45.md` (open). Everything is committed and pushed: this session's work is on branch `claude/task-t0ew7k` (main was fast-forwarded to it locally only; **origin/main is behind: merge or fast-forward `claude/task-t0ew7k` into main first**), and every task branch `task/g44-*`, `task/g45-*` is on origin.
 
-**Ladder:** #16, 2139 (ring-sprint-1, server 2136). #10 is 2242. ring-sprint-1 per map: weakest Devil 1858 (4-14), Trophy 1926 (10-16).
+**Ladder:** #19, 2146 (#10 is 2270). Live: ring-sprint-1 (no deploy this session: no candidate cleared the gate; ring-qforage-1's holdout 52.8% v the live bot's 62.1%).
 
-**g44 state:**
-| Task | Draft | State |
-|---|---|---|
-| g44-1 founder | ring-sprint-2 | 58-54 beats parent (noise); merged; the base for new workers. Not promoted: first resubmit ring-sprint-1 (live), and check trophy 4-8 / tower_defense 3-9, CPU, replays (analyst) |
-| g44-2 portals | ring-sprint-4 | 52-60 loses; its target metric not yet checked |
-| g44-3 lunge guard | ring-sprint-3 | 58-54 beats parent (noise); step-6 check was running (worktree g44-3) |
-| g44-4 queen parked | — | relaunched from WIP (worktree g44-4); no report yet |
-| g44-5 no bleed | ring-sprint-5 | 55-57 loses; step-6 check was running (worktree g44-5) |
-| g44-6 pickets | — | not submitted: the role fires ~2 times a game (id%3 over shared ids, few children before r60). Retry brief updated (briefs/g44-6.md), continue from task/g44-6 6baecbd |
-| g44-7 feeding conveyor | — | strategist #3, base and parent ring-sprint-2 (must be promoted before it submits); running (worktree g44-7) |
+**Line heads (arena):**
+| Line | Head | Code | = |
+|---|---|---|---|
+| ring-sprint | **ring-sprint-16** | variants/ring-sprint-qroom | ring-sprint-1 + founder (ring-sprint-2) + feeding conveyor (ring-sprint-6) + the queen keeps room (ring-sprint-16). Each promoted after an analyst's replay check (replays/promo-ring-sprint-{2,6,16}/REPORT.md) |
+| ring-qforage | **ring-qforage-1** | task/g45-2 first commit 4278391 (not merged to main) | ring-sprint-6 + the queen forages through the opening on 3+-dragon starts. Arena #1 ~1625. Early queen deaths x2 v other bots (replays/promo-ring-qforage-1/REPORT.md) |
+ring-sprint-1 (live on the server) is retired from the arena (user's choice).
 
-**Running analyst:** server-r19 (ring-sprint-1's server games; briefs/server-r19.md). Its brief now REQUIRES filmstrips; the running agent read the older "may" version.
-**Queue:** strategist #1 (race feeding) after g44-4; #4, #5; port winners onto the head one per worker; g45 needs 2-3 strategists after server-r19.
+**User direction, latest first:**
+1. **Focus on game-flipping losses** (losses we were winning: eval ≥0.65 after r50, then lost). Analyst flips-r20 was briefed (`../syeyoung-tokens.league/briefs/flips-r20.md`) and died before reporting: **relaunch it first**; new tasks come from its top causes.
+2. **Winning is the goal; the queen's survival is an advantage, not a constraint.** The binding rule is only: she never enters mazes, corridors or pockets.
+3. Arena improvement has translated to the server; no need to launch server games before deploying.
+4. Strategic v stupid losses, and per map, from server analyses (server-r19: `../syeyoung-tokens.league/replays/server-r19/analysis/REPORT.md`).
+
+**Unfinished tasks (worktrees under ../syeyoung-tokens.worktrees exist only in the cloud container; resume from the pushed branches):**
+| Task | Branch head | State | Next |
+|---|---|---|---|
+| g45-2 ring-qforage iter 2 | d651015 (WIP) | fixing lane/corner/pocket deaths (an ally takes her last exit) and parking; parent ring-qforage-1 | resume; brief briefs/g45-2.md (read the "Correction" section) |
+| g45-4 ring-sprint-portalfood iter 2 | d26c20a | iter 2 code committed (doors, gated crossing); not yet verified/submitted. Iter 1 = ring-sprint-13, 55-57 | resume: duel, submit with parent ring-sprint-6, check Trophy and schooltime |
+| g45-5 ring-sprint-giantwatch | abd5930 (WIP) | late concentration on an observed enemy giant; not submitted | resume (flip cause C2) |
+| g45-7 ring-sprint-qdead2 | a1e228f | enemy-queen death detection (announce before trade), on ring-sprint-16; a duel was running | resume: check its duels, submit with parent ring-sprint-16 (flip cause) |
+| g45-8 ring-sprint-guard2 | 604420f (WIP) | port of ring-sprint-17's guard onto ring-sprint-16 | resume: finish, submit with parent ring-sprint-16 (flip cause; guard cut long-worker deaths 15-24% on three bases) |
+
+**Closed this session (target didn't move; details in g44.md/g45.md):** g44-2 portals, g44-4 parked queen (partial → g45-7), g44-5 no bleed, g44-6 pickets, g44-8 relayed sightings, g44-9 S1 hunter fix (57-55 but target unmoved; not promoted), g45-3 stale patrol. Shelved: g45-6 race-time conveyor (never fires in the arena: arena queens are 2-4 at r400). Collected without promotion: ring-sprint-3/10/17 (guard; continued as g45-8).
+
+**Queue after flips-r20:** port ring-qforage (once iter 2 lands) onto ring-sprint-16 as one task; strategist b #2 (champion harvests material) after g45-5; b #4 (ring on beds); a #4 (home food as reserve); g44 strategist #5 (trade by local count).
+
+**Practical notes:**
+- Workers' `--wait` printouts have shown wrong numbers (another worker's duel; inflated totals): read verdicts with `tokenz show` / `tokenz duel show`. The games listing can repeat rows: count unique ids.
+- Workers share one scratchpad: tell each to use its own subfolder; tell them not to leave wait loops running.
+- The arena pool doesn't reproduce some server patterns (bed-waiting circling 8.5% v 13-17%; early-growing enemy queens), so some server-driven changes are inert in the arena.
+- Cloud container setup (if another cloud session is used): Tailscale (tagged device; pass `--owner cyoung06@github`), `NO_PROXY=.ts.net` at the top of ~/.bashrc, tokenz from /tokenz.py, a text-only league copy, bcweb credentials, Linux sim fix 2cd97cf; use a non-auto permission mode.
