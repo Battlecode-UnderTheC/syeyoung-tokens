@@ -93,7 +93,7 @@ A turn over the judge's 100M CPU-point cap kills that dragon. Keep the worst tur
   don't run `scripts/submit.sh`.
 - **No environment-variable reads**, no map-keyed logic (map names, exact sizes, lookup
   tables), no exploits of a specific opponent, no RL.
-- **The queen plays safe:** she never enters mazes, corridors or pockets.
+- **The queen:** keeping her alive is important, but it's not a rule. Risks that win games are allowed.
 - **Never** start server games or upload to the competition server.
 - **Never** look in `../syeyoung-tokens.league/maps/holdout/`.
 - **Use at most 2 threads;** the machine is shared.

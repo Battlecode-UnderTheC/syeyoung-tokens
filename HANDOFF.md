@@ -61,7 +61,7 @@ You are the orchestrator. You coordinate; you don't analyse strategy or write bo
 
 ## User rules (binding)
 - **Map knowledge:** no map keys, no geometric-centre targets, no exploits of one opponent, no env vars, no RL. **Maps are symmetric: never explain anything by the seat.**
-- **The queen plays safe:** she never enters mazes, corridors or pockets.
+- **The queen:** keeping her alive is important, but there's no queen rule. Risks that win games are allowed.
 - **The goal is to win games, not to keep the queen alive at all costs.** Her survival is an advantage and evidence to weigh, never a cap or abort line by itself (2026-10-06: I wrongly held ring-qforage-1 back on a doubled early queen death rate while it won).
 - **Metrics are evidence, not goals:** confirm behaviour in the replays.
 - **Line names** describe the real mechanism (e.g. ring-sprint, not ring-next).
@@ -107,7 +107,7 @@ ring-sprint-1 (live on the server) is retired from the arena (user's choice).
 
 **User direction, latest first:**
 1. **Focus on game-flipping losses** (losses we were winning: eval ≥0.65 after r50, then lost). Analyst flips-r20 was briefed (`../syeyoung-tokens.league/briefs/flips-r20.md`) and died before reporting: **relaunch it first**; new tasks come from its top causes.
-2. **Winning is the goal; the queen's survival is an advantage, not a constraint.** The binding rule is only: she never enters mazes, corridors or pockets.
+2. **Winning is the goal; the queen's survival is an advantage, not a constraint.** There is no queen rule (user, 2026-10-07): keeping her alive is important, but risks are allowed.
 3. Arena improvement has translated to the server; no need to launch server games before deploying.
 4. Strategic v stupid losses, and per map, from server analyses (server-r19: `../syeyoung-tokens.league/replays/server-r19/analysis/REPORT.md`).
 
