@@ -103,6 +103,8 @@ The sections above ("Current state", "g44 workers running") are out of date; thi
 | ring-qforage | **ring-qforage-1** | task/g45-2 first commit 4278391 (not merged to main) | ring-sprint-6 + the queen forages through the opening on 3+-dragon starts. Arena #1 ~1625. Early queen deaths x2 v other bots (replays/promo-ring-qforage-1/REPORT.md) |
 ring-sprint-1 (live on the server) is retired from the arena (user's choice).
 
+**League files written this session** (briefs, server-r19 and promo-* reports, strategist-a/b-g45) are copied in `league/cloud-sync/`: copy them into `../syeyoung-tokens.league/` before starting.
+
 **User direction, latest first:**
 1. **Focus on game-flipping losses** (losses we were winning: eval ≥0.65 after r50, then lost). Analyst flips-r20 was briefed (`../syeyoung-tokens.league/briefs/flips-r20.md`) and died before reporting: **relaunch it first**; new tasks come from its top causes.
 2. **Winning is the goal; the queen's survival is an advantage, not a constraint.** The binding rule is only: she never enters mazes, corridors or pockets.
