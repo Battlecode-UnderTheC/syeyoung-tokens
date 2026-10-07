@@ -31,6 +31,9 @@
 namespace gm2 {
 using namespace strat;
 
+#ifndef FIELD_BARREN
+#define FIELD_BARREN 1
+#endif
 namespace {
 // the opening: strategist A's gap opens r20-r40; past r35 the scheduler owns the board again
 constexpr int32_t kFieldUntil = 35;
@@ -48,6 +51,9 @@ constexpr double kFieldBeds = 4.0;
 constexpr double kSpawnBeds = 4.0;
 // past a portal any 2 beds are a gated room nobody else reaches soon
 constexpr double kFieldGated = 2.0;
+constexpr int32_t kWindowTiles = (2 * 3 + 1) * (2 * 3 + 1);   // one 7x7 window
+constexpr int32_t kBarrenTiles = 2 * kWindowTiles;              // two windows of new ground
+constexpr int32_t kBarrenRound = 12;
 constexpr int32_t kStall = 6;          // rounds without a new tile seen: the frontier is shut (rush.cpp)
 constexpr int32_t kView = 3;           // the 7x7 window's half-width
 constexpr int32_t kDetour = 2;         // a pearl at most one step off the path: 2 extra steps
@@ -76,6 +82,22 @@ double StrategyAgent::FieldBedsInView(bool live_only) const {
       s += live_only ? (board_.Current(t) && board_.at(t).pearl ? 1.0 : 0.0) : BedWeight(t);
     }
   return s;
+}
+
+// the mode ends without a field: a dragon that would have been one of the g40-5 frontier explorers
+// (rush.cpp) explores from here as it would have from r0, until its own rules or r30 end it. In
+// arena draft 1 (no hand-over) weakhold went 3-13: in sim, seed 1, the parent's explorer reached
+// the centre field (17,7) by r44 and the team had 19 dragons at r100; ours, back to normal play
+// at r13, followed home calls inside the spawn pocket and the team had 6.
+void StrategyAgent::FieldExit(const char* why) {
+  field_ = 2;
+  field_why_ = why;
+  if (rush_deferred_ && rush_state_ != 1) {
+    rush_state_ = 1;
+    rush_since_ = round_;
+    rush_seen_ = 0;
+  }
+  rush_deferred_ = false;
 }
 
 void StrategyAgent::UpdateField(const rl::Observation& o) {
@@ -122,12 +144,21 @@ void StrategyAgent::UpdateField(const rl::Observation& o) {
     field_hy_ = dragons::kDy[o.facing];
     field_since_ = 0;
     field_seen_ = 0;
-    founder_ = 3;   // the mode replaces the founder dispatch for these dragons
+    // the ground we stood on at spawn, and its pearl density (the home rate the walk must beat)
+    field_counted_.assign(board_.size(), 0);
+    int32_t home = 0, home_p = 0;
+    for (int32_t t = 0; t < board_.size(); ++t)
+      if (board_.at(t).seen_round >= 0) {
+        field_counted_[t] = 1;
+        ++home;
+        home_p += board_.Current(t) && board_.at(t).pearl;
+      }
+    field_home_rate_ = home > 0 ? double(home_p) / home : 0.0;
+    // (the founder dispatch, founder.cpp, waits while the mode runs and resumes after it)
   }
   if (field_ != 1) return;
   if (round_ >= kFieldUntil) {
-    field_ = 2;
-    field_why_ = "time";
+    FieldExit("time");
     return;
   }
   // a portal crossed: last turn's head steps to this one, but the two are not neighbours on the board
@@ -149,6 +180,39 @@ void StrategyAgent::UpdateField(const rl::Observation& o) {
     field_ = 2;
     field_why_ = field_gated_ ? "arrived gated" : "arrived";
     return;
+  }
+  // no field on this heading: the ground the walk has uncovered holds pearls no denser than home.
+  // Each tile counts once, with the pearl it shows when first seen. Judged once the walk has seen
+  // kBarrenTiles new tiles (two full windows): one window can fall on an empty lane between fields
+  // (Devil's kelp lanes), two in a row without a richer patch than home mean the heading crosses
+  // sparse ground, and walking it on to r35 left the queen alone while home went unfarmed (arena
+  // draft 1: weakhold 3-13, tower_defense 4-12, fresh sealed-spawn maps 7-17, total length at r50
+  // 92 v 108). Home pearls are 0 on a start with nothing in view: then the walk exits only if it
+  // has seen no pearl at all.
+  for (int32_t ey = -kView; ey <= kView; ++ey)
+    for (int32_t ex = -kView; ex <= kView; ++ex) {
+      const int32_t t = board_.Tile(board_.X(head_) + ex, board_.Y(head_) + ey);
+      if (field_counted_[t]) continue;
+      field_counted_[t] = 1;
+      ++field_new_;
+      field_new_p_ += board_.at(t).pearl;
+    }
+  // Also judged at kBarrenRound whatever ground was seen: the top teams' starters are on the bed
+  // clusters by r10-12 (STYLE.md: dt_devil_open, aa_trophy_open), and a walk that uncovered less
+  // than one window of new ground by then is circling a cramped home, not crossing the board (arena
+  // draft 1, sim weakhold seed 4: a starter wandered its home pocket on the heading until r35,
+  // total length 8 v 92 at the end).
+  if (FIELD_BARREN && (field_new_ >= kBarrenTiles || round_ >= kBarrenRound)) {
+    const double rate = field_new_ > 0 ? double(field_new_p_) / field_new_ : 0.0;
+    // ... and a walk that, from then on, is less than half a tile from spawn per round walked is
+    // circling, not heading anywhere: the opponents' starters stand 10.7 tiles from spawn at r20
+    // (strategist g46 A), half a tile a round; sim weakhold seed 4 (after the two rules above): a
+    // starter that saw scattered pearls on new ground circled 6-9 tiles from spawn until r35.
+    const bool circling = round_ >= kBarrenRound && 2 * Torus(field_spawn_, head_) < round_;
+    if (circling || field_new_ < kWindowTiles || field_new_p_ == 0 || rate <= field_home_rate_ + 1e-9) {
+      FieldExit("barren heading");
+      return;
+    }
   }
   int32_t seen = 0;
   for (int32_t t = 0; t < board_.size(); ++t) seen += board_.at(t).seen_round >= 0;
@@ -221,8 +285,7 @@ int32_t StrategyAgent::FieldGoal(const Paths& paths) {
   if (target < 0)
     if (const int32_t c = CallGoal(paths, 0.0); c >= 0) target = c, field_call_ = true;
   if (target < 0) {
-    field_ = 2;
-    field_why_ = "no forward move";
+    FieldExit("no forward move");
 #ifdef FIELD_DBG
     std::fprintf(stderr, "FIELD r%d team%d id%d len%d head(%d,%d) 1->2 no forward move\n", round_, spawn_.team, spawn_.id, length_,
                  board_.X(head_), board_.Y(head_));

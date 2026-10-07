@@ -110,8 +110,11 @@ void StrategyAgent::UpdateRush() {
   if (rush_state_ == 0) {
     rush_state_ = 3;
     const int32_t q = spawn_.id & 1;
-    if (!FIELD_MODE && leader_ && round_ == 0 && (spawn_.id == q + 2 || spawn_.id == q + 4)) {
-      rush_state_ = 1;
+    // g46-1: a dragon the field mode took (field.cpp) explores only once the mode ends without
+    // arriving (FieldExit); one it left out (a spawn field, the queen's child) explores as before
+    if (leader_ && round_ == 0 && (spawn_.id == q + 2 || spawn_.id == q + 4)) {
+      if (FIELD_MODE && field_ == 1) rush_deferred_ = true;
+      else rush_state_ = 1;
       rush_since_ = 0;
       // what the starters see at spawn is their own ground: the queen and the other starters
       // farm it, so a cluster in it is no find and doesn't end the exploration

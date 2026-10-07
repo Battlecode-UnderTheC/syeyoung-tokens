@@ -82,3 +82,39 @@ ChooseGoal score terms that nearby home food outbid, so this mode owns the goal 
   It needs a "no field on this heading" test better than r35, e.g. comparing pearls in view with
   the density already seen. Also judge it against the g46-6 field-style sparring bot, since the
   arena pool never contests the fields.
+
+## Draft 2 (arena ring-field-2, same parent): fix for starts with no field
+The coordinator asked for two fixes after draft 1: an early "no field on this heading" exit, and the
+old rush restored for dragons the mode leaves out.
+
+### Changes
+1. **Barren-heading exit (field.cpp).** Each tile the walk uncovers counts once, with the pearl it
+   shows when first seen. The test runs once the walk has seen two 7x7 windows of new ground, or at
+   r12, whichever comes first. The mode ends when any of these holds:
+   - the new ground holds no pearl;
+   - it holds pearls no denser than the spawn view;
+   - the walk has seen less than one window of new ground;
+   - the head is less than half a tile from spawn per round walked (circling).
+   Why r12: the top teams' starters are on the clusters by r10-12. Why half a tile a round: their
+   starters are 10.7 tiles from spawn at r20.
+2. **Rush restored.** Dragons the mode leaves out (a spawn field, the queen's child) explore as in
+   the parent. A mode dragon that would have been a g40-5 explorer (id q+2/q+4) becomes one when the
+   mode ends without arriving (FieldExit). This was the weakhold loss: in the parent, the explorer
+   reaches the centre field (17,7) by r44 and the team has 19 dragons at r100. In draft 1, the
+   dragon back in normal play followed home calls inside the spawn pocket and the team had 6.
+3. **Founder resumes after the mode** (it waited instead of being cancelled). Neutral in sim.
+
+### Local (v ring-sprint-guard2)
+- weakhold: 6-6 over seeds 1-6. Draft 1 went 2-18 over seeds 1-10; with the exit alone it was still
+  2-10, and the explorer hand-over fixed it.
+- tower_defense: 6-6.
+- Fresh sealed-spawn (4 maps, seeds 1-6): 25-23. Draft 1 went 7-17.
+- devil+trophy (seeds 1-6): 20-4.
+- Fresh mapgen (seed 46102, 44 maps, seeds 1-2): 85-91. At r50 total length is 67.5 v 68.5.
+- `check` passed.
+- The custom fixed-* trick maps aren't in this repo's mapgen, so they are judged from the arena.
+
+### Light duel v ring-sprint-21 (eph-ddd50d02, server, random:2)
+- 39-29 overall. By map: devil 4-0, trophy 4-0, weakhold 2-2, tower_defense 3-1, around_unsw 1-3,
+  maze 1-3.
+- dragons@100 26.5 v 22.8; queen alive at the end 60% v 46%.

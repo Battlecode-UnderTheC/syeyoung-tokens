@@ -2184,8 +2184,8 @@ bot::Action StrategyAgent::Decide(const rl::Observation& o) {
   UpdateLateChampion();
   UpdateCall(o);   // g42-1: the early cluster call (call.cpp)
   if (IsQueen()) return QueenMove();
-  UpdateRush();   // g39-4
   UpdateField(o);   // g46-1: the committed field-first opening (field.cpp)
+  UpdateRush();   // g39-4 (g46-1: not for a dragon the field mode took)
   // g43-6: a child that finds the team at most kFounderUnits strong on its first turn (we started
   // with <= 2 dragons) is a founder (founder.cpp). A child split off in round 0 also acts in round 0
   // (leader_ is set for it too). Its tail is the segment that was cut from its parent's new tail
@@ -2305,8 +2305,8 @@ bot::Action StrategyAgent::Decide(const rl::Observation& o) {
   // still draws it on.
   int32_t founder_goal = -1;
   bool founder_here = false;
-  if (FOUNDER_MODE && founder_ == 1 && round_ < kFounderUntil && ally_head < 0) founder_goal = FounderGoal(paths, &founder_here);
-  const bool founding = FOUNDER_MODE && founder_ == 1 && round_ < kFounderUntil && ally_head < 0 && founder_goal >= 0;
+  if (FOUNDER_MODE && founder_ == 1 && field_ != 1 && round_ < kFounderUntil && ally_head < 0) founder_goal = FounderGoal(paths, &founder_here);
+  const bool founding = FOUNDER_MODE && founder_ == 1 && field_ != 1 && round_ < kFounderUntil && ally_head < 0 && founder_goal >= 0;
   // no growth split on the way, except in a region, or at length kRaceSplitExempt+ (iteration 3: a
   // 6-12 long child of a long starter walked unsplit; 3.1 v 3.6 dragons at r10, 4.7 v 5.6 at r20 on
   // 26 fresh 1-2-starter maps; its split makes two travellers, as the contest's exemption says)

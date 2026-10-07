@@ -874,7 +874,12 @@ class StrategyAgent : public bot::Agent {
   int32_t field_seen_ = 0, field_since_ = 0;
   double field_hx_ = 0, field_hy_ = 0;   // the held heading (from our spawn)
   bool field_gated_ = false, field_call_ = false;
-  int32_t field_turns_ = 0;          // headings taken after the first (debug count)
+  int32_t field_turns_ = 0;
+  bool rush_deferred_ = false;       // a g40-5 explorer held back by the mode (FieldExit)
+  void FieldExit(const char* why);
+  std::vector<uint8_t> field_counted_;   // tiles already counted for the barren test
+  int32_t field_new_ = 0, field_new_p_ = 0;
+  double field_home_rate_ = 0;          // headings taken after the first (debug count)
   const char* field_why_ = "";
  public:
   int Field() const { return field_; }
