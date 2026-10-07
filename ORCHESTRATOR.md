@@ -424,4 +424,4 @@ findings accordingly.
 - A follow-up try is earned when replays show the mechanism working, not when a number moves.
 - Before promoting or merging, look at replays of the draft (have a subagent render and describe them): check the change does what it claims and has no ugly side effects.
 
-- Only ANALYST agents look at images: filmstrip PNGs via Read, several render.py --film strips over the stretch that matters, saying which conclusions came from the images. Workers and the orchestrator don't view images; they use decoded data and the analysts' reports.
+- Only ANALYST agents look at images: filmstrip PNGs via Read, several render.py --film strips over the stretch that matters, saying which conclusions came from the images. Workers may also view filmstrips of their own games to analyse the behaviour their change targets (user, 2026-10-08). The orchestrator doesn't view images.
