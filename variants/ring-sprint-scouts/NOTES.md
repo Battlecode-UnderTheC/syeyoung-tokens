@@ -45,5 +45,32 @@ In the code the explorers stop at the first cluster (rush.cpp) and the cluster c
   10 rounds r20-60 0.94 v 0.92; bed share r60 0.50 v 0.50; dragons r60 15.8 v 15.5, r100 24.1 v 24.3.
   Against the parent nothing in the economy moves: the targeted gap is against non-ring bots.
 
-## Arena
-- ring-sprint-33 (draft, parent ring-sprint-21): verdict pending at time of writing.
+## Arena: ring-sprint-33 (this code, v4)
+- Verdict vs parent ring-sprint-21: 67-0-52, 56.3% [47.3-64.9], beats_parent True (within noise);
+  server maps 43-32; decided by elimination 24-25, longer queen 27-13, longest 16-14.
+  vs ring-field-3 63-64, ring-qforage-1 57-59, spar-field-2 61-73 (no non-ring bots in the draft pool).
+- Games vs parent by suite (tokenz games, 112 listed): server 41-27, official 5-5, custom 19-15.
+- Eval P(win) vs parent (game.eval): r100 0.498, r200 0.497, r300 0.524.
+- CPU: p99 24.7M, max 42.0M.
+- Paired duel vs gst-search-12 (server suite, seeds 4801,4802, 68 games each): ring-sprint-33 58-10,
+  ring-sprint-21 53-15. Same seeds: 8 games flipped to wins, 3 to losses, mostly late (queen/longest).
+- **The targeted weak spot did not move.** In those paired games (us v gst): eats per dragon per 10
+  rounds r20-60 0.92 (parent 0.92), r60 bed share 0.55 (0.55), dragons r60 16.3 (16.5), r100 24.7
+  (25.0). Brief targets (1.3+ eats per dragon, more dragons at r60/r100) not reached.
+- Films (Islands, duel-d9b53dac game 19 v duel-f0cc6541 game 5, same seed, us seat B): in both, ~12-16
+  of our heads farm the top-right corner field r30-r70 while the 12-bed centre ring stays free until
+  gst takes it at r60+; the scouting draft shows no head leaving for it.
+- **Why (local trace on islands):** most scout trips ended on their first turn because RushGoal found
+  no frontier: the explorers' fan-out leaves a frontier to any ally within 6 that is nearer, and with
+  15-30 workers that is every frontier. 159 of 275 trips lasted 0 rounds.
+
+## Not submitted: v6 (fan-out fix), duel-tested only
+- Scouts let only an ally within kView 3 (it sees the frontier now) claim a frontier, and take
+  frontiers within 10 known steps only (the film's spare room was 6-10 tiles away; v4/v5 lost
+  rich-near-home 6-10 / 5-11 on fresh maps). Fresh maps v5 (fan-out fix only) 88-2-86; v6 rich-near-home 8-8.
+- Duels (eph-ec7acfaf): vs ring-sprint-21 server random:2 32-0-36; paired vs gst-search-12 (seeds
+  4801,4802) 58-10, same as ring-sprint-33. Economy in those games unchanged: eats/dragon 0.92, bed
+  share r60 0.55, dragons r60 16.3, r100 24.5. Not resubmitted: no measurable gain over v4.
+- Next: the scrum is not 'over capacity' by beds within 3 most of the time (the corner field on islands
+  has live beds); the missing behaviour is going to a known, uncontested, richer field 6-10 tiles away,
+  which is ChooseGoal's valuation (crowding/travel), not exploration.
