@@ -118,3 +118,39 @@ old rush restored for dragons the mode leaves out.
 - 39-29 overall. By map: devil 4-0, trophy 4-0, weakhold 2-2, tower_defense 3-1, around_unsw 1-3,
   maze 1-3.
 - dragons@100 26.5 v 22.8; queen alive at the end 60% v 46%.
+
+### Arena verdict (ring-field-2)
+- **vs parent ring-sprint-21:** 54-0-58 (48.2%, noise).
+  - By suite: server 33-35, custom 15-19, official 6-4.
+  - Decided by: elimination 26-27, longer queen 13-22, longest dragon 15-9.
+- **Others:** ring-qforage-1 55-57, ring-contest-4 66-46, ring-sched-17 68-44.
+- **CPU:** p99 25.8M, max 44.4M.
+- **Eval P(win) vs parent:** r100 .540, r200 .520, r300 .509 (draft 1: .544/.466/.443). The late fade
+  is gone.
+- **By map, all opponents, draft 1 -> draft 2:**
+  - targets kept: devil 16-0 -> 16-0, trophy 12-4 -> 12-4;
+  - recovered: weakhold 3-13 -> 9-7, tower_defense 4-12 -> 8-8, fixed-portal-larder 1-7 -> 3-5;
+  - still lost: fixed-edges 0-8 -> 0-8, fixed-honeypot 1-7 -> 0-8, fixed-pen 6-2 -> 0-8,
+    fixed-rooms 2-6, fixed-split 2-6, around_unsw 4-12.
+  - The parent's own records there: edges 77%, honeypot 81%, pen 71%, rooms 71%, split 67%.
+- **Draft 2's own Devil/Trophy games:** identical to draft 1 (the barren rule never fires there).
+  - startdir r20: devil 10.0 v 6.1, trophy 10.1 v 9.6;
+  - bedprox r40: devil 9.7 v 7.0, trophy 12.3 v 8.2;
+  - eaten by r30: 21.0 v 11.2 and 13.2 v 10.1;
+  - dragons at r40: 17.6 v 10.2 and 12.2 v 7.8.
+- **Weakhold games:** eaten by r30 7.5 v 10.1, dragons at r40 5.2 v 5.8. Tower_defense: even.
+
+### Custom fixed-* maps (extracted from arena replays, sim v ring-sprint-guard2, seeds 1-12)
+- Draft 2: edges 6-18, honeypot 6-18, pen 8-16. With FIELD_MODE 0 each is 6-6 per 6 seeds.
+- Edges: the deficit is material. At r50 the total is 31 v 53, and our dragon count falls between
+  r10 and r20 (mode dragons traded off in the open middle). The queen died in all 12 games.
+- Tried, not kept (no improvement there, or Devil broke):
+  - judging at r7 / one window: edges 6-6, but the Devil starters exit at (7,9) just short of the
+    field, so devil+trophy 16-8;
+  - food density by BedWeight plus an early 'poorer than home' exit: edges 0-12, honeypot 1-11;
+  - spawn-field threshold 2: edges 4-8, honeypot 1-11;
+  - no barren exit: pen 8-4, but edges 0-12;
+  - no explorer hand-over: weakhold 0-12.
+- Next: these are open or sparse maps with food scattered round the spawns. Sending every non-queen
+  r0 dragon out leaves the home food and the queen's surroundings to the opponent. A candidate is
+  keeping one r0 dragon per spawn group at home when its spawn view holds fast beds.
