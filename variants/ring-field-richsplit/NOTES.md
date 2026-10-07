@@ -45,5 +45,23 @@ dragons at 4.
 - Film bc28064a game 21 (wg39013, us seat B): 13 dragons v 4 at r20, 19 v 5 at r24. The queen splits
   at r8 and her children multiply in the south field.
 
-## Arena verdict
-(see below)
+## Arena verdict (ring-field-7)
+- vs ring-field-3: 54-0-58 (48.2%, noise; "loses to parent"); server 34-34, custom 16-16, official 4-6.
+  Decided by: elimination 27-29, longer queen 17-19, longest 9-9. No rotating games in the verdict.
+- Others (in progress): ring-qforage-1 59-53, ring-sprint-21 59-53, spar-field-2 56-55.
+- Eval P(win) v parent: r100 .504, r200 .494, r300 .493.
+- CPU: worst p99 23.4M, max 42.0M.
+- Verdict games on rich-spawn official/server/custom maps (26: arena, fixed-tiny, Colosseum,
+  default_small, stronghold, maze, stripes, trophy, around_unsw): splits r0-59 21.2 v 22.6, dragons
+  r40 9.6 v 10.3, queen dead <r100 9 v 6. On the other 81 games every opening number is equal.
+  Colosseum 0-2 (229807, 229811): both queens split at r0 and r14-18 on both sides; our queen died
+  at r59/r65 (boxed resign, lunge). Locally Colosseum is 7-1 over 4 seeds.
+- **Conclusion:** the multiplication shows on the rotating rich boards (wg39013 film: 13 v 4 dragons
+  at r20) but the verdict has none of them, and on the fixed rich maps it doesn't move the opening.
+  The split gates were not the binding limit there: on target maps they held ~40 L4 turns in 28
+  games. Eating rate is the bigger gap.
+
+## Next
+- The gap on rich starts is eating per turn (0.16-0.21 v 0.24-0.26), not split gating.
+- The queen part rarely fires: short queens already forage via forage35, and 4-long queens with an
+  enemy in view at r0 now stay on the ring.
