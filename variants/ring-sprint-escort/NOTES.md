@@ -46,5 +46,23 @@ nearest the queen within 8 steps; if it is one of them it is an escort:
   Share of late turns with an ally head within 3 of her: 0.60 v 0.60 (the threat gate keeps the
   role off most of the time); her late feed lines 8.3 v 8.7, pearls eaten r430+ 20.0 v 18.6.
 
-## Arena
-(filled in after the verdict)
+## Arena (ring-sprint-30)
+- vs parent ring-sprint-21: 57-0-55 (50.9%, BEATS parent, within noise). By suite: server 35-33,
+  custom 17-17, official 5-5. Decided by: elimination 28-27, longer queen 20-19, longest 9-9.
+- vs ring-field-3 52-60, ring-qforage-1 58-54, spar-field-2 48-64.
+- CPU p99 24.7M, max 40.9M.
+- Eval P(win) v parent: .500 at r100/r200/r300/r400 (identical play before r400), .529 at r450,
+  .540 at r490.
+- Replays (111 of 112 h2h games kept): r400+ queen deaths 11 v 13 (games with her alive at r400:
+  50 each); queen length at end in those games 17.2 v 14.3, pearls eaten r430+ 16.2 v 14.5, feed lines
+  beside her 7.3 v 6.4; late turns with an ally head within 3 of her 0.65 v 0.61 (mean 1.31 v 1.20).
+  Escort-type trades (our 3-8-long head into an enemy head that could reach our queen, r400+): 14 v
+  14, mostly the same trades in both seats (pre-existing kamikaze/lunge). Escort-only ones: 226122
+  r489 (7-long into a 15-long 4 from her), 226297 r430, 226456 r449, 226481 r409/r498.
+- The paired "saved" queens are mostly confounded: in islands 226332/226348 the B-side queen's
+  positions are identical in both games, and the parent's queen died to OUR attacker (732), not
+  because escorts were missing.
+- Verdict on the weak spot: the late out-of-view killer is not clearly fixed. The threat gate keeps
+  the role off most of the time (local: ~15 station turns a game, 0 trades), escorts lag her
+  sprints (often 4-8 tiles off), and the trade rarely finds a reachable killer. The net effect is
+  a small late gain (eval .54 at r490, queen length up) within noise.
