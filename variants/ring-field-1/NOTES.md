@@ -185,3 +185,24 @@ old rush restored for dragons the mode leaves out.
   - One different first move already gives the full loss on honeypot. On these sparse maps
     the sim result follows chaotic divergence from the first move, not the walk. In sim, these
     maps can't confirm or reject a fix against the parent.
+
+### ring-field-3 arena verdict
+- **vs parent ring-sprint-21:** 58-0-54 (51.8%, noise); beats_parent is true.
+  - By suite: server 35-33, custom 17-17, official 6-4.
+  - Decided by: elimination 26-28, longer queen 15-21, longest dragon 17-5.
+- **Others:** spar-field-2 60-52, ring-qforage-1 57-55, ring-contest-4 64-48.
+- **CPU:** p99 25.8M, max 42.0M.
+- **Eval P(win) vs parent:** r100 .539, r200 .517, r300 .477.
+- **By map, all opponents:**
+  - devil 16-0, trophy 12-4, tower_defense 10-6, around_unsw 9-7, weakhold 7-9;
+  - fixed-edges 3-5, fixed-split 4-4, fixed-honeypot 1-7, fixed-pen 1-7, fixed-rooms 2-6,
+    fixed-portal-larder 2-6.
+- **Light duel v spar-field-2** (eph-1893880c, server random:2): 35-33.
+  - By map: devil 3-1, trophy 3-1, tower_defense 4-0, portals 4-0; default 0-4,
+    prisoners_dilemma 0-4, stripes 0-4.
+  - Opening numbers in that duel (us v spar-field-2):
+    - Devil (4 games): startdir r20 11.3 v 5.9, eaten r30 17.0 v 7.2, dragons r40 14.5 v 8.5;
+    - Trophy (3 replays): startdir r20 7.3 v 7.3, eaten r30 9.0 v 8.3, dragons r40 10.7 v 9.0.
+  - Parent v spar-field-2 (arena games, 4 each):
+    - Devil: startdir 6.2 v 6.7, eaten 10.8 v 9.8, dragons 12.0 v 8.2;
+    - Trophy: startdir 9.6 v 9.2, eaten 10.0 v 13.2, dragons 8.5 v 12.0.
