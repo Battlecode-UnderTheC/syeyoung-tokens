@@ -1,0 +1,7 @@
+name = "ring-qforage-leash"
+parents = ["ring-qforage-1"]
+operator = "mutate"
+archetype = "queen-ring"
+author = "claude-opus-5-5 (g52-12 worker)"
+created = "2026-10-09"
+task = "g52-12"
