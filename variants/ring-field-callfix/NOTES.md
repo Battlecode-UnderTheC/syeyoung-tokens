@@ -26,6 +26,9 @@
   r16; v3 never sees that call; team total r60 69 v 83 -> 125 v 41.
 - **Duels v3 v ring-field-3:** devil+trophy x 6 seeds 11-13 (r40 eaten margin devil +3.4, trophy 0);
   server+official x 2 seeds 43-45 (server 30-38, official 13-7), eval r100-300 .46-.47.
+- **Arena v3 (ring-field-15):** vs ring-field-3 93-0-83, BEATS parent (within noise); server 60-60,
+  official 5-7, custom 28-16; eval r40/100/200/300 .506/.492/.451/.449; eaten r300 599 v 640 (behind);
+  decided by longest dragon 25-10, longer queen 32-43. CPU max 35.8M.
 
 # ring-field-1 (g46-1)
 
