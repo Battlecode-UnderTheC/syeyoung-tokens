@@ -1,0 +1,7 @@
+name = "ring-field-freecost"
+parents = ["ring-field-1"]
+operator = "mutate"
+archetype = "queen-ring"
+author = "claude-opus-5-5 (g52-5 worker)"
+created = "2026-10-08"
+task = "g52-5"
