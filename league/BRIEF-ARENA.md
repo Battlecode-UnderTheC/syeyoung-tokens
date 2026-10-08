@@ -46,7 +46,7 @@ Rules: `docs/game.md`, unswbc 1.2.7.
    - A clear duel loss against the base means stop and report; don't submit.
 ## Prove the mechanism fires before submitting (required)
 Workers have repeatedly built a simpler stand-in that never fired where intended. So, before submitting:
-1. **Targeted duel.** Upload an ephemeral build (`tokenz ephemeral`) and duel it against the parent ON THE TARGET MAPS ONLY, a few seeds (`tokenz duel <eph> <parent> --maps <the maps named in your brief> --seeds random:2 --wait`). Arena duels and local sims are both fine for this quick test (local sims are handy for debug traces).
+1. **Targeted duel.** Upload an ephemeral build (`tokenz ephemeral`) and duel it against the parent ON THE TARGET MAPS ONLY, a few seeds (`tokenz duel <eph> <parent> --maps <the maps named in your brief> --seeds random:2 --wait`). Use a local sim for a handful of games (and for debug traces); for anything around 20 games or more, an arena duel is faster.
 2. **Decode those duel games.** Show that the intended behaviour happens in the situation the brief describes. Where you need a trace, reproduce the duel game locally on its seed with your debug labels on (the local sim matches the arena move for move), and count how often the new code path ran and changed the move.
 3. **If it doesn't fire, or acts somewhere other than intended,** that is a bug. Fix it before you submit.
 4. **Report** these targeted-duel game ids, the trace counts, and 1-2 decoded examples. An independent reviewer checks your brief, your diff and this evidence before your draft counts.
