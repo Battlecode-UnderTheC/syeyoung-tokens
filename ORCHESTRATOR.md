@@ -200,7 +200,7 @@ Their branches `team9/*` are pushed; their findings are in KNOWLEDGE.md and g34.
 - No map-keyed logic: no map names, exact sizes or lookup tables. Adapt only to what dragons
   observe.
 - No exploits of one opponent's quirks, and no overfitting to v9.
-- The queen: there is no queen rule. Keeping her alive is important, but risks that win games are allowed. Her survival is evidence to weigh, never a cap by itself.
+- The queen plays safe: no mazes, corridors or pockets. The goal is winning, not keeping her alive at all costs: her survival is evidence to weigh, never a cap by itself.
 - One change per draft, with a real note.
 - Never look in `../syeyoung-tokens.league/maps/holdout/`.
 - Never print `~/.unswbc/keys.json` or `~/.unswbc-web/credentials`.
@@ -424,11 +424,4 @@ findings accordingly.
 - A follow-up try is earned when replays show the mechanism working, not when a number moves.
 - Before promoting or merging, look at replays of the draft (have a subagent render and describe them): check the change does what it claims and has no ugly side effects.
 
-- Only ANALYST agents look at images: filmstrip PNGs via Read, several render.py --film strips over the stretch that matters, saying which conclusions came from the images. Workers may also view filmstrips of their own games to analyse the behaviour their change targets (user, 2026-10-08). The orchestrator doesn't view images.
-
-## Implementation review (user, 2026-10-08)
-- Workers kept building naive stand-ins for the briefed mechanism.
-- Every worker must prove the mechanism fires with a TARGETED arena duel on the target maps, decoding those games (local reproduction for traces) before submitting. Local sims for a few games or traces; arena duels for ~20+ games.
-- Before a draft counts, a fresh REVIEWER agent reads the brief, the worker's diff and that evidence. It confirms the code implements the briefed mechanism (not a simpler heuristic) and that it fires where intended. If not, the work goes back to the worker.
-
-- No centre ban (user, 2026-10-08). The old 'no geometric-centre targets' rule and the anti-centre trick maps were my over-reading of the user's overfitting worry, overfitting in reverse. The rule is only: no hardcoded map features or map keys. Don't judge changes by the anti-centre family.
+- Only ANALYST agents look at images: filmstrip PNGs via Read, several render.py --film strips over the stretch that matters, saying which conclusions came from the images. Workers and the orchestrator don't view images; they use decoded data and the analysts' reports.

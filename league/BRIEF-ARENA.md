@@ -44,13 +44,6 @@ Rules: `docs/game.md`, unswbc 1.2.7.
    - Keep duels LIGHTWEIGHT, about the size of the old local check: `tokenz duel <eph-id> {base_id} --suite server --seeds random:2 --wait` (17 maps × 2 seeds × 2 seats = 68 games). Optionally add one more light duel on `--suite official --seeds random:2`, or against `cs-queen-split-tail-risk-v1-7`. Never run full-suite duels: the draft's own arena games are the thorough test.
    - Report each duel's W-L by suite, the 2 v 3+ starter split, and the per-side metrics it returns.
    - A clear duel loss against the base means stop and report; don't submit.
-## Prove the mechanism fires before submitting (required)
-Workers have repeatedly built a simpler stand-in that never fired where intended. So, before submitting:
-1. **Targeted duel.** Upload an ephemeral build (`tokenz ephemeral`) and duel it against the parent ON THE TARGET MAPS ONLY, a few seeds (`tokenz duel <eph> <parent> --maps <the maps named in your brief> --seeds random:2 --wait`). Use a local sim for a handful of games (and for debug traces); for anything around 20 games or more, an arena duel is faster.
-2. **Decode those duel games.** Show that the intended behaviour happens in the situation the brief describes. Where you need a trace, reproduce the duel game locally on its seed with your debug labels on (the local sim matches the arena move for move), and count how often the new code path ran and changed the move.
-3. **If it doesn't fire, or acts somewhere other than intended,** that is a bug. Fix it before you submit.
-4. **Report** these targeted-duel game ids, the trace counts, and 1-2 decoded examples. An independent reviewer checks your brief, your diff and this evidence before your draft counts.
-
 5. Make the bot and submit it:
    - `scripts/make-bot.sh variants/{variant} <out>`
    - `tokenz --agent {task} submit <out> --bot {line} --parent {base_id} --note "Hypothesis: ... Change: ... Local: ..." --wait`
@@ -68,7 +61,7 @@ Workers have repeatedly built a simpler stand-in that never fired where intended
 
 ## Watch replays (metrics are not the goal)
 The metrics in this brief (eval P(win), counts at round N) are evidence, not the target. A change can move a number without fixing the behaviour (Goodhart's law).
-- Before and after your change, check from decoded replays and your action labels or debug counters that your bot does what was intended in the situation the change is for. You may also render filmstrips (render.py --film) of those games and look at them, to analyse the behaviour your change is meant to fix. Name the game ids.
+- Before and after your change, check from decoded replays and your action labels or debug counters that your bot does what was intended in the situation the change is for. Name the game ids. Don't view images: image analysis is done by analyst agents.
 - Describe concretely what the dragons now do differently, and whether it is what was intended and sensible.
 - If a metric moved but the replays don't show the intended behaviour (or show a side effect), say so: that is not a success.
 
@@ -91,7 +84,7 @@ A turn over the judge's 100M CPU-point cap kills that dragon. Keep the worst tur
 
 - **No hidden map knowledge**.
   - Every new threshold or trigger must name the OBSERVED cause it responds to and why that value. 'It fixed Stripes' is not a reason.
-  - No board-size gates, no hardcoded map coordinates or map-specific keys, and no constants picked to fit particular maps. (Targets derived from what the dragons observe, the board's size or its symmetry are fine, including the middle of the board, but never mindlessly: the user makes maps that punish a blind rush in ANY fixed direction (centre, edges, corners, the r0 facing, mirror points), so every heading must depend on what is actually there. A centre PRIOR is still encouraged (real competition maps resemble today's, with a contested middle), as long as observation can override it.)
+  - No board-size gates, no aiming at fixed board positions (e.g. the geometric centre), and no constants picked to fit particular maps.
   - Prefer general mechanisms (valuing food, room, danger and numbers from what dragons see) over new 'if X starters and queen ≤ N' rules.
   - The orchestrator reviews your diff for this and rejects violations.
 - **Report per map class**, not only the total: 1 / 2 / 3+ starters; cramped / corridor / open; sealed queen; central cluster or not. A clear loss in any class means not ready. Also run one light check on freshly generated maps (`tools/mapgen` once it exists, otherwise the sim's worldgen).
@@ -100,7 +93,7 @@ A turn over the judge's 100M CPU-point cap kills that dragon. Keep the worst tur
   don't run `scripts/submit.sh`.
 - **No environment-variable reads**, no map-keyed logic (map names, exact sizes, lookup
   tables), no exploits of a specific opponent, no RL.
-- **The queen:** keeping her alive is important, but it's not a rule. Risks that win games are allowed.
+- **The queen plays safe:** she never enters mazes, corridors or pockets.
 - **Never** start server games or upload to the competition server.
 - **Never** look in `../syeyoung-tokens.league/maps/holdout/`.
 - **Use at most 2 threads;** the machine is shared.
