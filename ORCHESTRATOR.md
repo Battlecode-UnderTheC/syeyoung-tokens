@@ -430,3 +430,5 @@ findings accordingly.
 - Workers kept building naive stand-ins for the briefed mechanism.
 - Every worker must prove the mechanism fires with a TARGETED arena duel on the target maps, decoding those games (local reproduction for traces) before submitting. Local sims for a few games or traces; arena duels for ~20+ games.
 - Before a draft counts, a fresh REVIEWER agent reads the brief, the worker's diff and that evidence. It confirms the code implements the briefed mechanism (not a simpler heuristic) and that it fires where intended. If not, the work goes back to the worker.
+
+- No centre ban (user, 2026-10-08). The old 'no geometric-centre targets' rule and the anti-centre trick maps were my over-reading of the user's overfitting worry, overfitting in reverse. The rule is only: no hardcoded map features or map keys. Don't judge changes by the anti-centre family.

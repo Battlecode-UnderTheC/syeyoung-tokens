@@ -60,7 +60,7 @@ You are the orchestrator. You coordinate; you don't analyse strategy or write bo
 - **The server's #1, "dev test 1",** wins on early economy and spread, free sprints, cull-and-harvest, and playing on after its queen dies (`../syeyoung-tokens.league/replays/devtest1/REPORT.md`).
 
 ## User rules (binding)
-- **Map knowledge:** no map keys, no geometric-centre targets, no exploits of one opponent, no env vars, no RL. **Maps are symmetric: never explain anything by the seat.**
+- **Map knowledge:** no map keys or hardcoded map features, no exploits of one opponent, no env vars, no RL. **Maps are symmetric: never explain anything by the seat.**
 - **The queen:** keeping her alive is important, but there's no queen rule. Risks that win games are allowed.
 - **The goal is to win games, not to keep the queen alive at all costs.** Her survival is an advantage and evidence to weigh, never a cap or abort line by itself (2026-10-06: I wrongly held ring-qforage-1 back on a doubled early queen death rate while it won).
 - **Metrics are evidence, not goals:** confirm behaviour in the replays.
