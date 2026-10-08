@@ -425,3 +425,8 @@ findings accordingly.
 - Before promoting or merging, look at replays of the draft (have a subagent render and describe them): check the change does what it claims and has no ugly side effects.
 
 - Only ANALYST agents look at images: filmstrip PNGs via Read, several render.py --film strips over the stretch that matters, saying which conclusions came from the images. Workers may also view filmstrips of their own games to analyse the behaviour their change targets (user, 2026-10-08). The orchestrator doesn't view images.
+
+## Implementation review (user, 2026-10-08)
+- Workers kept building naive stand-ins for the briefed mechanism.
+- Every worker must prove the mechanism fires with a TARGETED arena duel on the target maps, decoding those games (local reproduction for traces) before submitting. Arena duels are the quick test.
+- Before a draft counts, a fresh REVIEWER agent reads the brief, the worker's diff and that evidence. It confirms the code implements the briefed mechanism (not a simpler heuristic) and that it fires where intended. If not, the work goes back to the worker.

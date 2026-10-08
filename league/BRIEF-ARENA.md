@@ -44,6 +44,13 @@ Rules: `docs/game.md`, unswbc 1.2.7.
    - Keep duels LIGHTWEIGHT, about the size of the old local check: `tokenz duel <eph-id> {base_id} --suite server --seeds random:2 --wait` (17 maps × 2 seeds × 2 seats = 68 games). Optionally add one more light duel on `--suite official --seeds random:2`, or against `cs-queen-split-tail-risk-v1-7`. Never run full-suite duels: the draft's own arena games are the thorough test.
    - Report each duel's W-L by suite, the 2 v 3+ starter split, and the per-side metrics it returns.
    - A clear duel loss against the base means stop and report; don't submit.
+## Prove the mechanism fires before submitting (required)
+Workers have repeatedly built a simpler stand-in that never fired where intended. So, before submitting:
+1. **Targeted duel.** Upload an ephemeral build (`tokenz ephemeral`) and duel it against the parent ON THE TARGET MAPS ONLY, a few seeds (`tokenz duel <eph> <parent> --maps <the maps named in your brief> --seeds random:2 --wait`). Arena duels are the quick test; use local sims only to reproduce an exact game.
+2. **Decode those duel games.** Show that the intended behaviour happens in the situation the brief describes. Where you need a trace, reproduce the duel game locally on its seed with your debug labels on (the local sim matches the arena move for move), and count how often the new code path ran and changed the move.
+3. **If it doesn't fire, or acts somewhere other than intended,** that is a bug. Fix it before you submit.
+4. **Report** these targeted-duel game ids, the trace counts, and 1-2 decoded examples. An independent reviewer checks your brief, your diff and this evidence before your draft counts.
+
 5. Make the bot and submit it:
    - `scripts/make-bot.sh variants/{variant} <out>`
    - `tokenz --agent {task} submit <out> --bot {line} --parent {base_id} --note "Hypothesis: ... Change: ... Local: ..." --wait`
