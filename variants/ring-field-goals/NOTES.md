@@ -25,3 +25,13 @@ for a live pearl on 34% v 44%. Goal scoring should value food the dragon can act
   share 16% / crowd 9% of those times; in the draft 2% / 0% (the change does what it says). The rest
   is the schedule giving that pearl to an ally (56-59%) and beds whose ripe-by-arrival neighbours
   earn a cluster bonus (field beds), which is intended.
+- Targeted situation (eatrate-r24's 84 rich rf3 v gst-search-12/queen-3 arena games, local exact
+  repro, the draft in rf3's seat; rf3's own repro matches the analysis: 34% pearl / 29% unripe on
+  the 32 rich losses). Rich losses, draft v rf3: pearl 31.6% v 33.9%, unripe bed 29.8% v 29.3%,
+  ripe bed 6.5% v 4.4%, eats per worker-turn 0.138 v 0.132, newborn first eat 4.83 v 5.25 rounds
+  (my birth->first-eat convention, same for both). Targets (<=23% / >=40% / <=4.3) NOT met.
+- Why the mix can't move much: of the turns heading to an unripe bed with a reachable pearl within 6,
+  ~72% are beds that ripen by the time we arrive (due - dist <= 0; the "unripe" label is at
+  decision time, not arrival), and 61% have the pearl matched by the schedule to an ally that gets
+  there first. Share/crowd cuts on that pearl fell from 17%/12% to 4%/2%. The remaining lever is
+  the schedule itself, which is not this change.
