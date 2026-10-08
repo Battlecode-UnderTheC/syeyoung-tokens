@@ -842,8 +842,8 @@ class StrategyAgent : public bot::Agent {
   };
   std::unordered_map<int32_t, Call> calls_;   // cluster tile -> the freshest call heard about it
   int32_t own_call_ = -1;                     // this turn: a cluster we found and call ourselves
-  // g50-3: the 7x7 views of this dragon and the allies in view on its first turn: its spawn ground,
-  // which the queen, the starters or its parent farm, so a cluster there is no find to call
+  // g50-3: the tiles this dragon saw on its first turn when it started in the opening (r0-2): its
+  // spawn ground, which the queen and the starters farm, so a cluster there is no find to call
   std::vector<uint8_t> call_home_;
   double CallBedWeight(int32_t t) const;   // a pearl seen, or a bed due within kCallDue (0/1)
   double CallClusterScore(int32_t t) const;

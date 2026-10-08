@@ -81,7 +81,6 @@ void StrategyAgent::HearCall(int32_t x, int32_t y, int32_t v, int32_t r, int32_t
 double StrategyAgent::CallBedWeight(int32_t t) const {
   const TileMemory& m = board_.at(t);
   if (m.seen_round < 0) return 0.0;
-  if (!call_home_.empty() && call_home_[t]) return 0.0;   // g50-3: spawn ground is the starters' own food
   if (m.pearl) return 1.0;
   if (m.countdown < 0) return 0.0;
   return m.countdown - (round_ - m.seen_round) <= kCallDue ? 1.0 : 0.0;
@@ -113,20 +112,11 @@ int32_t StrategyAgent::UnmatchedPearlsInView() const {
 void StrategyAgent::UpdateCall(const rl::Observation& o) {
   own_call_ = -1;
   // g50-3: our spawn ground (the first turn of a dragon that starts in the opening)
-  // (iteration 2: the view of every ally head in view then too. The starters spawn together, and a
-  // starter one step on saw the home cluster from a tile just outside its own first view: wg39000
-  // repro, finds of (22,9)/(21,8) at r1-2 by the queen and a starter, answered from 13 tiles out.)
-  // (iteration 3: every dragon on its first turn, not only r0-2: a child is born where its parent
-  // stands, so its first view is ground its parent or the starters already farm and call; wg39000
-  // repro: a child born r3 called the home cluster (22,9) at once)
-  if (round_ == born_ && call_home_.empty()) {
+  // (ablation g50-3c: as briefed, the dragon's own first-turn view in the opening only; iterations
+  // 2-3 widened this to allies' views and every first turn, and the r200-300 eval fell .52 -> .45)
+  if (round_ == born_ && round_ <= 2 && call_home_.empty()) {
     call_home_.assign(board_.size(), 0);
-    std::vector<int32_t> heads{head_};
-    for (const auto& [id, w] : seen_)
-      if (w.team == spawn_.team && w.round == round_ && w.head >= 0) heads.push_back(w.head);
-    for (const int32_t h : heads)
-      for (int32_t ey = -kCallView; ey <= kCallView; ++ey)
-        for (int32_t ex = -kCallView; ex <= kCallView; ++ex) call_home_[board_.Tile(board_.X(h) + ex, board_.Y(h) + ey)] = 1;
+    for (int32_t t = 0; t < board_.size(); ++t) call_home_[t] = board_.at(t).seen_round >= 0;
   }
   // what we heard (Decode only sees the word, so the inbox is read here)
   for (const uint64_t w : o.inbox) {

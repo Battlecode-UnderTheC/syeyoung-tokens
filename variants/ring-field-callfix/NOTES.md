@@ -238,3 +238,14 @@ old rush restored for dragons the mode leaves out.
   - Parent v spar-field-2 (arena games, 4 each):
     - Devil: startdir 6.2 v 6.7, eaten 10.8 v 9.8, dragons 12.0 v 8.2;
     - Trophy: startdir 9.6 v 9.2, eaten 10.0 v 13.2, dragons 8.5 v 12.0.
+
+## Ablation (review of ring-field-15) -> ring-field-16 (the code now committed)
+- (b) back to the brief: no find on the finder's own first-turn view at r0-2; home beds count in finds
+  elsewhere. Keeps (a), (c) and the own_call_ block.
+- Arena vs ring-field-3: 58-0-54 BEATS (noise); server 32-36, official 6-4, custom 20-14; devil 2-2,
+  trophy 2-2. Eval r40/100/200/300 .503/.495/.471/.465; eaten r300 641 v 680. CPU max 36.2M.
+- Call-travel share r0-60 (turns labelled call: toward cluster / field: to call), by local match60
+  repro of each arena game on its map and seed (r60 lengths within ~3% of the arena's, not exact):
+  ring-field-16 2.94% v ring-field-3 4.13% (112 games); ring-field-15 1.93% v 4.10%.
+- So the r200-300 fade is mostly present without the widened home too (v1 .521/.514, v4 .471/.465,
+  v3 .451/.449; SE ~.03 at n~90): the own_call_ block or noise, not only iterations 2-3.
