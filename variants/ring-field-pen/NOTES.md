@@ -38,7 +38,25 @@
   12-12, longest 2-9; 3+ 16-24, <=2 16-12), official 10-10. queen_length@end 11.8 v 11.1, longest@400 12.5 v 11.9.
 
 ## Arena
-- (pending)
+- **ring-field-12 verdict:** 57-0-55 vs ring-field-9, "BEATS parent" (within noise). By suite: server 36-32,
+  custom 17-17, official 4-6. Decided by elimination 27-27, longer queen 16-15, longest 12-12, total 2-1.
+  vs ring-field-3 58-54, ring-qforage-1 60-52, ring-sprint-21 51-61. CPU p99 24.7M, max 41.9M.
+- **Eval P(win) v parent:** r100-300 .50 (identical), r350 .51, r400 .51, r430 .49, r460 .49, r490 .42.
+- **Targeted (the 112 games v parent, metrics API):** queen deaths r300-429 26 v 26 (lunged 23 v 20,
+  no valid move 3 v 6). Queen length r430 / r460 / r490 / end 6.2 / 13.1 / 15.9 / 16.8 v 6.2 / 14.5 /
+  19.4 / 18.6: the late lead is NOT kept.
+- **Drift (decoded replays):** > 5 tiles from her r300 head in 31 of 66 (ring-field-9's own games v
+  ring-field-3: 33 of 67); > 7 in 16 v 20. Out of an approximate pen (Chebyshev 3 round her r280-299
+  heads): 10.7% of her r300-429 rounds v the parent queen's 10.4% in the same games. Not fixed.
+- **Replay 245525 (portals):** the behaviour is as built: in r365-372 she flees enemy heads 4 tiles
+  out of the pen, then sprints straight back at r373-374 and stays. But the pen sits in contested ground
+  (enemy heads within 6 nearly every round r300-340), so going back keeps her exposed.
+- **What it shows:** the 'no valid move' deaths halved (exits reserved from r300, PenKeep), but lunges
+  rose by about as much; 12 of 14 lunge deaths in duel 2 were within 5 tiles of her r300 head, i.e. in
+  her pen. The ">5 tiles" drift count is mostly pen geometry (a 3x2 ring + 3 spans 8-9 tiles) and short
+  flights, not pen loss.
+- **Next:** the danger is the pen's place, not drift: pick or re-pick the pen by enemy-head traffic
+  (redraw when threats recur in it), rather than hold it harder.
 
 # ring-field-qfeed (g48-3)
 
