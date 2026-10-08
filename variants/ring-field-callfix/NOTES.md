@@ -12,7 +12,20 @@
   40 -> 26 per run; official local 12-18 (same as W-L noise of rf1 mirror unknown); server seed 1
   13-21; fresh mapgen (seed 50311, 44 maps x 2 seeds) 86-2-88.
 - **Duels v ring-field-3:** server 37-31; official 6-14 and 8-12 (within noise each).
-- **Arena verdict:** see below / orchestrator.
+- **Arena v1 (ring-field-14):** vs ring-field-3 55-0-57 (noise); server 31-37, official 5-5, custom
+  19-15; eval r40/100/200/300 .505/.504/.521/.514; eaten r100 133.7 v 131.6; CPU max 36.2M.
+- **Iteration 2-3 (targeted CALL_DBG repro, match60 to r60, wg39000/wg39001/devil/trophy x 3 seeds x 2
+  seats v rf1):** v1 still let the home cluster be found at r1-3 one tile past the finder's own first
+  view (by the queen, a starter, an r3 child) and let workers holding their own find answer another
+  call (wg39000 253 GO turns). So: home = the 7x7 views of the dragon and the allies in view on its
+  first turn (any round), its beds count 0 in a find; and a worker calling its own find this turn
+  doesn't answer. Repro (rf1 -> v3): r0-2 finds 112 -> 9 (none on spawn views); GO from own find
+  427 -> 0; call-travel share devil 2.2->1.6%, trophy 1.3->0.5%, wg39001 1.7->0.9%, wg39000 7.4->5.8%
+  (a real cluster at (22,17) found r7 off the spawn views). 224415 film (seed 1592614637 v
+  gst-giant-2; repro id18 = arena worker 17): rf1 answers the r0 home call (22,9) 13 tiles out at
+  r16; v3 never sees that call; team total r60 69 v 83 -> 125 v 41.
+- **Duels v3 v ring-field-3:** devil+trophy x 6 seeds 11-13 (r40 eaten margin devil +3.4, trophy 0);
+  server+official x 2 seeds 43-45 (server 30-38, official 13-7), eval r100-300 .46-.47.
 
 # ring-field-1 (g46-1)
 
