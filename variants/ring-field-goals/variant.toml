@@ -1,0 +1,7 @@
+name = "ring-field-goals"
+parents = ["ring-field-3"]
+operator = "mutate"
+archetype = "queen-ring"
+author = "claude-opus-5-5 (g50-4 worker)"
+created = "2026-10-08"
+task = "g50-4"
