@@ -1,0 +1,7 @@
+name = "ring-field-callfix"
+parents = ["ring-field-1"]
+operator = "mutate"
+archetype = "queen-ring"
+author = "claude-opus-5-5 (g50-3 worker)"
+created = "2026-10-08"
+task = "g50-3"
