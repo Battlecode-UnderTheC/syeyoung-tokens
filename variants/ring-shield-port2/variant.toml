@@ -1,0 +1,7 @@
+name = "ring-shield-port2"
+parents = ["ring-shield-bastion"]
+operator = "mutate"
+archetype = "queen-ring"
+author = "claude-opus-5-5 (g53-10 worker)"
+created = "2026-10-09"
+task = "g53-10"
