@@ -1,0 +1,7 @@
+name = "ring-shield-ghost"
+parents = ["ring-shield-rush"]
+operator = "mutate"
+archetype = "queen-ring"
+author = "claude-opus-5-5 (g53-20 worker)"
+created = "2026-10-09"
+task = "g53-20"
