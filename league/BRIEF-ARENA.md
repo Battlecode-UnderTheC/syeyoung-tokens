@@ -84,7 +84,8 @@ A turn over the judge's 100M CPU-point cap kills that dragon. Keep the worst tur
 
 - **No hidden map knowledge**.
   - Every new threshold or trigger must name the OBSERVED cause it responds to and why that value. 'It fixed Stripes' is not a reason.
-  - No board-size gates, no aiming at fixed board positions (e.g. the geometric centre), and no constants picked to fit particular maps.
+  - No board-size gates, no map keys or hardcoded coordinates, and no constants picked to fit particular maps.
+  - A SOFT preference for the centre is allowed (user, 2026-10-09): early growth matters a lot and the real maps will look like today's. It must stay soft (a prior/bonus that observed food, danger and reachability can outweigh), and dragons must still explore other directions.
   - Prefer general mechanisms (valuing food, room, danger and numbers from what dragons see) over new 'if X starters and queen ≤ N' rules.
   - The orchestrator reviews your diff for this and rejects violations.
 - **Report per map class**, not only the total: 1 / 2 / 3+ starters; cramped / corridor / open; sealed queen; central cluster or not. A clear loss in any class means not ready. Also run one light check on freshly generated maps (`tools/mapgen` once it exists, otherwise the sim's worldgen).
